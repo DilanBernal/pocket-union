@@ -3,11 +3,12 @@ import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
-import 'package:pocket_union/ui/Screens/home_screen.dart';
-import 'package:pocket_union/ui/Screens/register_screen.dart';
+import 'package:pocket_union/ui/screens/auth/start_screen.dart';
+import 'package:pocket_union/ui/screens/home_screen.dart';
+import 'package:pocket_union/ui/screens/register_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'ui/Widgets/list_menu.dart';
+import 'ui/widgets/list_menu.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -103,7 +104,7 @@ class _MyAppState extends State<MyApp> {
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
       home: _isFirstLaunch
-          ? const RegisterScreen()
+          ? const StartScreen()
           : Scaffold(
               appBar: AppBar(
                 title: const Text(''),

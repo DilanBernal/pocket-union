@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pocket_union/ui/Screens/new_entry_screen.dart';
-import 'package:pocket_union/ui/Screens/new_out_screen.dart';
+import 'package:pocket_union/ui/screens/new_entry_screen.dart';
+import 'package:pocket_union/ui/screens/new_out_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

@@ -4,8 +4,8 @@ import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/domain/models/revenue.dart';
-import 'package:pocket_union/ui/Widgets/form_title.dart';
-import 'package:pocket_union/ui/Widgets/input_with_button.dart';
+import 'package:pocket_union/ui/widgets/form_title.dart';
+import 'package:pocket_union/ui/widgets/input_with_button.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
