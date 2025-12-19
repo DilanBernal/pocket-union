@@ -5,7 +5,6 @@ import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
 import 'package:pocket_union/ui/screens/auth/start_screen.dart';
 import 'package:pocket_union/ui/screens/home_screen.dart';
-import 'package:pocket_union/ui/screens/register_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ui/widgets/list_menu.dart';
