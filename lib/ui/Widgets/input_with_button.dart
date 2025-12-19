@@ -12,7 +12,8 @@ class InputWithButton extends StatefulWidget {
   final Map<String, List<String>>? dropdownOptions;
   final Map<String, String>? initialDropdownValues;
   final Map<String, Map<String, IconData>>? dropdownIcons;
-  final Map<String, Map<String, int>>? dropdownElementId;
+  final Map<String, Map<String, int>>? dropdownElementIdNumber;
+  final Map<String, Map<String, String>>? dropdownElementString;
 
   const InputWithButton(
       {super.key,
@@ -24,7 +25,8 @@ class InputWithButton extends StatefulWidget {
       this.dropdownOptions,
       this.initialDropdownValues,
       this.dropdownIcons,
-      this.dropdownElementId});
+      this.dropdownElementIdNumber,
+      this.dropdownElementString});
 
   @override
   _InputWithButtonState createState() => _InputWithButtonState();
@@ -172,9 +174,9 @@ class _InputWithButtonState extends State<InputWithButton> {
 
     final Map<String, IconData>? iconsForField =
         widget.dropdownIcons?[fieldName];
-    final Map<String, int> optionIds = widget.dropdownElementId![fieldName]!;
+    final Map<String, String> optionIds = widget.dropdownElementString![fieldName]!;
     return DropdownButtonFormField<String>(
-      value: _dropdownValues[fieldName],
+      initialValue: _dropdownValues[fieldName],
       decoration: InputDecoration(
           labelText: fieldName,
           enabledBorder: OutlineInputBorder(

@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:our_finances/Dao/sqlite/user_dao_sqlite.dart';
-import 'package:our_finances/Models/user.dart';
-import 'package:our_finances/Widgets/input_with_button.dart';
+import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
+import 'package:pocket_union/domain/models/user.dart';
+import 'package:pocket_union/ui/Widgets/input_with_button.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,7 +40,7 @@ class RegisterScreen extends StatelessWidget {
       final name = values['nombre']!;
       final balance = double.tryParse(values['dinero']!) ?? 0.0;
       if (name.trim() != '' && isFirst == true) {
-        final user = User(id: 0, name: name, balance: balance, inCloud: false);
+        final user = User(id: '', name: name, balance: balance, inCloud: false);
         int idGenerated = await userRepo.insertUser(user);
         await prefs.setInt('userId', idGenerated);
         await prefs.setBool('isFirstLaunch', false);

@@ -1,5 +1,5 @@
-import 'package:our_finances/Dao/sqlite/db_helper_sqlite.dart';
-import 'package:our_finances/Models/revenue.dart';
+import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
+import 'package:pocket_union/domain/models/revenue.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RevenueDaoSqlite {

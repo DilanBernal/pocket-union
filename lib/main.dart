@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:our_finances/Dao/sqlite/category_dao_sqlite.dart';
-import 'package:our_finances/Dao/sqlite/db_helper_sqlite.dart';
-import 'package:our_finances/Dao/sqlite/revenue_dao_sqlite.dart';
-import 'package:our_finances/Dao/sqlite/user_dao_sqlite.dart';
-import 'package:our_finances/Screens/home_screen.dart';
-import 'package:our_finances/Screens/register_screen.dart';
+import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
+import 'package:pocket_union/ui/Screens/home_screen.dart';
+import 'package:pocket_union/ui/Screens/register_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'Widgets/list_menu.dart';
+import 'ui/Widgets/list_menu.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,12 +1,11 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show CircularProgressIndicator;
+import 'package:flutter/material.dart' show CircularProgressIndicator, IconData, StatefulWidget, State, BuildContext, Widget, Column;
 import 'package:flutter/services.dart';
-import 'package:our_finances/Dao/sqlite/category_dao_sqlite.dart';
-import 'package:our_finances/Dao/sqlite/revenue_dao_sqlite.dart';
-import 'package:our_finances/Models/category.dart';
-import 'package:our_finances/Models/revenue.dart';
-import 'package:our_finances/Widgets/form_title.dart';
-import 'package:our_finances/Widgets/input_with_button.dart';
+import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
+import 'package:pocket_union/domain/models/category.dart';
+import 'package:pocket_union/domain/models/revenue.dart';
+import 'package:pocket_union/ui/Widgets/form_title.dart';
+import 'package:pocket_union/ui/Widgets/input_with_button.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,7 +19,7 @@ class NewEntryScreen extends StatefulWidget {
 class _NewEntryScreenState extends State<NewEntryScreen> {
   List<String> _categoryNames = [];
   Map<String, IconData> _categoryIcons = {};
-  Map<String, int> _categoriesId = {};
+  Map<String, String> _categoriesId = {};
   bool _loadingCategories = true;
 
   @override
@@ -82,7 +81,7 @@ class _NewEntryScreenState extends State<NewEntryScreen> {
               dropdownIcons: {'categoria': _categoryIcons},
               buttonName: "Agregar gasto",
               dropdownOptions: {'categoria': _categoryNames},
-              dropdownElementId: {'categoria': _categoriesId},
+              dropdownElementString: {'categoria': _categoriesId},
             )
     ]);
   }
@@ -90,7 +89,7 @@ class _NewEntryScreenState extends State<NewEntryScreen> {
   Future<void> _createEntry(
       Map<String, String> values, RevenueDaoSqlite revRepo) async {
     final prefs = await SharedPreferences.getInstance();
-    final idUser = prefs.getInt('userId');
+    final idUser = prefs.getString('userId');
     print(values);
     try {
       final name = values['nombre']!;
@@ -100,7 +99,7 @@ class _NewEntryScreenState extends State<NewEntryScreen> {
       final description = values['descripcion'];
       if (name.trim() != '' && price! > 50) {
         final revenue = Revenue(
-            id: 0,
+            id: '',
             idUser: idUser!,
             name: name,
             date: date,
@@ -140,12 +139,12 @@ class _NewEntryScreenState extends State<NewEntryScreen> {
     return categories;
   }
 
-  Future<Map<String, int>> _getAllCategoriesId(
+  Future<Map<String, String>> _getAllCategoriesId(
       List<Category> categoryList) async {
-    Map<String, int> categories = {};
+    Map<String, String> categories = {};
 
     for (var value in categoryList) {
-      final result = <String, int>{value.name: value.id};
+      final result = <String, String>{value.name: value.id};
       categories.addEntries(result.entries);
     }
     return categories;

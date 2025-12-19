@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 
 class Category {
-  final int id;
+  final String id;
   String name;
   var icon;
   bool inCloud;

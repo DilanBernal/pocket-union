@@ -1,5 +1,5 @@
-import 'package:our_finances/Dao/sqlite/db_helper_sqlite.dart';
-import 'package:our_finances/Models/user.dart';
+import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
+import 'package:pocket_union/domain/models/user.dart';
 import 'package:sqflite/sqflite.dart';
 
 class UserDaoSqlite {

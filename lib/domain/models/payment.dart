@@ -1,6 +1,6 @@
 class Payment {
-  final int id;
-  final int idUser;
+  final String id;
+  final String idUser;
   String name;
   DateTime date;
   String? description;

@@ -1,9 +1,9 @@
-import 'package:our_finances/Models/category.dart';
+import 'package:pocket_union/domain/models/category.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DbSqlite {
-  static const _dbName = "our_finances.db";
+  static const _dbName = "pocket_union.db";
   static const _dbVersion = 1;
 
   static final DbSqlite instance = DbSqlite._internal();
@@ -31,7 +31,7 @@ class DbSqlite {
     try {
       await db.execute('''
       CREATE TABLE IF NOT EXISTS user(
-        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        id UUID PRIMARY KEY NOT NULL,
         name TEXT NOT NULL,
         balance NUMERIC NOT NULL,
         inCloud INTEGER NOT NULL
@@ -63,11 +63,11 @@ class DbSqlite {
     ''');
 
       await db.insert('category',
-          Category(id: 0,name: 'Comida', icon: 57946, inCloud: false).toMap());
+          Category(id: '',name: 'Comida', icon: 57946, inCloud: false).toMap());
       await db.insert('category',
-          Category(id: 0,name: 'Transporte', icon: 61379, inCloud: false).toMap());
+          Category(id: '',name: 'Transporte', icon: 61379, inCloud: false).toMap());
       await db.insert('category',
-          Category(id: 0,name: 'Deudas', icon: 62303, inCloud: false).toMap());
+          Category(id: '',name: 'Deudas', icon: 62303, inCloud: false).toMap());
 
       await db.execute('''
       CREATE TABLE IF NOT EXISTS revenue(
