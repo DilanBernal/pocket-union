@@ -24,9 +24,13 @@ class PocketUnionApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      initialRoute: '/',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.blackDarkTheme,
       themeMode: ThemeMode.system,
+      builder: (context, child) {
+        return Scaffold(body: child);
+      },
       debugShowCheckedModeBanner: false,
       routes: AppRoutes.routes,
     );

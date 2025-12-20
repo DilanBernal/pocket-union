@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocket_union/ui/router.dart';
 
 /// Botón de entrada
 class EnterButton extends StatelessWidget {
@@ -11,13 +12,16 @@ class EnterButton extends StatelessWidget {
       children: [
         InkWell(
           onTap: () {
-            print('Botón presionado');
+            Navigator.pushReplacementNamed(context, AppRoutes.register);
           },
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color.fromRGBO(105, 25, 210, 1), const Color.fromRGBO(235, 30, 99, 1)],
+                colors: [
+                  const Color.fromRGBO(105, 25, 210, 1),
+                  const Color.fromRGBO(235, 30, 99, 1)
+                ],
               ),
               borderRadius: BorderRadius.circular(30),
               boxShadow: [

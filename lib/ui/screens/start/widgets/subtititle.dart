@@ -30,7 +30,7 @@ class Subtitle extends StatelessWidget {
                     fontStyle: FontStyle.italic,
                     color: Colors.pink.shade400,
                     shadows: [
-                      Shadow(color: Colors.black, offset: Offset(5, 5))
+                      Shadow(color: Colors.black, offset: Offset(2.5, 2.5))
                     ]),
               ),
             ],

@@ -1,37 +1,21 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
 import 'package:pocket_union/domain/models/user.dart';
-import 'package:pocket_union/ui/widgets/input_with_button.dart';
-import 'package:provider/provider.dart';
+import 'package:pocket_union/ui/screens/start/widgets/gradient_overlay_background.dart';
+import 'package:pocket_union/ui/widgets/grid_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../widgets/form_title.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final userRepo = context.read<UserDaoSqlite>();
-    return Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          FormTitle(title: "Registro"),
-          InputWithButton(
-            onSend: (values) => {_createUser(values, userRepo)},
-            fieldNames: ["nombre", "dinero"],
-            keyboardTypes: [TextInputType.text, TextInputType.number],
-            buttonName: "Registrar tu usuario",
-            inputFormatters: [
-              [],
-              [FilteringTextInputFormatter.digitsOnly]
-            ],
-          )
-        ]);
-  }
+  State<StatefulWidget> createState() => _RegisterScreenState();
+}
 
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
   Future<void> _createUser(
       Map<String, String> values, UserDaoSqlite userRepo) async {
     final prefs = await SharedPreferences.getInstance();
@@ -49,5 +33,133 @@ class RegisterScreen extends StatelessWidget {
     } catch (e) {
       throw Exception(e);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const colorFocusBorderInput = Color.fromRGBO(56, 49, 70, 1);
+    const colorEnabledBorderInput = Color.fromRGBO(45, 41, 53, 1);
+    // final userRepo = context.read<UserDaoSqlite>();
+    return GridBackground(
+      gridColor: const Color.fromRGBO(27, 7, 35, 1),
+      strokeWidth: 2,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+            gradient: RadialGradient(
+                center: AlignmentGeometry.topRight,
+                focal: AlignmentGeometry.bottomRight,
+                focalRadius: 3,
+                colors: [Colors.red.shade800, Colors.transparent])),
+        child: SafeArea(
+          child: Form(
+            key: _formKey,
+            autovalidateMode: AutovalidateMode.onUnfocus,
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 20,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FormTitle(title: "Registro"),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      fillColor: const Color.fromRGBO(22, 17, 30, 1),
+                      filled: true,
+                      label: Text("Nombres completos"),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          borderSide: BorderSide(
+                              color: colorFocusBorderInput,
+                              width: 1.5,
+                              strokeAlign: 20)),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          borderSide: BorderSide(
+                              color: colorEnabledBorderInput,
+                              width: 1.5,
+                              strokeAlign: 20)),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please add some text";
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      fillColor: const Color.fromRGBO(22, 17, 30, 1),
+                      filled: true,
+                      label: Text("Email"),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          borderSide: BorderSide(
+                              color: colorFocusBorderInput,
+                              width: 1.5,
+                              strokeAlign: 20)),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          borderSide: BorderSide(
+                              color: colorEnabledBorderInput,
+                              width: 1.5,
+                              strokeAlign: 20)),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please add some text";
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      fillColor: const Color.fromRGBO(22, 17, 30, 1),
+                      filled: true,
+                      label: Text("Contraseña"),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          borderSide: BorderSide(
+                              color: colorFocusBorderInput,
+                              width: 1.5,
+                              strokeAlign: 20)),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          borderSide: BorderSide(
+                              color: colorEnabledBorderInput,
+                              width: 1.5,
+                              strokeAlign: 20)),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please add some text";
+                      }
+                      return null;
+                    },
+                  )
+
+                  // InputWithButton(
+                  //   onSend: (values) => {_createUser(values, userRepo)},
+                  //   fieldNames: ["nombre", "dinero"],
+                  //   keyboardTypes: [TextInputType.text, TextInputType.number],
+                  //   buttonName: "Registrar tu usuario",
+                  //   inputFormatters: [
+                  //     [],
+                  //     [FilteringTextInputFormatter.digitsOnly]
+                  //   ],
+                  // )
+                ]),
+          ),
+        ),
+      ),
+    );
   }
 }
