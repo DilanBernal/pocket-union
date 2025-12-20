@@ -112,6 +112,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  injector:
+    dependency: "direct main"
+    description:
+      name: injector
+      sha256: d692c37788872bfd4bd7c01b864b0712190a25ae5a346431ff69949d5728a2e1
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.0"
   intl:
     dependency: "direct main"
     description:

@@ -25,11 +25,13 @@ class Subtitle extends StatelessWidget {
               Text(
                 "Drama",
                 style: TextStyle(
-                  fontSize: _fontSizeBase,
-                  fontWeight: FontWeight.bold,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.pink.shade400,
-                ),
+                    fontSize: _fontSizeBase,
+                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.pink.shade400,
+                    shadows: [
+                      Shadow(color: Colors.black, offset: Offset(5, 5))
+                    ]),
               ),
             ],
           ),

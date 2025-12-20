@@ -3,11 +3,9 @@ import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
-import 'package:pocket_union/ui/screens/start/start_screen.dart';
-import 'package:pocket_union/ui/screens/home_screen.dart';
+import 'package:pocket_union/ui/router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'ui/widgets/list_menu.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,20 +24,20 @@ void main() async {
       Provider<CategoryDaoSqlite>(
           create: (ctx) => CategoryDaoSqlite(dbHelper: ctx.read<DbSqlite>()))
     ],
-    child: MyApp(isFirstLaunch: isFirstLaunch),
+    child: PocketUnionApp(isFirstLaunch: isFirstLaunch),
   ));
 }
 
-class MyApp extends StatefulWidget {
+class PocketUnionApp extends StatefulWidget {
   final bool isFirstLaunch;
 
-  const MyApp({super.key, required this.isFirstLaunch});
+  const PocketUnionApp({super.key, required this.isFirstLaunch});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<PocketUnionApp> createState() => _PocketUnionAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _PocketUnionAppState extends State<PocketUnionApp> {
   late bool _isFirstLaunch;
   late SharedPreferences _prefs;
 
@@ -102,19 +100,20 @@ class _MyAppState extends State<MyApp> {
       darkTheme: blackDarkTheme,
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      home: _isFirstLaunch
-          ? Scaffold(body: const StartScreen())
-          : Scaffold(
-              appBar: AppBar(
-                title: const Text(''),
-              ),
-              body: const SafeArea(
-                child: HomeScreen(),
-              ),
-              drawer: Drawer(
-                child: ListMenu(),
-              ),
-            ),
+      routes: AppRoutes.routes,
+      // home: _isFirstLaunch
+      //     ? Scaffold(body: const StartScreen())
+      //     : Scaffold(
+      //         appBar: AppBar(
+      //           title: const Text(''),
+      //         ),
+      //         body: const SafeArea(
+      //           child: HomeScreen(),
+      //         ),
+      //         drawer: Drawer(
+      //           child: ListMenu(),
+      //         ),
+      //       ),
     );
   }
 
