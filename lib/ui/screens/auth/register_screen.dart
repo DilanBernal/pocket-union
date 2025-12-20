@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
 import 'package:pocket_union/domain/models/user.dart';
-import 'package:pocket_union/ui/screens/start/widgets/gradient_overlay_background.dart';
+import 'package:pocket_union/ui/screens/auth/widgets/register_form.dart';
 import 'package:pocket_union/ui/widgets/grid_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../widgets/form_title.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -43,6 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return GridBackground(
       gridColor: const Color.fromRGBO(27, 7, 35, 1),
       strokeWidth: 2,
+      gridSize: 40,
       child: DecoratedBox(
         decoration: BoxDecoration(
             gradient: RadialGradient(
@@ -51,113 +50,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 focalRadius: 3,
                 colors: [Colors.red.shade800, Colors.transparent])),
         child: SafeArea(
-          child: Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.onUnfocus,
-            child: Column(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 20,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FormTitle(title: "Registro"),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      fillColor: const Color.fromRGBO(22, 17, 30, 1),
-                      filled: true,
-                      label: Text("Nombres completos"),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(
-                              color: colorFocusBorderInput,
-                              width: 1.5,
-                              strokeAlign: 20)),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(
-                              color: colorEnabledBorderInput,
-                              width: 1.5,
-                              strokeAlign: 20)),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please add some text";
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      fillColor: const Color.fromRGBO(22, 17, 30, 1),
-                      filled: true,
-                      label: Text("Email"),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(
-                              color: colorFocusBorderInput,
-                              width: 1.5,
-                              strokeAlign: 20)),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(
-                              color: colorEnabledBorderInput,
-                              width: 1.5,
-                              strokeAlign: 20)),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please add some text";
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      fillColor: const Color.fromRGBO(22, 17, 30, 1),
-                      filled: true,
-                      label: Text("Contraseña"),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(
-                              color: colorFocusBorderInput,
-                              width: 1.5,
-                              strokeAlign: 20)),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(
-                              color: colorEnabledBorderInput,
-                              width: 1.5,
-                              strokeAlign: 20)),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please add some text";
-                      }
-                      return null;
-                    },
-                  )
-
-                  // InputWithButton(
-                  //   onSend: (values) => {_createUser(values, userRepo)},
-                  //   fieldNames: ["nombre", "dinero"],
-                  //   keyboardTypes: [TextInputType.text, TextInputType.number],
-                  //   buttonName: "Registrar tu usuario",
-                  //   inputFormatters: [
-                  //     [],
-                  //     [FilteringTextInputFormatter.digitsOnly]
-                  //   ],
-                  // )
-                ]),
-          ),
+          child: RegisterForm(
+              formKey: _formKey,
+              colorFocusBorderInput: colorFocusBorderInput,
+              colorEnabledBorderInput: colorEnabledBorderInput),
         ),
       ),
     );

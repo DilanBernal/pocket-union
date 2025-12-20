@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static final ThemeData lightTheme = ThemeData.light();
@@ -19,9 +20,34 @@ class AppTheme {
       surface: const Color.fromRGBO(82, 0, 138, 1.0),
       onSurface: Colors.white,
     ),
-    textTheme: const TextTheme(
-      bodyLarge: TextStyle(color: Colors.white),
-      bodyMedium: TextStyle(color: Colors.white70),
+    textTheme: TextTheme(
+      titleLarge: GoogleFonts.bungeeTextTheme()
+          .titleLarge!
+          .copyWith(color: Colors.white),
+      titleMedium: GoogleFonts.bungeeTextTheme()
+          .titleMedium!
+          .copyWith(color: Colors.white),
+      titleSmall: GoogleFonts.bungeeTextTheme()
+          .titleSmall!
+          .copyWith(color: Colors.white),
+      bodyLarge: GoogleFonts.didactGothicTextTheme()
+          .bodyLarge!
+          .copyWith(color: Colors.white),
+      bodyMedium: GoogleFonts.didactGothicTextTheme()
+          .bodyMedium!
+          .copyWith(color: Colors.white),
+      bodySmall: GoogleFonts.didactGothicTextTheme()
+          .bodySmall!
+          .copyWith(color: Colors.white),
+      labelLarge: GoogleFonts.didactGothicTextTheme()
+          .labelLarge!
+          .copyWith(color: Colors.white),
+      labelMedium: GoogleFonts.honkTextTheme()
+          .labelMedium!
+          .copyWith(color: Colors.white),
+      labelSmall: GoogleFonts.didactGothicTextTheme()
+          .labelSmall!
+          .copyWith(color: Colors.white),
     ),
   );
 }

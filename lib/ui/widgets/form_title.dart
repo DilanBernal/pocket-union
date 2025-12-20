@@ -1,21 +1,36 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 class FormTitle extends StatelessWidget {
   final String title;
-  const FormTitle({super.key, required this.title});
+  final List<Color> gradientColors;
+  final Color textColor;
+  final Color shadowColor;
+  const FormTitle(
+      {super.key,
+      required this.title,
+      this.gradientColors = const [],
+      this.textColor = CupertinoColors.white,
+      this.shadowColor = CupertinoColors.white});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(10.0),
-      child: Text(
-        title,
+    Text textWidget = Text(title,
         textAlign: TextAlign.center,
-        style: TextStyle(
+        style: Theme.of(context).textTheme.titleLarge!.copyWith(
             fontSize: 30,
-            color: Color.fromRGBO(182, 182, 255, 1.0),
-            decoration: TextDecoration.none),
-      ),
+            fontWeight: FontWeight.w200,
+            shadows: [Shadow(color: shadowColor, blurRadius: 20)],
+            color: textColor));
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 20),
+      child: gradientColors.length <= 1
+          ? textWidget
+          : ShaderMask(
+              shaderCallback: (bounds) =>
+                  LinearGradient(colors: gradientColors).createShader(bounds),
+              child: textWidget,
+            ),
     );
   }
 }

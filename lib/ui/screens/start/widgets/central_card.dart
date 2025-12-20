@@ -36,14 +36,14 @@ class CentralCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               "Juntos es",
-              style: TextStyle(
-                color: Colors.white,
-                shadows: _shadows,
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    shadows: _shadows,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                  ),
               textAlign: TextAlign.center,
             ),
             ColoredTitleWidget(
@@ -51,14 +51,15 @@ class CentralCard extends StatelessWidget {
                 Color.fromARGB(255, 175, 35, 200),
                 Color.fromARGB(255, 115, 25, 210),
               ],
-              textWidget: const Text(
+              horizontalPadding: 20,
+              textWidget: Text(
                 "MEJOR",
-                style: TextStyle(
-                  color: Colors.white,
-                  shadows: _shadows,
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      shadows: _shadows,
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ),

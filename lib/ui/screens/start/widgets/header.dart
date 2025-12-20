@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:pocket_union/ui/screens/start/widgets/colored_title.dart';
 
 class Header extends StatelessWidget {
@@ -17,9 +18,9 @@ class Header extends StatelessWidget {
         Colors.purple,
         Colors.pink,
       ],
-      textWidget: const Text(
+      textWidget: Text(
         'Pocket Union',
-        style: TextStyle(
+        style: GoogleFonts.sixtyfour().copyWith(
           fontSize: 30,
           shadows: _shadows,
           fontWeight: FontWeight.bold,

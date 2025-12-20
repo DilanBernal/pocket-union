@@ -15,18 +15,18 @@ class Subtitle extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 "Finanzas sin ",
-                style: TextStyle(
-                  fontSize: _fontSizeBase,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                      fontSize: _fontSizeBase,
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
               Text(
                 "Drama",
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                     fontSize: _fontSizeBase,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     fontStyle: FontStyle.italic,
                     color: Colors.pink.shade400,
                     shadows: [
@@ -35,10 +35,12 @@ class Subtitle extends StatelessWidget {
               ),
             ],
           ),
-          const Text(
+          Text(
             "Sin complicaciones, Solo tú, tu pareja, y vuestras metas. Transparencia total y cero estres",
-            style:
-                TextStyle(color: Colors.white70, fontSize: _fontSizeBase / 1.3),
+            style: Theme.of(context)
+                .textTheme
+                .bodyLarge!
+                .copyWith(color: Colors.white70, fontSize: _fontSizeBase / 1.3),
             textAlign: TextAlign.center,
           ),
         ],
