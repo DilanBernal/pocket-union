@@ -3,7 +3,7 @@ import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
-import 'package:pocket_union/ui/screens/auth/start_screen.dart';
+import 'package:pocket_union/ui/screens/start/start_screen.dart';
 import 'package:pocket_union/ui/screens/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -103,7 +103,7 @@ class _MyAppState extends State<MyApp> {
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
       home: _isFirstLaunch
-          ? const StartScreen()
+          ? Scaffold(body: const StartScreen())
           : Scaffold(
               appBar: AppBar(
                 title: const Text(''),
