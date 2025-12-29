@@ -27,8 +27,8 @@ class RegisterForm extends StatelessWidget {
             FormTitle(
               title: "Crea tu cuenta",
               shadowColor: Colors.green,
-              textColor: Colors.blue,
-              gradientColors: [Colors.purple.shade300, Colors.pink.shade200],
+              textColor: Colors.white,
+              gradientColors: [Colors.purple.shade600, Colors.pink.shade700],
             ),
             Text(
               "El futuro de vuestras finanzas comienza aqui.",
@@ -57,7 +57,15 @@ class RegisterForm extends StatelessWidget {
               icon: Icons.key,
               fieldLabel: "Contraseña",
             ),
-            TextButton(onPressed: () {}, child: Text("data"))
+            Material(
+              color: Colors.transparent,
+              child: Ink(
+                child: InkWell(
+                  onTap: () {},
+                  child: Text("kasdfads"),
+                ),
+              ),
+            )
           ]),
     );
   }
