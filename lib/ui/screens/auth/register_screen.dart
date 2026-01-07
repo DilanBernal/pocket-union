@@ -14,24 +14,6 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  Future<void> _createUser(
-      Map<String, String> values, UserDaoSqlite userRepo) async {
-    final prefs = await SharedPreferences.getInstance();
-    final bool isFirst = prefs.getBool('isFirstLaunch') ?? true;
-    try {
-      final name = values['nombre']!;
-      final balance = double.tryParse(values['dinero']!) ?? 0.0;
-      if (name.trim() != '' && isFirst == true) {
-        final user = User(id: '', name: name, balance: balance, inCloud: false);
-        int idGenerated = await userRepo.insertUser(user);
-        await prefs.setInt('userId', idGenerated);
-        await prefs.setBool('isFirstLaunch', false);
-      }
-      await userRepo.getAllUsers();
-    } catch (e) {
-      throw Exception(e);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

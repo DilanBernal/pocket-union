@@ -1,8 +1,8 @@
 import 'dart:async';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:pocket_union/ui/router.dart';
-import 'package:pocket_union/ui/screens/auth/widgets/register_text_form_field.dart';
+import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -87,7 +87,7 @@ class _LoginFormState extends State<LoginForm> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   FormTitle(
-                    title: "Inicia sesión en tu cuenta",
+                    title: "Inicia sesión",
                     shadowColor: Colors.green,
                     textColor: Colors.white,
                     gradientColors: [
@@ -95,14 +95,7 @@ class _LoginFormState extends State<LoginForm> {
                       Colors.pink.shade700
                     ],
                   ),
-                  Text(
-                    "El futuro de vuestras finanzas comienza aqui.",
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelLarge!
-                        .copyWith(fontSize: 19),
-                  ),
-                  RegisterTextFormField(
+                  AuthTextFormField(
                     colorFocusBorderInput: colorFocusBorderInput,
                     colorEnabledBorderInput: colorEnabledBorderInput,
                     icon: Icons.email_outlined,
@@ -121,7 +114,7 @@ class _LoginFormState extends State<LoginForm> {
                       return null;
                     },
                   ),
-                  RegisterTextFormField(
+                  AuthTextFormField(
                     colorFocusBorderInput: colorFocusBorderInput,
                     colorEnabledBorderInput: colorEnabledBorderInput,
                     keyboardType: TextInputType.visiblePassword,
@@ -134,21 +127,35 @@ class _LoginFormState extends State<LoginForm> {
                       if (value == null || value.isEmpty) {
                         return "Por favor, ingresa tu email.";
                       }
-                      // Opcional: Validar formato de email
-                      // if (!value.contains('@')) {
-                      //   return 'Por favor, ingresa un email válido.';
-                      // }
                       return null;
                     },
                   ),
                   Material(
+                    borderOnForeground: false,
                     color: Colors.transparent,
-                    child: Ink(
-                      child: InkWell(
-                        onTap: _signIn,
-                        child: Text("Logearse"),
+                    type: MaterialType.button,
+                    child: DecoratedBox(
+                      position: DecorationPosition.background,
+                      decoration: BoxDecoration(),
+                      child: SizedBox(
+                        width: 300,
+                        child: Ink(
+                          color: Colors.amber,
+                          child: InkWell(
+                            splashColor: Colors.blue,
+                            onTap: _signIn,
+                            child: Center(child: Text("Logearse")),
+                          ),
+                        ),
                       ),
                     ),
+                  ),
+                  FloatingActionButton(
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(
+                          context, AppRoutes.register);
+                    },
+                    child: Text("Registrarse"),
                   )
                 ]),
           );

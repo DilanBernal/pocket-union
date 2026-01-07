@@ -21,6 +21,7 @@ dependencies:
   shared_preferences: ^2.2.2
   intl: ^0.20.2
   injector: ^4.0.0
+  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -48,6 +49,7 @@ flutter:
   assets:
     - assets/img/horizontal_synth_wave_background.png
     - assets/img/celeste.png
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

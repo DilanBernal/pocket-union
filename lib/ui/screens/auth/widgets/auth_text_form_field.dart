@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class RegisterTextFormField extends StatelessWidget {
-  const RegisterTextFormField(
+class AuthTextFormField extends StatelessWidget {
+  const AuthTextFormField(
       {super.key,
       required this.colorFocusBorderInput,
       required this.colorEnabledBorderInput,
