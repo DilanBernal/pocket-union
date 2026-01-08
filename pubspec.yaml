@@ -9,43 +9,30 @@ dependencies:
     sdk: flutter
 
   uuid: ^4.4.2
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  supabase_flutter: ^2.0.0
   sqflite: ^2.3.0
   path: ^1.9.0
-  google_fonts: ^6.3.3
+  google_fonts: ^7.0.0
   provider: ^6.1.1
   shared_preferences: ^2.2.2
   intl: ^0.20.2
   injector: ^4.0.0
+  flutter_dotenv: ^6.0.0
+  riverpod: ^3.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter packages.
 flutter:
 
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
-
-  # To add assets to your application, add an assets section, like this:
   assets:
     - assets/img/horizontal_synth_wave_background.png
+    - assets/img/celeste.png
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

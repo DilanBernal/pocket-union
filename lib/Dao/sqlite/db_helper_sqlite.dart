@@ -17,7 +17,7 @@ class DbSqlite {
     return _db!;
   }
 
-  _initDB() async {
+  Future<Database> _initDB() async {
     final db = await openDatabase(
       join(await getDatabasesPath(), _dbName),
       version: _dbVersion,
@@ -62,12 +62,18 @@ class DbSqlite {
       );
     ''');
 
-      await db.insert('category',
-          Category(id: '',name: 'Comida', icon: 57946, inCloud: false).toMap());
-      await db.insert('category',
-          Category(id: '',name: 'Transporte', icon: 61379, inCloud: false).toMap());
-      await db.insert('category',
-          Category(id: '',name: 'Deudas', icon: 62303, inCloud: false).toMap());
+      await db.insert(
+          'category',
+          Category(id: '', name: 'Comida', icon: 57946, inCloud: false)
+              .toMap());
+      await db.insert(
+          'category',
+          Category(id: '', name: 'Transporte', icon: 61379, inCloud: false)
+              .toMap());
+      await db.insert(
+          'category',
+          Category(id: '', name: 'Deudas', icon: 62303, inCloud: false)
+              .toMap());
 
       await db.execute('''
       CREATE TABLE IF NOT EXISTS revenue(

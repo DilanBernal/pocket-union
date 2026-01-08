@@ -1,19 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
-import 'package:pocket_union/domain/models/user.dart';
-import 'package:pocket_union/ui/screens/auth/widgets/register_form.dart';
+import 'package:pocket_union/ui/screens/auth/widgets/login_form.dart';
 import 'package:pocket_union/ui/widgets/grid_background.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
-
-  @override
-  State<StatefulWidget> createState() => _RegisterScreenState();
-}
-
-class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 focalRadius: 3,
                 colors: [Colors.red.shade800, Colors.transparent])),
         child: SafeArea(
-          child: RegisterForm(
-              formKey: _formKey,
+          child: LoginForm(
               colorFocusBorderInput: colorFocusBorderInput,
               colorEnabledBorderInput: colorEnabledBorderInput),
         ),

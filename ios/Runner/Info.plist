@@ -12,6 +12,17 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>io.supabase.flutterquickstart</string>
+      </array>
+    </dict>
+  </array>
 	<key>CFBundleName</key>
 	<string>pocket_union</string>
 	<key>CFBundlePackageType</key>
