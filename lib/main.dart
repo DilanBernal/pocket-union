@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/dependency-injection/app_initializer.dart';
 import 'package:pocket_union/dependency-injection/multi_provider.dart';
 import 'package:pocket_union/ui/router.dart';
@@ -10,10 +11,12 @@ void main() async {
   final dependencies = await AppInitializer.initialize();
 
   runApp(
-    MultiProviderInApp(
-      dbSqlite: dependencies.dbSqlite,
-      sharedPreferences: dependencies.sharedPreferences,
-      child: const PocketUnionApp(),
+    ProviderScope(
+      child: MultiProviderInApp(
+        dbSqlite: dependencies.dbSqlite,
+        sharedPreferences: dependencies.sharedPreferences,
+        child: const PocketUnionApp(),
+      ),
     ),
   );
 }
