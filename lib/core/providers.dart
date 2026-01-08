@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -13,6 +15,18 @@ final sqliteDbProvider = Provider<DbSqlite>((ref) {
 final revenueDaoProvider = Provider<RevenueDaoSqlite>((ref) {
   final dbHelper = ref.read(sqliteDbProvider);
   return RevenueDaoSqlite(dbHelper: dbHelper);
+});
+
+// UserDaoSqlite provider
+final userDaoProvider = Provider<UserDaoSqlite>((ref) {
+  final dbHelper = ref.read(sqliteDbProvider);
+  return UserDaoSqlite(dbHelper: dbHelper);
+});
+
+// CategoryDaoSqlite provider
+final categoryDaoProvider = Provider<CategoryDaoSqlite>((ref) {
+  final dbHelper = ref.read(sqliteDbProvider);
+  return CategoryDaoSqlite(dbHelper: dbHelper);
 });
 
 // SharedPreferences provider with lazy initialization
