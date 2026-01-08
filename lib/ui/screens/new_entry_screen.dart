@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
+import 'package:pocket_union/core/providers.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/domain/models/revenue.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
@@ -9,14 +11,14 @@ import 'package:pocket_union/ui/widgets/input_with_button.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class NewEntryScreen extends StatefulWidget {
+class NewEntryScreen extends ConsumerStatefulWidget {
   const NewEntryScreen({super.key});
 
   @override
-  _NewEntryScreenState createState() => _NewEntryScreenState();
+  ConsumerState<NewEntryScreen> createState() => _NewEntryScreenState();
 }
 
-class _NewEntryScreenState extends State<NewEntryScreen> {
+class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
   List<String> _categoryNames = [];
   Map<String, IconData> _categoryIcons = {};
   Map<String, String> _categoriesId = {};
@@ -49,7 +51,7 @@ class _NewEntryScreenState extends State<NewEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final revenueRepo = context.read<RevenueDaoSqlite>();
+    final revenueRepo = ref.read(revenueDaoProvider);
 
     return Column(children: [
       FormTitle(title: "Agregar entrada de dinero"),
