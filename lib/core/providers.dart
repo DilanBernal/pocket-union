@@ -8,13 +8,16 @@ final sqliteDbProvider = Provider<DbSqlite>((ref) {
   return DbSqlite.instance;
 });
 
-// SharedPreferences provider
+// SharedPreferences provider with lazy initialization
+// Note: SharedPreferences.getInstance() returns a singleton, so this is safe
+// to call even though AppInitializer also initializes SharedPreferences
 final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async {
   return await SharedPreferences.getInstance();
 });
 
 // Supabase provider
-// Note: Assumes Supabase is already initialized by AppInitializer
+// Note: Returns the Supabase client initialized by AppInitializer.
+// AppInitializer.initialize() must complete before this provider is accessed.
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return Supabase.instance.client;
 });
