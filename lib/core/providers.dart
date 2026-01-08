@@ -11,7 +11,7 @@ final sqliteDbProvider = Provider<DbSqlite>((ref) {
 
 // RevenueDaoSqlite provider
 final revenueDaoProvider = Provider<RevenueDaoSqlite>((ref) {
-  final dbHelper = ref.watch(sqliteDbProvider);
+  final dbHelper = ref.read(sqliteDbProvider);
   return RevenueDaoSqlite(dbHelper: dbHelper);
 });
 
