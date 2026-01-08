@@ -8,7 +8,6 @@ import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/domain/models/revenue.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 import 'package:pocket_union/ui/widgets/input_with_button.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NewEntryScreen extends ConsumerStatefulWidget {
@@ -31,7 +30,7 @@ class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
   }
 
   Future<void> _loadCategories() async {
-    final categoryRepo = context.read<CategoryDaoSqlite>();
+    final categoryRepo = ref.read(categoryDaoProvider);
     try {
       final categories = await _getAllCategories(categoryRepo);
       final names = await _getAllCategoriesNames(categories);
