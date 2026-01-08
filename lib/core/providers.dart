@@ -4,7 +4,7 @@ import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// SQLite provider (ya existe)
+// SQLite provider (existing)
 final sqliteDbProvider = Provider<DbSqlite>((ref) {
   return DbSqlite.instance;
 });
@@ -16,10 +16,16 @@ final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async 
 
 // Supabase provider
 final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
-  await dotenv.load(fileName: ".env", isOptional: false);
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_API_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-  );
-  return Supabase.instance.client;
+  // Check if already initialized (by AppInitializer during migration)
+  try {
+    return Supabase.instance.client;
+  } catch (e) {
+    // Not initialized yet, initialize now
+    await dotenv.load(fileName: ".env", isOptional: false);
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_API_URL']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    );
+    return Supabase.instance.client;
+  }
 });
