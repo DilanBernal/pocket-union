@@ -36,6 +36,8 @@ final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async 
 });
 
 // DotEnv provider - carga variables de entorno
+// Note: dotenv.load() loads variables into a global singleton instance.
+// This provider ensures the .env file is loaded before other providers that need it.
 final dotEnvProvider = FutureProvider<DotEnv>((ref) async {
   await dotenv.load(fileName: ".env", isOptional: false);
   return dotenv;
@@ -46,7 +48,9 @@ final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
   // Asegurar que dotenv esté cargado
   await ref.watch(dotEnvProvider.future);
   
-  // Check if Supabase is already initialized to avoid exceptions
+  // Check if Supabase is already initialized to avoid exceptions.
+  // FutureProvider caches results, but this safeguards against any edge cases
+  // where Supabase.initialize() might be called from elsewhere in the app.
   if (!Supabase.instance.isInitialized) {
     await Supabase.initialize(
       url: dotenv.env['SUPABASE_API_URL']!,
