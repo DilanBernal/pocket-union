@@ -46,10 +46,13 @@ final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
   // Asegurar que dotenv esté cargado
   await ref.watch(dotEnvProvider.future);
   
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_API_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-  );
+  // Check if Supabase is already initialized to avoid exceptions
+  if (!Supabase.instance.isInitialized) {
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_API_URL']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    );
+  }
   
   return Supabase.instance.client;
 });
