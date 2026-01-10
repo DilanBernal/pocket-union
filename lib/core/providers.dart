@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
@@ -30,15 +31,32 @@ final categoryDaoProvider = Provider<CategoryDaoSqlite>((ref) {
 });
 
 // SharedPreferences provider with lazy initialization
-// Note: SharedPreferences.getInstance() returns a singleton, so this is safe
-// to call even though AppInitializer also initializes SharedPreferences
 final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async {
   return await SharedPreferences.getInstance();
 });
 
-// Supabase provider
-// Note: Returns the Supabase client initialized by AppInitializer.
-// AppInitializer.initialize() must complete before this provider is accessed.
-final supabaseClientProvider = Provider<SupabaseClient>((ref) {
+// DotEnv provider - carga variables de entorno
+// Note: dotenv.load() loads variables into a global singleton instance.
+// This provider ensures the .env file is loaded before other providers that need it.
+final dotEnvProvider = FutureProvider<DotEnv>((ref) async {
+  await dotenv.load(fileName: ".env", isOptional: false);
+  return dotenv;
+});
+
+// Supabase provider con inicialización lazy
+final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
+  // Asegurar que dotenv esté cargado
+  await ref.watch(dotEnvProvider.future);
+  
+  // Check if Supabase is already initialized to avoid exceptions.
+  // FutureProvider caches results, but this safeguards against any edge cases
+  // where Supabase.initialize() might be called from elsewhere in the app.
+  if (!Supabase.instance.isInitialized) {
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_API_URL']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    );
+  }
+  
   return Supabase.instance.client;
 });
