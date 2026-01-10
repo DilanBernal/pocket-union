@@ -1,6 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
 import 'package:pocket_union/domain/models/user.dart';
+import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -87,7 +89,27 @@ class RegisterForm extends StatelessWidget {
                   child: Text("kasdfads"),
                 ),
               ),
-            )
+            ),
+            RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Navigator.pushReplacementNamed(
+                            context, AppRoutes.login);
+                      },
+                    text: "¿Ya tienes una cuenta?\n",
+                    style: TextStyle(),
+                    children: [
+                      TextSpan(
+                        text: "¡Inicia sesión!",
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Navigator.pushReplacementNamed(
+                                context, AppRoutes.login);
+                          },
+                      )
+                    ]))
           ]),
     );
   }
