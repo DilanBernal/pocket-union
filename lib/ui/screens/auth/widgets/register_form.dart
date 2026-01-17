@@ -25,11 +25,11 @@ class RegisterForm extends StatelessWidget {
       if (name.trim() != '' && isFirst == true) {
         final user =
             User(id: '', fullName: name, balance: balance, inCloud: false);
-        int idGenerated = await userRepo.insertUser(user);
+        int idGenerated = await userRepo.upsertUser(user);
         await prefs.setInt('userId', idGenerated);
         await prefs.setBool('isFirstLaunch', false);
       }
-      await userRepo.getAllUsers();
+      // await userRepo.getAllUsers();
     } catch (e) {
       throw Exception(e);
     }

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
-import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/core/providers.dart';
 import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/domain/models/income.dart';
+import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 import 'package:pocket_union/ui/widgets/input_with_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,10 +88,10 @@ class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
   }
 
   Future<void> _createEntry(
-      Map<String, String> values, RevenueDaoSqlite revRepo) async {
+      Map<String, String> values, IncomeDaoSqlite revRepo) async {
     final prefs = await SharedPreferences.getInstance();
     final idUser = prefs.getString('userId');
-    print(values);
+    debugPrint(values as String?);
     try {
       final name = values['nombre']!;
       final DateTime date =
@@ -99,17 +99,15 @@ class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
       final price = double.tryParse(values['precio']!);
       final description = values['descripcion'];
       if (name.trim() != '' && price! > 50) {
-        final revenue = Income(
-            id: '',
-            idUser: idUser!,
+        final income = NewIncomeDto(
+            amount: price,
             name: name,
-            date: date,
-            price: price,
-            description: description,
-            category: 2,
-            inCloud: false);
-        int idGenerated = await revRepo.insertRevenue(revenue);
-        print(idGenerated);
+            importanceLevel: 3,
+            categoryId: "",
+            isRecurring: false,
+            isReceived: false);
+        int idGenerated = await revRepo.insertRevenue(income);
+        debugPrint(idGenerated as String?);
       }
     } catch (e) {
       return;
@@ -134,7 +132,7 @@ class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
       List<Category> categoryList) async {
     Map<String, IconData> categories = {};
     for (var value in categoryList) {
-      final result = <String, IconData>{value.name: value.iconData};
+      final result = <String, IconData>{value.name: IconData(2)};
       categories.addEntries(result.entries);
     }
     return categories;

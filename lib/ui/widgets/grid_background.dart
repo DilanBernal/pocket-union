@@ -16,15 +16,13 @@ class GridBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: CustomPaint(
-        painter: GridPainter(
-          gridColor: gridColor,
-          gridSize: gridSize,
-          strokeWidth: strokeWidth,
-        ),
-        child: child,
+    return CustomPaint(
+      painter: GridPainter(
+        gridColor: gridColor,
+        gridSize: gridSize,
+        strokeWidth: strokeWidth,
       ),
+      child: child,
     );
   }
 }
