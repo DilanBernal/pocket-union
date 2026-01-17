@@ -1,3 +1,4 @@
+import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -64,15 +65,36 @@ class DbSqlite {
 
       await db.insert(
           'category',
-          Category(id: '', name: 'Comida', icon: 57946, inCloud: false)
+          Category(
+                  id: '',
+                  name: 'Comida',
+                  icon: "57946",
+                  inCloud: false,
+                  coupleId: '',
+                  createdAt: DateTime.now(),
+                  categoryHost: CategoryHost.expense)
               .toMap());
       await db.insert(
           'category',
-          Category(id: '', name: 'Transporte', icon: 61379, inCloud: false)
+          Category(
+                  id: '',
+                  name: 'Transporte',
+                  icon: "61379",
+                  inCloud: false,
+                  coupleId: '',
+                  createdAt: DateTime.now(),
+                  categoryHost: CategoryHost.expense)
               .toMap());
       await db.insert(
           'category',
-          Category(id: '', name: 'Deudas', icon: 62303, inCloud: false)
+          Category(
+                  id: '',
+                  name: 'Deudas',
+                  icon: "62303",
+                  inCloud: false,
+                  coupleId: '',
+                  createdAt: DateTime.now(),
+                  categoryHost: CategoryHost.expense)
               .toMap());
 
       await db.execute('''
