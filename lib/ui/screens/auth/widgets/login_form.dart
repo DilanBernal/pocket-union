@@ -31,8 +31,6 @@ class _LoginFormState extends State<LoginForm> {
   final Color colorEnabledBorderInput;
   bool _isLoading = false;
 
-  final supabase = Supabase.instance.client;
-
   late String _email;
   late String _password;
 
@@ -47,8 +45,6 @@ class _LoginFormState extends State<LoginForm> {
       setState(() {
         _isLoading = true;
       });
-      await supabase.auth
-          .signInWithPassword(email: _email, password: _password);
       if (mounted) {
         Navigator.pushReplacementNamed(context, AppRoutes.home);
         // context.showSnackBar('Check your email for a login link!');
