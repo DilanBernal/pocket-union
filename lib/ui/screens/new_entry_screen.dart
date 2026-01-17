@@ -5,7 +5,7 @@ import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
 import 'package:pocket_union/core/providers.dart';
 import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/domain/models/revenue.dart';
+import 'package:pocket_union/domain/models/income.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 import 'package:pocket_union/ui/widgets/input_with_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -99,7 +99,7 @@ class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
       final price = double.tryParse(values['precio']!);
       final description = values['descripcion'];
       if (name.trim() != '' && price! > 50) {
-        final revenue = Revenue(
+        final revenue = Income(
             id: '',
             idUser: idUser!,
             name: name,

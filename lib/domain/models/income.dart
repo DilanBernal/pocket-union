@@ -1,0 +1,102 @@
+class Income {
+  final String id;
+  final String? coupleId;
+  String name;
+  DateTime transactionDate;
+  String? description;
+  final double amount;
+  final String? categoryId;
+  final bool isRecurring;
+  final Map<String, dynamic>? recurrenceInterval;
+  final bool isReceived;
+  final Map<String, dynamic>? receivedIn;
+  final DateTime createdAt;
+  bool inCloud;
+
+  Income({
+    required this.id,
+    this.coupleId,
+    required this.name,
+    required this.transactionDate,
+    this.description,
+    required this.amount,
+    this.categoryId,
+    this.isRecurring = false,
+    this.recurrenceInterval,
+    this.isReceived = true,
+    this.receivedIn,
+    required this.createdAt,
+    required this.inCloud,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'couple_id': coupleId,
+      'name': name,
+      'transaction_date': transactionDate.toIso8601String(),
+      'description': description,
+      'amount': amount,
+      'category_id': categoryId,
+      'is_recurring': isRecurring ? 1 : 0,
+      'recurrence_interval': recurrenceInterval,
+      'is_received': isReceived ? 1 : 0,
+      'received_in': receivedIn,
+      'created_at': createdAt.toIso8601String(),
+      'inCloud': inCloud ? 1 : 0,
+    };
+  }
+
+  factory Income.fromMap(Map<String, dynamic> map) {
+    return Income(
+      id: map['id'],
+      coupleId: map['couple_id'],
+      name: map['name'],
+      transactionDate: DateTime.parse(map['transaction_date']),
+      description: map['description'],
+      amount: (map['amount'] as num).toDouble(),
+      categoryId: map['category_id'],
+      isRecurring: map['is_recurring'] == 1,
+      recurrenceInterval: map['recurrence_interval'],
+      isReceived: map['is_received'] == 1,
+      receivedIn: map['received_in'],
+      createdAt: DateTime.parse(map['created_at']),
+      inCloud: map['inCloud'] == 1,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'couple_id': coupleId,
+      'name': name,
+      'transaction_date': transactionDate.toIso8601String(),
+      'description': description,
+      'amount': amount,
+      'category_id': categoryId,
+      'is_recurring': isRecurring,
+      'recurrence_interval': recurrenceInterval,
+      'is_received': isReceived,
+      'received_in': receivedIn,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
+
+  factory Income.fromJson(Map<String, dynamic> json) {
+    return Income(
+      id: json['id'],
+      coupleId: json['couple_id'],
+      name: json['name'],
+      transactionDate: DateTime.parse(json['transaction_date']),
+      description: json['description'],
+      amount: (json['amount'] as num).toDouble(),
+      categoryId: json['category_id'],
+      isRecurring: json['is_recurring'] ?? false,
+      recurrenceInterval: json['recurrence_interval'],
+      isReceived: json['is_received'] ?? true,
+      receivedIn: json['received_in'],
+      createdAt: DateTime.parse(json['created_at']),
+      inCloud: json['inCloud'] == 1,
+    );
+  }
+}

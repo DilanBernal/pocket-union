@@ -1,5 +1,5 @@
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
-import 'package:pocket_union/domain/models/revenue.dart';
+import 'package:pocket_union/domain/models/income.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RevenueDaoSqlite {
@@ -7,24 +7,22 @@ class RevenueDaoSqlite {
 
   RevenueDaoSqlite({required this.dbHelper});
 
-  Future<int> insertRevenue(Revenue revenue) async {
+  Future<int> insertRevenue(Income revenue) async {
     final db = await dbHelper.database;
     int id = await db.insert('revenue', revenue.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
     return id;
   }
 
-  Future<List<Revenue>> getAllRevenues() async{
+  Future<List<Income>> getAllRevenues() async {
     final db = await dbHelper.database;
     try {
-      final List<Map<String, dynamic>> maps = await db.query(
-        'revenue',
-        orderBy: 'name ASC'
-      );
+      final List<Map<String, dynamic>> maps =
+          await db.query('revenue', orderBy: 'name ASC');
       return List.generate(maps.length, (int i) {
-        return Revenue.fromMap(maps[i]);
+        return Income.fromMap(maps[i]);
       });
-    }catch (e) {
+    } catch (e) {
       throw Exception(e);
     }
   }
