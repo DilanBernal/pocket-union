@@ -2,7 +2,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
-import 'package:pocket_union/Dao/sqlite/revenue_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,9 +13,9 @@ final sqliteDbProvider = Provider<DbSqlite>((ref) {
 });
 
 // RevenueDaoSqlite provider
-final revenueDaoProvider = Provider<RevenueDaoSqlite>((ref) {
+final revenueDaoProvider = Provider<IncomeDaoSqlite>((ref) {
   final dbHelper = ref.read(sqliteDbProvider);
-  return RevenueDaoSqlite(dbHelper: dbHelper);
+  return IncomeDaoSqlite(dbHelper: dbHelper);
 });
 
 // UserDaoSqlite provider
@@ -31,7 +31,8 @@ final categoryDaoProvider = Provider<CategoryDaoSqlite>((ref) {
 });
 
 // SharedPreferences provider with lazy initialization
-final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async {
+final sharedPreferencesProvider =
+    FutureProvider<SharedPreferences>((ref) async {
   return await SharedPreferences.getInstance();
 });
 
@@ -47,7 +48,7 @@ final dotEnvProvider = FutureProvider<DotEnv>((ref) async {
 final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
   // Asegurar que dotenv esté cargado
   await ref.watch(dotEnvProvider.future);
-  
+
   // Check if Supabase is already initialized to avoid exceptions.
   // FutureProvider caches results, but this safeguards against any edge cases
   // where Supabase.initialize() might be called from elsewhere in the app.
@@ -57,6 +58,6 @@ final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
     );
   }
-  
+
   return Supabase.instance.client;
 });

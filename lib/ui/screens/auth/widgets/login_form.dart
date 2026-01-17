@@ -15,6 +15,7 @@ class LoginForm extends StatefulWidget {
   final Color colorFocusBorderInput;
   final Color colorEnabledBorderInput;
   @override
+  // ignore: no_logic_in_create_state
   State<LoginForm> createState() => _LoginFormState(
       colorEnabledBorderInput: colorEnabledBorderInput,
       colorFocusBorderInput: colorFocusBorderInput);
@@ -48,10 +49,10 @@ class _LoginFormState extends State<LoginForm> {
       if (mounted) {
         Navigator.pushReplacementNamed(context, AppRoutes.home);
         // context.showSnackBar('Check your email for a login link!');
-        print("Revisa email");
+        debugPrint("Revisa email");
       }
     } on AuthException catch (error) {
-      if (mounted) print(error.message);
+      if (mounted) debugPrint(error.message);
     } catch (error) {
       if (mounted) {
         // context.showSnackBar('Unexpected error occurred', isError: true);
