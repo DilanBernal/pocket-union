@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
@@ -14,6 +15,7 @@ class LoginForm extends StatefulWidget {
 
   final Color colorFocusBorderInput;
   final Color colorEnabledBorderInput;
+
   @override
   // ignore: no_logic_in_create_state
   State<LoginForm> createState() => _LoginFormState(
@@ -132,27 +134,45 @@ class _LoginFormState extends State<LoginForm> {
                     type: MaterialType.button,
                     child: DecoratedBox(
                       position: DecorationPosition.background,
-                      decoration: BoxDecoration(),
+                      decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [
+                            Color.fromARGB(255, 116, 11, 218),
+                            Color.fromRGBO(251, 0, 204, 1)
+                          ]),
+                          borderRadius: BorderRadiusGeometry.circular(20)),
                       child: SizedBox(
                         width: 300,
+                        height: 40,
                         child: Ink(
-                          color: Colors.amber,
                           child: InkWell(
                             splashColor: Colors.blue,
                             onTap: _signIn,
-                            child: Center(child: Text("Logearse")),
+                            child: Center(child: Text("ACCEDER")),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  FloatingActionButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(
-                          context, AppRoutes.register);
-                    },
-                    child: Text("Registrarse"),
-                  )
+                  RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              Navigator.pushReplacementNamed(
+                                  context, AppRoutes.login);
+                            },
+                          text: "¿Ya tienes una cuenta?\n",
+                          style: TextStyle(),
+                          children: [
+                            TextSpan(
+                              text: "¡Inicia sesión!",
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.pushReplacementNamed(
+                                      context, AppRoutes.login);
+                                },
+                            )
+                          ]))
                 ]),
           );
   }

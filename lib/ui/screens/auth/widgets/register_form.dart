@@ -15,6 +15,8 @@ class RegisterForm extends StatelessWidget {
     required this.colorEnabledBorderInput,
   }) : _formKey = formKey;
 
+  Future<void> _handleCreateUser() async {}
+
   Future<void> _createUser(
       Map<String, String> values, UserDaoSqlite userRepo) async {
     final prefs = await SharedPreferences.getInstance();
@@ -83,11 +85,37 @@ class RegisterForm extends StatelessWidget {
               fieldLabel: "Contraseña",
             ),
             Material(
+              borderOnForeground: false,
               color: Colors.transparent,
-              child: Ink(
-                child: InkWell(
-                  onTap: () {},
-                  child: Text("kasdfads"),
+              type: MaterialType.button,
+              child: DecoratedBox(
+                position: DecorationPosition.background,
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [
+                      Color.fromARGB(255, 116, 11, 218),
+                      Color.fromRGBO(251, 0, 204, 1)
+                    ]),
+                    borderRadius: BorderRadiusGeometry.circular(20)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: SizedBox(
+                    width: 300,
+                    child: Ink(
+                      child: InkWell(
+                        splashColor: Colors.blue,
+                        onTap: _handleCreateUser,
+                        child: Center(
+                            child: Text("Crear cuenta",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: (Theme.of(context)
+                                            .textTheme
+                                            .titleLarge!
+                                            .fontSize ?? 40) *
+                                        1.3))),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
