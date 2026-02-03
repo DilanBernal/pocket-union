@@ -26,9 +26,9 @@ class RegisterForm extends StatelessWidget {
       final balance = double.tryParse(values['dinero']!) ?? 0.0;
       if (name.trim() != '' && isFirst == true) {
         final user =
-            User(id: '', fullName: name, balance: balance, inCloud: false);
-        int idGenerated = await userRepo.upsertUser(user);
-        await prefs.setInt('userId', idGenerated);
+            DomainUser(id: '', fullName: name, balance: balance, inCloud: false);
+        var idGenerated = await userRepo.upsertUser(user);
+        await prefs.setBool('userId', idGenerated);
         await prefs.setBool('isFirstLaunch', false);
       }
       // await userRepo.getAllUsers();

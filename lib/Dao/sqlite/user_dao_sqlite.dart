@@ -9,22 +9,27 @@ class UserDaoSqlite extends UserPort {
   UserDaoSqlite({required this.dbHelper});
 
   @override
-  Future upsertUser(User user) async {
-    final db = await dbHelper.database;
-    await db.insert(
-      'profile',
-      user.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+  Future<bool> upsertUser(DomainUser user) async {
+    try {
+      final db = await dbHelper.database;
+      var data = await db.insert(
+        'profile',
+        user.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
-  Future<User> getTheUser(int idUser) async {
+  Future<DomainUser> getTheUser(int idUser) async {
     final db = await dbHelper.database;
 
     try {
       final Map<String, dynamic> map =
-          (await db.query('user')) as Map<String, dynamic>;
-      return User.fromMap(map);
+      (await db.query('user')) as Map<String, dynamic>;
+      return DomainUser.fromMap(map);
     } catch (e) {
       throw Exception('Error al cargar el usuario');
     }

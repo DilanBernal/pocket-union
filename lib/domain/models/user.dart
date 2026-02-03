@@ -1,4 +1,4 @@
-class User {
+class DomainUser {
   final String id;
   final String fullName;
   double balance;
@@ -6,7 +6,7 @@ class User {
   bool inCloud;
   DateTime? lastSync;
 
-  User(
+  DomainUser(
       {required this.id,
       required this.fullName,
       required this.balance,
@@ -18,15 +18,15 @@ class User {
     return {
       'id': id,
       'full_name': fullName,
-      'balance': balance,
-      'inCloud': inCloud == true ? 1 : 0,
-      'avatarUrl': avatarUrl,
-      'lastSync': lastSync?.toIso8601String(),
+      'user_balance': balance,
+      'in_cloud': inCloud == true ? 1 : 0,
+      'avatar_url': avatarUrl,
+      'last_sync': lastSync?.toIso8601String(),
     };
   }
 
-  factory User.fromMap(Map<String, dynamic> map) {
-    return User(
+  factory DomainUser.fromMap(Map<String, dynamic> map) {
+    return DomainUser(
       id: map['id'],
       fullName: map['full_name'],
       balance: (map['balance'] as num).toDouble(),
@@ -37,8 +37,8 @@ class User {
     );
   }
 
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
+  factory DomainUser.fromJson(Map<String, dynamic> json) {
+    return DomainUser(
       id: json['id'],
       fullName: json['full_name'] ?? json['name'],
       balance: (json['balance'] as num).toDouble(),

@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocket_union/core/providers.dart';
+import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class LoginForm extends StatefulWidget {
+class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({
     super.key,
     required this.colorFocusBorderInput,
@@ -18,12 +21,12 @@ class LoginForm extends StatefulWidget {
 
   @override
   // ignore: no_logic_in_create_state
-  State<LoginForm> createState() => _LoginFormState(
+  ConsumerState<LoginForm> createState() => _LoginFormState(
       colorEnabledBorderInput: colorEnabledBorderInput,
       colorFocusBorderInput: colorFocusBorderInput);
 }
 
-class _LoginFormState extends State<LoginForm> {
+class _LoginFormState extends ConsumerState<LoginForm> {
   _LoginFormState({
     required this.colorFocusBorderInput,
     required this.colorEnabledBorderInput,
@@ -37,7 +40,7 @@ class _LoginFormState extends State<LoginForm> {
   late String _email;
   late String _password;
 
-  Future<void> _signIn() async {
+  Future<void> _handleSignin() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -48,7 +51,9 @@ class _LoginFormState extends State<LoginForm> {
       setState(() {
         _isLoading = true;
       });
+      final authService = await ref.read(authServiceProvider.future);
       if (mounted) {
+        var response = await authService.login(LoginDto(email: _email, password: _password));
         Navigator.pushReplacementNamed(context, AppRoutes.home);
         // context.showSnackBar('Check your email for a login link!');
         debugPrint("Revisa email");
@@ -146,7 +151,7 @@ class _LoginFormState extends State<LoginForm> {
                         child: Ink(
                           child: InkWell(
                             splashColor: Colors.blue,
-                            onTap: _signIn,
+                            onTap: _handleSignin,
                             child: Center(child: Text("ACCEDER")),
                           ),
                         ),

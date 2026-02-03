@@ -9,7 +9,6 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     const colorFocusBorderInput = Color.fromRGBO(56, 49, 70, 1);
     const colorEnabledBorderInput = Color.fromRGBO(45, 41, 53, 1);
-    // final userRepo = context.read<UserDaoSqlite>();
     return GridBackground(
       gridColor: const Color.fromRGBO(27, 7, 35, 1),
       strokeWidth: 2,

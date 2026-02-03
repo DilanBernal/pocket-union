@@ -61,8 +61,8 @@ class DbSqlite {
           id TEXT PRIMARY KEY,
           full_name TEXT,
           avatar_url TEXT,
-          updated_at TEXT,
-          user_balance INTEGER NOT NULL DEFAULT 0,  -- En centavos
+          user_balance INTEGER NOT NULL DEFAULT 0,
+          in_cloud INTEGER NOT NULL DEFAULT 0,
           last_sync TEXT
         )
       ''');

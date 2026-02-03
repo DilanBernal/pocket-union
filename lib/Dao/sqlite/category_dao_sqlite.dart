@@ -31,7 +31,7 @@ class CategoryDaoSqlite {
   }
 
 
-  Future<List<User>> getAllUsers() async{
+  Future<List<DomainUser>> getAllUsers() async{
     final db = await dbHelper.database;
     try {
       final List<Map<String, dynamic>> maps = await db.query(
@@ -39,7 +39,7 @@ class CategoryDaoSqlite {
           orderBy: 'name ASC'
       );
       return List.generate(maps.length, (int i) {
-        return User.fromMap(maps[i]);
+        return DomainUser.fromMap(maps[i]);
       });
     }catch(e) {
       throw Exception(e);

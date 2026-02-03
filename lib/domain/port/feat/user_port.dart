@@ -1,5 +1,5 @@
 import 'package:pocket_union/domain/models/user.dart';
 
 abstract class UserPort {
-  Future upsertUser(User user);
+  Future<bool> upsertUser(DomainUser user);
 }

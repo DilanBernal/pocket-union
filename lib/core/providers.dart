@@ -1,11 +1,16 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
+import 'package:pocket_union/core/services/auth/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../domain/port/auth/auth_port.dart';
+import '../domain/port/feat/user_port.dart';
 
 // SQLite provider (existing)
 final sqliteDbProvider = Provider<DbSqlite>((ref) {
@@ -19,7 +24,7 @@ final revenueDaoProvider = Provider<IncomeDaoSqlite>((ref) {
 });
 
 // UserDaoSqlite provider
-final userDaoProvider = Provider<UserDaoSqlite>((ref) {
+final userDaoProvider = Provider<UserPort>((ref) {
   final dbHelper = ref.read(sqliteDbProvider);
   return UserDaoSqlite(dbHelper: dbHelper);
 });
@@ -36,28 +41,32 @@ final sharedPreferencesProvider =
   return await SharedPreferences.getInstance();
 });
 
-// DotEnv provider - carga variables de entorno
-// Note: dotenv.load() loads variables into a global singleton instance.
-// This provider ensures the .env file is loaded before other providers that need it.
 final dotEnvProvider = FutureProvider<DotEnv>((ref) async {
   await dotenv.load(fileName: ".env", isOptional: false);
   return dotenv;
 });
 
-// Supabase provider con inicialización lazy
 final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
-  // Asegurar que dotenv esté cargado
   await ref.watch(dotEnvProvider.future);
 
-  // Check if Supabase is already initialized to avoid exceptions.
-  // FutureProvider caches results, but this safeguards against any edge cases
-  // where Supabase.initialize() might be called from elsewhere in the app.
-  if (!Supabase.instance.isInitialized) {
-    await Supabase.initialize(
+  try {
+    if (Supabase.instance.isInitialized) {
+      return Supabase.instance.client;
+    }
+  } on AssertionError catch (error) {
+      await Supabase.initialize(
       url: dotenv.env['SUPABASE_API_URL']!,
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
     );
+  } catch (error) {
+    debugPrint("Ocurrio un error iniciando supabase");
   }
 
   return Supabase.instance.client;
+});
+
+final authServiceProvider = FutureProvider<AuthPort>((ref) async {
+  final supabaseClient = await ref.watch(supabaseClientProvider.future);
+  final userSqlite = ref.watch(userDaoProvider);
+  return AuthService(supabaseClient, userSqlite);
 });
