@@ -45,7 +45,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       return;
     }
     _formKey.currentState!.save();
-    _isLoading = true;
 
     try {
       setState(() {

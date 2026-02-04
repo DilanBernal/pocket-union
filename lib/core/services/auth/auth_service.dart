@@ -23,7 +23,11 @@ class AuthService extends AuthPort {
         email: loginRequest.email,
         password: loginRequest.password,
       );
-      var sqlIteResponse = await _userDaoPort.upsertUser(DomainUser(id: loginRes.user!.id, fullName: "Prueba por ahora", balance: 0, inCloud: true));
+      var sqlIteResponse = await _userDaoPort.upsertUser(DomainUser(
+          id: loginRes.user!.id,
+          fullName: "Prueba por ahora",
+          balance: 0,
+          inCloud: true));
       if (sqlIteResponse) {
         debugPrint("Se creo correctamente ${sqlIteResponse.toString()}");
       }
@@ -35,11 +39,22 @@ class AuthService extends AuthPort {
   }
 
   @override
-  Future<AuthResponse> register(RegisterDto registerRequest) {
+  Future<AuthResponse> register(RegisterDto registerRequest) async {
     String sa = _uuid.v4();
-    print(sa);
-
-    throw UnimplementedError();
+    try {
+      var res = await _supabaseClient.auth.signUp(
+          password: registerRequest.password,
+          email: registerRequest.email,
+          data: {
+            'fullName': registerRequest.fullName,
+            'full_name': registerRequest.fullName
+          });
+      debugPrint(res.toString());
+      return res;
+    } catch (e) {
+      debugPrint("ocurrio un error al intentar registrarse ${e.toString()}");
+      throw e;
+    }
   }
 
   @override

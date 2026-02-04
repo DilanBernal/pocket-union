@@ -1,13 +1,16 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
+import 'package:pocket_union/core/providers.dart';
 import 'package:pocket_union/domain/models/user.dart';
+import 'package:pocket_union/dto/register_dto.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class RegisterForm extends StatelessWidget {
+class RegisterForm extends ConsumerStatefulWidget {
   const RegisterForm({
     super.key,
     required GlobalKey<FormState> formKey,
@@ -15,7 +18,32 @@ class RegisterForm extends StatelessWidget {
     required this.colorEnabledBorderInput,
   }) : _formKey = formKey;
 
-  Future<void> _handleCreateUser() async {}
+  final GlobalKey<FormState> _formKey;
+  final Color colorFocusBorderInput;
+  final Color colorEnabledBorderInput;
+
+  @override
+  ConsumerState<RegisterForm> createState() => _RegisterFormState();
+}
+
+class _RegisterFormState extends ConsumerState<RegisterForm> {
+  late String _email;
+  late String _fullName;
+  late String _password;
+
+  Future<void> _handleCreateUser() async {
+    if (!widget._formKey.currentState!.validate()) {
+      return;
+    }
+    widget._formKey.currentState!.save();
+    try {
+      final authService = await ref.read(authServiceProvider.future);
+      var res = await authService.register(
+          RegisterDto(email: _email, fullName: _fullName, password: _password));
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
 
   Future<void> _createUser(
       Map<String, String> values, UserDaoSqlite userRepo) async {
@@ -25,8 +53,8 @@ class RegisterForm extends StatelessWidget {
       final name = values['nombre']!;
       final balance = double.tryParse(values['dinero']!) ?? 0.0;
       if (name.trim() != '' && isFirst == true) {
-        final user =
-            DomainUser(id: '', fullName: name, balance: balance, inCloud: false);
+        final user = DomainUser(
+            id: '', fullName: name, balance: balance, inCloud: false);
         var idGenerated = await userRepo.upsertUser(user);
         await prefs.setBool('userId', idGenerated);
         await prefs.setBool('isFirstLaunch', false);
@@ -37,14 +65,10 @@ class RegisterForm extends StatelessWidget {
     }
   }
 
-  final GlobalKey<FormState> _formKey;
-  final Color colorFocusBorderInput;
-  final Color colorEnabledBorderInput;
-
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: _formKey,
+      key: widget._formKey,
       autovalidateMode: AutovalidateMode.onUnfocus,
       child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -65,24 +89,60 @@ class RegisterForm extends StatelessWidget {
                   .copyWith(fontSize: 19),
             ),
             AuthTextFormField(
-              colorFocusBorderInput: colorFocusBorderInput,
+              colorFocusBorderInput: widget.colorFocusBorderInput,
               icon: Icons.person_outline,
               fieldLabel: "Nombres completos",
-              colorEnabledBorderInput: colorEnabledBorderInput,
+              colorEnabledBorderInput: widget.colorEnabledBorderInput,
+              onSaved: (text) {
+                _fullName = text ?? '';
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Por favor, ingresa tu email.";
+                }
+                // if (!value.contains('@')) {
+                //   return 'Por favor, ingresa un email válido.';
+                // }
+                return null;
+              },
             ),
             AuthTextFormField(
-              colorFocusBorderInput: colorFocusBorderInput,
-              colorEnabledBorderInput: colorEnabledBorderInput,
+              colorFocusBorderInput: widget.colorFocusBorderInput,
+              colorEnabledBorderInput: widget.colorEnabledBorderInput,
               icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
               fieldLabel: "Email",
+              onSaved: (text) {
+                _email = text ?? '';
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Por favor, ingresa tu email.";
+                }
+                if (!value.contains('@')) {
+                  return 'Por favor, ingresa un email válido.';
+                }
+                return null;
+              },
             ),
             AuthTextFormField(
-              colorFocusBorderInput: colorFocusBorderInput,
-              colorEnabledBorderInput: colorEnabledBorderInput,
+              colorFocusBorderInput: widget.colorFocusBorderInput,
+              colorEnabledBorderInput: widget.colorEnabledBorderInput,
               keyboardType: TextInputType.visiblePassword,
               icon: Icons.key,
               fieldLabel: "Contraseña",
+              onSaved: (value) {
+                _password = value ?? '';
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Por favor, ingresa tu email.";
+                }
+                // if (!value.contains('@')) {
+                //   return 'Por favor, ingresa un email válido.';
+                // }
+                return null;
+              },
             ),
             Material(
               borderOnForeground: false,
@@ -109,9 +169,10 @@ class RegisterForm extends StatelessWidget {
                                 style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: (Theme.of(context)
-                                            .textTheme
-                                            .titleLarge!
-                                            .fontSize ?? 40) *
+                                                .textTheme
+                                                .titleLarge!
+                                                .fontSize ??
+                                            40) *
                                         1.3))),
                       ),
                     ),
