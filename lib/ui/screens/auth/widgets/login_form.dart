@@ -53,15 +53,43 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       final authService = await ref.read(authServiceProvider.future);
       if (mounted) {
         var response = await authService.login(LoginDto(email: _email, password: _password));
+        
+        // Mostrar notificación de bienvenida
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text("¡Bienvenido! Ya puedes empezar a usar la aplicación."),
+              backgroundColor: Colors.green.shade600,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        
         Navigator.pushReplacementNamed(context, AppRoutes.home);
         // context.showSnackBar('Check your email for a login link!');
         debugPrint("Revisa email");
       }
     } on AuthException catch (error) {
-      if (mounted) debugPrint(error.message);
+      if (mounted) {
+        debugPrint(error.message);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${error.message}"),
+            backgroundColor: Colors.red.shade600,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } catch (error) {
       if (mounted) {
-        // context.showSnackBar('Unexpected error occurred', isError: true);
+        debugPrint("Error durante el login: $error");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Ocurrió un error inesperado. Por favor intenta nuevamente."),
+            backgroundColor: Colors.red.shade600,
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } finally {
       if (mounted) {

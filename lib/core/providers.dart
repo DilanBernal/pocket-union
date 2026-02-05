@@ -6,6 +6,7 @@ import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
 import 'package:pocket_union/core/services/auth/auth_service.dart';
+import 'package:pocket_union/domain/models/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -69,4 +70,9 @@ final authServiceProvider = FutureProvider<AuthPort>((ref) async {
   final supabaseClient = await ref.watch(supabaseClientProvider.future);
   final userSqlite = ref.watch(userDaoProvider);
   return AuthService(supabaseClient, userSqlite);
+});
+
+final currentUserProvider = FutureProvider<DomainUser?>((ref) async {
+  final userDao = ref.watch(userDaoProvider);
+  return await userDao.getCurrentUser();
 });
