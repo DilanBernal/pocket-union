@@ -6,6 +6,7 @@ import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
 import 'package:pocket_union/core/services/auth/auth_service.dart';
+import 'package:pocket_union/domain/models/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -38,7 +39,12 @@ final categoryDaoProvider = Provider<CategoryDaoSqlite>((ref) {
 // SharedPreferences provider with lazy initialization
 final sharedPreferencesProvider =
     FutureProvider<SharedPreferences>((ref) async {
-  return await SharedPreferences.getInstance();
+  final instance = await SharedPreferences.getInstance();
+  var isInSession = instance.getBool("isInSession");
+  if (isInSession == null) {
+    instance.setBool('isInSession', false);
+  }
+  return instance;
 });
 
 final dotEnvProvider = FutureProvider<DotEnv>((ref) async {
@@ -53,8 +59,8 @@ final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
     if (Supabase.instance.isInitialized) {
       return Supabase.instance.client;
     }
-  } on AssertionError catch (error) {
-      await Supabase.initialize(
+  } on AssertionError catch (_) {
+    await Supabase.initialize(
       url: dotenv.env['SUPABASE_API_URL']!,
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
     );
@@ -68,5 +74,11 @@ final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
 final authServiceProvider = FutureProvider<AuthPort>((ref) async {
   final supabaseClient = await ref.watch(supabaseClientProvider.future);
   final userSqlite = ref.watch(userDaoProvider);
-  return AuthService(supabaseClient, userSqlite);
+  final refs = await ref.watch(sharedPreferencesProvider.future);
+  return AuthService(supabaseClient, userSqlite, refs);
+});
+
+final currentUserProvider = FutureProvider<DomainUser?>((ref) async {
+  final userDao = ref.watch(userDaoProvider);
+  return await userDao.getCurrentUser();
 });

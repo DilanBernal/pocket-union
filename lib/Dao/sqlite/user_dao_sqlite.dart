@@ -23,15 +23,32 @@ class UserDaoSqlite extends UserPort {
     }
   }
 
-  Future<DomainUser> getTheUser(int idUser) async {
-    final db = await dbHelper.database;
-
+  @override
+  Future<DomainUser?> getCurrentUser() async {
     try {
-      final Map<String, dynamic> map =
-      (await db.query('user')) as Map<String, dynamic>;
-      return DomainUser.fromMap(map);
+      final db = await dbHelper.database;
+      final result = await db.query('profile', limit: 1);
+      
+      if (result.isEmpty) {
+        return null;
+      }
+      
+      return DomainUser.fromMap(result.first);
     } catch (e) {
-      throw Exception('Error al cargar el usuario');
+      print('Error al cargar el usuario: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<bool> deleteAllUsers() async {
+    try {
+      final db = await dbHelper.database;
+      await db.delete('profile');
+      return true;
+    } catch (e) {
+      print('Error al eliminar usuarios: $e');
+      return false;
     }
   }
 }
