@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Obtener SharedPreferences para determinar la ruta inicial
   final prefs = await SharedPreferences.getInstance();
   final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
@@ -20,13 +20,13 @@ void main() async {
 
 class PocketUnionApp extends StatelessWidget {
   final bool isFirstLaunch;
-  
+
   const PocketUnionApp({super.key, required this.isFirstLaunch});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: isFirstLaunch ? '/' : '/login',
+      initialRoute: isFirstLaunch ? AppRoutes.start : AppRoutes.home,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.blackDarkTheme,
       themeMode: ThemeMode.system,

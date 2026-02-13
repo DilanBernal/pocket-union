@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers.dart';
 
 class ListMenu extends ConsumerStatefulWidget {
-  const ListMenu({
-    super.key
-  });
+  const ListMenu({super.key});
 
   @override
   ConsumerState<ListMenu> createState() => _ListMenuState();
@@ -15,6 +13,7 @@ class _ListMenuState extends ConsumerState<ListMenu> {
   bool _isLoggingOut = false;
 
   Future<void> _handleLogout() async {
+    if (!mounted) return;
     setState(() {
       _isLoggingOut = true;
     });
@@ -22,7 +21,7 @@ class _ListMenuState extends ConsumerState<ListMenu> {
     try {
       final authService = await ref.read(authServiceProvider.future);
       await authService.logout("");
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -30,7 +29,7 @@ class _ListMenuState extends ConsumerState<ListMenu> {
             duration: Duration(seconds: 2),
           ),
         );
-        
+
         // Navigate back to login screen
         Navigator.of(context).pushReplacementNamed('/login');
       }
@@ -77,7 +76,8 @@ class _ListMenuState extends ConsumerState<ListMenu> {
                           user!.avatarUrl!,
                           fit: BoxFit.cover,
                         )
-                      : const Icon(Icons.person, size: 30, color: Color.fromRGBO(46, 0, 76, 0.75)),
+                      : const Icon(Icons.person,
+                          size: 30, color: Color.fromRGBO(46, 0, 76, 0.75)),
                 ),
                 const SizedBox(height: 12),
                 // Nombre del usuario
@@ -179,7 +179,8 @@ class _ListMenuState extends ConsumerState<ListMenu> {
                     barrierDismissible: false,
                     builder: (context) => AlertDialog(
                       title: const Text('Cerrar sesión'),
-                      content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+                      content: const Text(
+                          '¿Estás seguro de que deseas cerrar sesión?'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
@@ -189,8 +190,12 @@ class _ListMenuState extends ConsumerState<ListMenu> {
                           onPressed: _isLoggingOut
                               ? null
                               : () {
-                                  Navigator.pop(context);
-                                  _handleLogout();
+                                  _handleLogout().then((_) {
+                                    debugPrint("hola");
+                                  });
+                                  if (mounted) {
+                                    Navigator.pop(context);
+                                  }
                                 },
                           child: const Text(
                             'Cerrar sesión',

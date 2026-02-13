@@ -13,9 +13,10 @@ import '../../../domain/port/feat/user_port.dart';
 class AuthService extends AuthPort {
   final SupabaseClient _supabaseClient;
   final UserPort _userDaoPort;
+  final SharedPreferences _sharedPreferences;
   final _uuid = Uuid();
 
-  AuthService(this._supabaseClient, this._userDaoPort);
+  AuthService(this._supabaseClient, this._userDaoPort, this._sharedPreferences);
 
   @override
   Future<AuthResponse> login(LoginDto loginRequest) async {
@@ -29,6 +30,7 @@ class AuthService extends AuthPort {
           fullName: "Prueba por ahora",
           balance: 0,
           inCloud: true));
+      await _sharedPreferences.setBool("isFirstLaunch", false);
       if (sqlIteResponse) {
         debugPrint("Se creo correctamente ${sqlIteResponse.toString()}");
       }
@@ -57,6 +59,7 @@ class AuthService extends AuthPort {
             fullName: registerRequest.fullName,
             balance: 0,
             inCloud: true);
+        await _sharedPreferences.setBool("isFirstLaunch", false);
 
         await _userDaoPort.upsertUser(domainUser);
         debugPrint("Usuario registrado y guardado en SQLite: ${res.user!.id}");

@@ -55,7 +55,7 @@ final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
       return Supabase.instance.client;
     }
   } on AssertionError catch (error) {
-      await Supabase.initialize(
+    await Supabase.initialize(
       url: dotenv.env['SUPABASE_API_URL']!,
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
     );
@@ -69,7 +69,8 @@ final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
 final authServiceProvider = FutureProvider<AuthPort>((ref) async {
   final supabaseClient = await ref.watch(supabaseClientProvider.future);
   final userSqlite = ref.watch(userDaoProvider);
-  return AuthService(supabaseClient, userSqlite);
+  final refs = await ref.watch(sharedPreferencesProvider.future);
+  return AuthService(supabaseClient, userSqlite, refs);
 });
 
 final currentUserProvider = FutureProvider<DomainUser?>((ref) async {

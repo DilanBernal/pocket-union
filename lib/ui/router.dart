@@ -4,7 +4,7 @@ import 'package:pocket_union/ui/screens/auth/register_screen.dart';
 import 'package:pocket_union/ui/screens/categories_screen.dart';
 import 'package:pocket_union/ui/screens/history_expenses_screen.dart';
 import 'package:pocket_union/ui/screens/history_income_screen.dart';
-import 'package:pocket_union/ui/screens/home_screen.dart';
+import 'package:pocket_union/ui/screens/home/home_screen.dart';
 import 'package:pocket_union/ui/screens/missions_screen.dart';
 import 'package:pocket_union/ui/screens/settings_screen.dart';
 import 'package:pocket_union/ui/screens/start/start_screen.dart';
