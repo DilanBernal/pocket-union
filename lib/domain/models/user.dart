@@ -32,8 +32,9 @@ class DomainUser {
       balance: (map['user_balance'] ?? map['balance'] as num? ?? 0).toDouble(),
       inCloud: (map['in_cloud'] ?? map['inCloud'] ?? 0) == 1,
       avatarUrl: map['avatar_url'] ?? map['avatarUrl'],
-      lastSync:
-          (map['last_sync'] ?? map['lastSync']) != null ? DateTime.parse(map['last_sync'] ?? map['lastSync']) : null,
+      lastSync: (map['last_sync'] ?? map['lastSync']) != null
+          ? DateTime.parse(map['last_sync'] ?? map['lastSync'])
+          : null,
     );
   }
 
@@ -58,5 +59,10 @@ class DomainUser {
       'avatarUrl': avatarUrl,
       'lastSync': lastSync?.toIso8601String(),
     };
+  }
+
+  @override
+  String toString() {
+    return 'DomainUser(id: $id, fullName: $fullName, balance: $balance, inCloud: $inCloud, avatarUrl: $avatarUrl, lastSync: $lastSync)';
   }
 }

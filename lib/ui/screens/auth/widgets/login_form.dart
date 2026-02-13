@@ -52,22 +52,21 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       });
       final authService = await ref.read(authServiceProvider.future);
       if (mounted) {
-        var response = await authService.login(LoginDto(email: _email, password: _password));
-        
+        var response = await authService
+            .login(LoginDto(email: _email, password: _password));
+
         // Mostrar notificación de bienvenida
-        if (mounted) {
+        if (mounted && response.session != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text("¡Bienvenido! Ya puedes empezar a usar la aplicación."),
+              content: const Text(
+                  "¡Bienvenido! Ya puedes empezar a usar la aplicación."),
               backgroundColor: Colors.green.shade600,
               duration: const Duration(seconds: 3),
             ),
           );
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
         }
-        
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
-        // context.showSnackBar('Check your email for a login link!');
-        debugPrint("Revisa email");
       }
     } on AuthException catch (error) {
       if (mounted) {
@@ -85,7 +84,8 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         debugPrint("Error durante el login: $error");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text("Ocurrió un error inesperado. Por favor intenta nuevamente."),
+            content: const Text(
+                "Ocurrió un error inesperado. Por favor intenta nuevamente."),
             backgroundColor: Colors.red.shade600,
             duration: const Duration(seconds: 3),
           ),
@@ -107,7 +107,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   @override
   Widget build(BuildContext context) {
     return _isLoading
-        ? CircularProgressIndicator()
+        ? CircularProgressIndicator(
+            constraints: BoxConstraints(maxWidth: 50, maxHeight: 50),
+          )
         : Form(
             key: _formKey,
             autovalidateMode: AutovalidateMode.onUnfocus,

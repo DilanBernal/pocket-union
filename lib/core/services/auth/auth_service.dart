@@ -14,29 +14,38 @@ class AuthService extends AuthPort {
   final SupabaseClient _supabaseClient;
   final UserPort _userDaoPort;
   final SharedPreferences _sharedPreferences;
-  final _uuid = Uuid();
 
   AuthService(this._supabaseClient, this._userDaoPort, this._sharedPreferences);
 
   @override
   Future<AuthResponse> login(LoginDto loginRequest) async {
     try {
+      await _sharedPreferences.setBool("isFirstLaunch", false);
       final loginRes = await _supabaseClient.auth.signInWithPassword(
         email: loginRequest.email,
         password: loginRequest.password,
       );
-      var sqlIteResponse = await _userDaoPort.upsertUser(DomainUser(
-          id: loginRes.user!.id,
-          fullName: "Prueba por ahora",
-          balance: 0,
-          inCloud: true));
-      await _sharedPreferences.setBool("isFirstLaunch", false);
+      if (loginRes.user?.id == null) {
+        throw Exception("No trae el id del usuario");
+      }
+      DomainUser userProfile = DomainUser.fromMap(await _supabaseClient
+          .from("profile")
+          .select("id, full_name, user_balance, last_sync")
+          .filter('id', 'eq', loginRes.user!.id)
+          .single());
+      userProfile.inCloud = true;
+      var sqlIteResponse = await _userDaoPort.upsertUser(userProfile);
+      await _sharedPreferences.setBool("isInSession", true);
+      await _sharedPreferences.setString("idUser", loginRes.user!.id);
+      debugPrint(userProfile.toString());
+      await _sharedPreferences.setString("userProfile", userProfile.toString());
+
       if (sqlIteResponse) {
         debugPrint("Se creo correctamente ${sqlIteResponse.toString()}");
       }
       return loginRes;
     } catch (error) {
-      print(error);
+      debugPrint(error.toString());
     }
     return AuthResponse();
   }
@@ -95,6 +104,7 @@ class AuthService extends AuthPort {
       // 3. Clear SharedPreferences - reset to first launch
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isFirstLaunch', true);
+      await prefs.setBool('isInSession', false);
       debugPrint("SharedPreferences limpiado - isFirstLaunch reset");
     } catch (e) {
       debugPrint("Error al hacer logout: $e");

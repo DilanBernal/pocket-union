@@ -10,23 +10,31 @@ void main() async {
   // Obtener SharedPreferences para determinar la ruta inicial
   final prefs = await SharedPreferences.getInstance();
   final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
+  final isInSession = prefs.getBool('isInSession') ?? false;
 
   runApp(
     ProviderScope(
-      child: PocketUnionApp(isFirstLaunch: isFirstLaunch),
+      child: PocketUnionApp(
+          isFirstLaunch: isFirstLaunch, isInSession: isInSession),
     ),
   );
 }
 
 class PocketUnionApp extends StatelessWidget {
   final bool isFirstLaunch;
+  final bool isInSession;
 
-  const PocketUnionApp({super.key, required this.isFirstLaunch});
+  const PocketUnionApp(
+      {super.key, required this.isFirstLaunch, required this.isInSession});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: isFirstLaunch ? AppRoutes.start : AppRoutes.home,
+      initialRoute: isFirstLaunch
+          ? AppRoutes.start
+          : !isInSession
+              ? AppRoutes.login
+              : AppRoutes.home,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.blackDarkTheme,
       themeMode: ThemeMode.system,

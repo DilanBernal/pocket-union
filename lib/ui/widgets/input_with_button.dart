@@ -29,7 +29,7 @@ class InputWithButton extends StatefulWidget {
       this.dropdownElementString});
 
   @override
-  _InputWithButtonState createState() => _InputWithButtonState();
+  State<InputWithButton> createState() => _InputWithButtonState();
 }
 
 class _InputWithButtonState extends State<InputWithButton> {
@@ -174,7 +174,8 @@ class _InputWithButtonState extends State<InputWithButton> {
 
     final Map<String, IconData>? iconsForField =
         widget.dropdownIcons?[fieldName];
-    final Map<String, String> optionIds = widget.dropdownElementString![fieldName]!;
+    final Map<String, String> optionIds =
+        widget.dropdownElementString![fieldName]!;
     return DropdownButtonFormField<String>(
       initialValue: _dropdownValues[fieldName],
       decoration: InputDecoration(

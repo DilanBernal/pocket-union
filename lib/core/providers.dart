@@ -39,7 +39,12 @@ final categoryDaoProvider = Provider<CategoryDaoSqlite>((ref) {
 // SharedPreferences provider with lazy initialization
 final sharedPreferencesProvider =
     FutureProvider<SharedPreferences>((ref) async {
-  return await SharedPreferences.getInstance();
+  final instance = await SharedPreferences.getInstance();
+  var isInSession = instance.getBool("isInSession");
+  if (isInSession == null) {
+    instance.setBool('isInSession', false);
+  }
+  return instance;
 });
 
 final dotEnvProvider = FutureProvider<DotEnv>((ref) async {
@@ -54,7 +59,7 @@ final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
     if (Supabase.instance.isInitialized) {
       return Supabase.instance.client;
     }
-  } on AssertionError catch (error) {
+  } on AssertionError catch (_) {
     await Supabase.initialize(
       url: dotenv.env['SUPABASE_API_URL']!,
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,

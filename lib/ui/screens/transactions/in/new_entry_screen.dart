@@ -6,6 +6,7 @@ import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/core/providers.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
+import 'package:pocket_union/ui/screens/transactions/in/widgets/new_entry_form.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 import 'package:pocket_union/ui/widgets/input_with_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,36 +55,35 @@ class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
 
     return Column(children: [
       FormTitle(title: "Agregar entrada de dinero"),
-      _loadingCategories
-          ? const CircularProgressIndicator()
-          : InputWithButton(
-              onSend: (values) {
-                _createEntry(values, revenueRepo);
-              },
-              fieldNames: [
-                "nombre",
-                "fecha",
-                "precio",
-                "categoria",
-                "descripcion"
-              ],
-              keyboardTypes: [
-                TextInputType.text,
-                TextInputType.datetime,
-                TextInputType.number,
-                TextInputType.multiline
-              ],
-              inputFormatters: [
-                [],
-                [],
-                [FilteringTextInputFormatter.digitsOnly],
-                []
-              ],
-              dropdownIcons: {'categoria': _categoryIcons},
-              buttonName: "Agregar gasto",
-              dropdownOptions: {'categoria': _categoryNames},
-              dropdownElementString: {'categoria': _categoriesId},
-            )
+      _loadingCategories ? const CircularProgressIndicator() : NewEntryForm()
+      // : InputWithButton(
+      //     onSend: (values) {
+      //       _createEntry(values, revenueRepo);
+      //     },
+      //     fieldNames: [
+      //       "nombre",
+      //       "fecha",
+      //       "precio",
+      //       "categoria",
+      //       "descripcion"
+      //     ],
+      //     keyboardTypes: [
+      //       TextInputType.text,
+      //       TextInputType.datetime,
+      //       TextInputType.number,
+      //       TextInputType.multiline
+      //     ],
+      //     inputFormatters: [
+      //       [],
+      //       [],
+      //       [FilteringTextInputFormatter.digitsOnly],
+      //       []
+      //     ],
+      //     dropdownIcons: {'categoria': _categoryIcons},
+      //     buttonName: "Agregar gasto",
+      //     dropdownOptions: {'categoria': _categoryNames},
+      //     dropdownElementString: {'categoria': _categoriesId},
+      //   )
     ]);
   }
 

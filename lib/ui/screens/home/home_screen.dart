@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:pocket_union/ui/screens/home/widgets/start_hero_widget.dart';
-import 'package:pocket_union/ui/screens/new_entry_screen.dart';
-import 'package:pocket_union/ui/screens/new_out_screen.dart';
+import 'package:pocket_union/ui/screens/transactions/in/new_entry_screen.dart';
+import 'package:pocket_union/ui/screens/transactions/out/new_out_screen.dart';
 import 'package:pocket_union/ui/widgets/list_menu.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int indexScreen = 1;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(_titles[_actualPage]),
-      //   backgroundColor: const Color.fromRGBO(46, 0, 76, 0.75),
-      //   elevation: 0,
-      // ),
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(190, 0, 0, 0),
+        elevation: 0,
+      ),
       drawer: const Drawer(
         child: ListMenu(),
       ),
@@ -27,26 +27,42 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-              child: StartHeroWidget(
-            name1: "1",
-            name2: "2",
-          )),
-          Expanded(
-            child: Placeholder(),
-          )
+          switch (indexScreen) {
+            0 => NewEntryScreen(),
+            1 => Expanded(
+                  child: StartHeroWidget(
+                name1: "1",
+                name2: "2",
+              )),
+            2 => NewOutScreen(),
+            int() => throw UnimplementedError(),
+          }
         ],
       )),
       bottomNavigationBar: BottomNavigationBar(
+        landscapeLayout: BottomNavigationBarLandscapeLayout.centered,
         selectedItemColor: Color.fromRGBO(128, 128, 204, 1.0),
-        unselectedItemColor: Color.fromRGBO(163, 0, 0, 1.0),
-        onTap: (index) {},
+        unselectedItemColor: Color.fromRGBO(255, 17, 203, 1),
+        currentIndex: indexScreen,
+        type: BottomNavigationBarType.shifting,
+        onTap: (index) {
+          debugPrint(index.toString());
+          setState(() {
+            indexScreen = index;
+          });
+        },
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.add_circle_outline),
+              activeIcon: Icon(Icons.add_circle),
               label: 'Agregar una entrada'),
           BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              label: 'Home',
+              activeIcon: Icon(Icons.home)),
+          BottomNavigationBarItem(
               icon: Icon(Icons.remove_circle_outline),
+              activeIcon: Icon(Icons.remove_circle),
               label: 'Agregar una salida'),
         ],
       ),

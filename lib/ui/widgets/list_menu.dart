@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers.dart';
+import 'package:pocket_union/ui/router.dart';
 
 class ListMenu extends ConsumerStatefulWidget {
   const ListMenu({super.key});
@@ -13,26 +14,26 @@ class _ListMenuState extends ConsumerState<ListMenu> {
   bool _isLoggingOut = false;
 
   Future<void> _handleLogout() async {
-    if (!mounted) return;
-    setState(() {
-      _isLoggingOut = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoggingOut = true;
+      });
+    }
 
     try {
       final authService = await ref.read(authServiceProvider.future);
       await authService.logout("");
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sesión cerrada correctamente'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sesión cerrada correctamente'),
+          duration: Duration(seconds: 2),
+        ),
+      );
 
-        // Navigate back to login screen
-        Navigator.of(context).pushReplacementNamed('/login');
-      }
+      // Navigate back to login screen
+      Navigator.of(context).pushReplacementNamed(AppRoutes.start);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -173,7 +174,7 @@ class _ListMenuState extends ConsumerState<ListMenu> {
           onTap: _isLoggingOut
               ? null
               : () {
-                  Navigator.pop(context);
+                  // Navigator.pop(context); // Quitar esto para no disponer el widget
                   showDialog(
                     context: context,
                     barrierDismissible: false,
@@ -190,12 +191,8 @@ class _ListMenuState extends ConsumerState<ListMenu> {
                           onPressed: _isLoggingOut
                               ? null
                               : () {
-                                  _handleLogout().then((_) {
-                                    debugPrint("hola");
-                                  });
-                                  if (mounted) {
-                                    Navigator.pop(context);
-                                  }
+                                  Navigator.pop(context); // Cierra el diálogo
+                                  _handleLogout();
                                 },
                           child: const Text(
                             'Cerrar sesión',
