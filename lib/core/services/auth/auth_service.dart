@@ -33,14 +33,16 @@ class AuthService extends AuthPort {
           .filter('id', 'eq', loginRes.user!.id)
           .single());
       userProfile.inCloud = true;
-      var sqlIteResponse = await _userDaoPort.upsertUser(userProfile);
-      await _sharedPreferences.setBool("isInSession", true);
-      await _sharedPreferences.setString("idUser", loginRes.user!.id);
+      var response = await Future.wait([
+        _sharedPreferences.setBool("isInSession", true),
+        _sharedPreferences.setString("idUser", loginRes.user!.id),
+        _userDaoPort.upsertUser(userProfile),
+        _sharedPreferences.setString("userProfile", userProfile.toString())
+      ]);
       debugPrint(userProfile.toString());
-      await _sharedPreferences.setString("userProfile", userProfile.toString());
 
-      if (sqlIteResponse) {
-        debugPrint("Se creo correctamente ${sqlIteResponse.toString()}");
+      if (response.isNotEmpty) {
+        debugPrint("Se creo correctamente ${response.toString()}");
       }
       return loginRes;
     } catch (error) {

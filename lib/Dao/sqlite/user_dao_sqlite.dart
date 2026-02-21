@@ -17,6 +17,7 @@ class UserDaoSqlite extends UserPort {
         user.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
+      if (data.isNegative || data == 0) return false;
       return true;
     } catch (e) {
       return false;
@@ -28,11 +29,11 @@ class UserDaoSqlite extends UserPort {
     try {
       final db = await dbHelper.database;
       final result = await db.query('profile', limit: 1);
-      
+
       if (result.isEmpty) {
         return null;
       }
-      
+
       return DomainUser.fromMap(result.first);
     } catch (e) {
       print('Error al cargar el usuario: $e');
