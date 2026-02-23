@@ -1,28 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
-import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/core/providers.dart';
 import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/dto/new_income_dto.dart';
+import 'package:pocket_union/domain/port/feat/category_port.dart';
 import 'package:pocket_union/ui/screens/transactions/in/widgets/new_entry_form.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
-import 'package:pocket_union/ui/widgets/input_with_button.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class NewEntryScreen extends ConsumerStatefulWidget {
+class NewEntryScreen extends ConsumerWidget {
   const NewEntryScreen({super.key});
 
   @override
-  ConsumerState<NewEntryScreen> createState() => _NewEntryScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesAsync = ref.watch(categoryServiceProvider);
+
+    return Column(
+      children: [
+        const FormTitle(title: 'Agregar entrada de dinero'),
+        categoriesAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.all(32.0),
+            child: CircularProgressIndicator(),
+          ),
+          error: (e, _) => Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Error al cargar el servicio: $e',
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+          data: (categoryService) => _CategoriesLoader(
+            categoryService: categoryService,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
-  List<String> _categoryNames = [];
-  Map<String, IconData> _categoryIcons = {};
-  Map<String, String> _categoriesId = {};
-  bool _loadingCategories = true;
+class _CategoriesLoader extends ConsumerStatefulWidget {
+  const _CategoriesLoader({required this.categoryService});
+
+  final CategoryPort categoryService;
+
+  @override
+  ConsumerState<_CategoriesLoader> createState() => _CategoriesLoaderState();
+}
+
+class _CategoriesLoaderState extends ConsumerState<_CategoriesLoader> {
+  List<Category>? _categories;
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -31,121 +58,43 @@ class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
   }
 
   Future<void> _loadCategories() async {
-    final categoryRepo = ref.read(categoryDaoProvider);
     try {
-      final categories = await _getAllCategories(categoryRepo);
-      final names = await _getAllCategoriesNames(categories);
-      final icons = await _getAllCategoriesIcons(categories);
-      final ids = await _getAllCategoriesId(categories);
-      setState(() {
-        _categoryNames = names;
-        _categoryIcons = icons;
-        _categoriesId = ids;
-        _loadingCategories = false;
-      });
+      final categories = await widget.categoryService.getAllCategories();
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+          _loading = false;
+        });
+      }
     } catch (e) {
-      _loadingCategories = false;
-      throw Exception(e);
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final revenueRepo = ref.read(revenueDaoProvider);
-
-    return Column(children: [
-      FormTitle(title: "Agregar entrada de dinero"),
-      _loadingCategories ? const CircularProgressIndicator() : NewEntryForm()
-      // : InputWithButton(
-      //     onSend: (values) {
-      //       _createEntry(values, revenueRepo);
-      //     },
-      //     fieldNames: [
-      //       "nombre",
-      //       "fecha",
-      //       "precio",
-      //       "categoria",
-      //       "descripcion"
-      //     ],
-      //     keyboardTypes: [
-      //       TextInputType.text,
-      //       TextInputType.datetime,
-      //       TextInputType.number,
-      //       TextInputType.multiline
-      //     ],
-      //     inputFormatters: [
-      //       [],
-      //       [],
-      //       [FilteringTextInputFormatter.digitsOnly],
-      //       []
-      //     ],
-      //     dropdownIcons: {'categoria': _categoryIcons},
-      //     buttonName: "Agregar gasto",
-      //     dropdownOptions: {'categoria': _categoryNames},
-      //     dropdownElementString: {'categoria': _categoriesId},
-      //   )
-    ]);
-  }
-
-  Future<void> _createEntry(
-      Map<String, String> values, IncomeDaoSqlite revRepo) async {
-    final prefs = await SharedPreferences.getInstance();
-    final idUser = prefs.getString('userId');
-    debugPrint(values as String?);
-    try {
-      final name = values['nombre']!;
-      final DateTime date =
-          DateTime.tryParse(values['fecha']!) ?? DateTime.now();
-      final price = double.tryParse(values['precio']!);
-      final description = values['descripcion'];
-      if (name.trim() != '' && price! > 50) {
-        final income = NewIncomeDto(
-            amount: price,
-            name: name,
-            importanceLevel: 3,
-            categoryId: "",
-            isRecurring: false,
-            isReceived: false);
-        int idGenerated = await revRepo.insertRevenue(income);
-        debugPrint(idGenerated as String?);
-      }
-    } catch (e) {
-      return;
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.all(32.0),
+        child: CircularProgressIndicator(),
+      );
     }
-  }
 
-  Future<List<Category>> _getAllCategories(CategoryDaoSqlite catRepo) async {
-    try {
-      List<Category> categoryList = await catRepo.getAllCategories();
-      return categoryList;
-    } catch (e) {
-      return [];
+    if (_error != null) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(
+          'Error al cargar categorías: $_error',
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
     }
-  }
 
-  Future<List<String>> _getAllCategoriesNames(
-      List<Category> categoryList) async {
-    return categoryList.map((category) => category.name).toList();
-  }
-
-  Future<Map<String, IconData>> _getAllCategoriesIcons(
-      List<Category> categoryList) async {
-    Map<String, IconData> categories = {};
-    for (var value in categoryList) {
-      final result = <String, IconData>{value.name: IconData(2)};
-      categories.addEntries(result.entries);
-    }
-    return categories;
-  }
-
-  Future<Map<String, String>> _getAllCategoriesId(
-      List<Category> categoryList) async {
-    Map<String, String> categories = {};
-
-    for (var value in categoryList) {
-      final result = <String, String>{value.name: value.id};
-      categories.addEntries(result.entries);
-    }
-    return categories;
+    return NewEntryForm(categories: _categories ?? []);
   }
 }

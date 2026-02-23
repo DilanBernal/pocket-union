@@ -6,7 +6,11 @@ import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
 import 'package:pocket_union/core/services/auth/auth_service.dart';
+import 'package:pocket_union/core/services/features/category_service.dart';
+import 'package:pocket_union/core/services/features/income_service.dart';
 import 'package:pocket_union/domain/models/user.dart';
+import 'package:pocket_union/domain/port/feat/category_port.dart';
+import 'package:pocket_union/domain/port/feat/income_port.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -81,4 +85,18 @@ final authServiceProvider = FutureProvider<AuthPort>((ref) async {
 final currentUserProvider = FutureProvider<DomainUser?>((ref) async {
   final userDao = ref.watch(userDaoProvider);
   return await userDao.getCurrentUser();
+});
+
+// CategoryService provider (offline-first)
+final categoryServiceProvider = FutureProvider<CategoryPort>((ref) async {
+  final supabaseClient = await ref.watch(supabaseClientProvider.future);
+  final categoryDao = ref.watch(categoryDaoProvider);
+  return CategoryService(categoryDao, supabaseClient);
+});
+
+// IncomeService provider (offline-first)
+final incomeServiceProvider = FutureProvider<IncomePort>((ref) async {
+  final supabaseClient = await ref.watch(supabaseClientProvider.future);
+  final incomeDao = ref.watch(revenueDaoProvider);
+  return IncomeService(incomeDao, supabaseClient);
 });
