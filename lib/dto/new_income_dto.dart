@@ -8,6 +8,7 @@ class NewIncomeDto {
   Object? recurrenceInterval;
   final bool isReceived;
   Object? receivedIn;
+  final String userRecipientId;
 
   NewIncomeDto({
     required this.amount,
@@ -16,6 +17,7 @@ class NewIncomeDto {
     required this.categoryId,
     required this.isRecurring,
     required this.isReceived,
+    required this.userRecipientId,
     this.description,
     this.recurrenceInterval,
     this.receivedIn,

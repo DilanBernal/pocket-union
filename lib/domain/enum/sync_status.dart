@@ -1,8 +1,8 @@
 enum SyncStatus {
-  pending('PENDING'),
-  synced('SYNCED'),
-  conflict('CONFLICT'),
-  deleted('DELETED');
+  pending('pending'),
+  synced('synced'),
+  conflict('conflict'),
+  deleted('deleted');
 
   final String value;
 
@@ -10,7 +10,7 @@ enum SyncStatus {
 
   static SyncStatus fromString(String value) {
     return SyncStatus.values.firstWhere(
-      (e) => e.value == value,
+      (e) => e.value == value.toLowerCase(),
       orElse: () => SyncStatus.pending,
     );
   }
