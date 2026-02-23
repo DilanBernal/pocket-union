@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:pocket_union/domain/models/user.dart';
 import 'package:pocket_union/domain/port/auth/auth_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
-import 'package:pocket_union/dto/new_couple_dto.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -86,12 +85,6 @@ class AuthService extends AuthPort {
       debugPrint("ocurrio un error al intentar registrarse ${e.toString()}");
       rethrow;
     }
-  }
-
-  @override
-  Future<dynamic> acceptCouple(NewCoupleDto coupleDto) {
-    // TODO: implement acceptCouple
-    throw UnimplementedError();
   }
 
   @override

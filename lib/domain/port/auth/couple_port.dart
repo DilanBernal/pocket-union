@@ -5,4 +5,5 @@ abstract class CouplePort {
   Future acceptCouple(NewCoupleDto coupleDto);
   Future declineCouple();
   Future<Couple?> getCouple();
+  Future createCouple(NewCoupleDto coupleDto);
 }
