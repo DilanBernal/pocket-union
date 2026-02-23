@@ -2,11 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:pocket_union/domain/models/user.dart';
 import 'package:pocket_union/domain/port/auth/auth_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
-import 'package:pocket_union/dto/new_couple_dto.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../domain/port/feat/user_port.dart';
 
@@ -34,14 +32,16 @@ class AuthService extends AuthPort {
           .filter('id', 'eq', loginRes.user!.id)
           .single());
       userProfile.inCloud = true;
-      var sqlIteResponse = await _userDaoPort.upsertUser(userProfile);
-      await _sharedPreferences.setBool("isInSession", true);
-      await _sharedPreferences.setString("idUser", loginRes.user!.id);
+      var response = await Future.wait([
+        _sharedPreferences.setBool("isInSession", true),
+        _sharedPreferences.setString("idUser", loginRes.user!.id),
+        _userDaoPort.upsertUser(userProfile),
+        _sharedPreferences.setString("userProfile", userProfile.toString())
+      ]);
       debugPrint(userProfile.toString());
-      await _sharedPreferences.setString("userProfile", userProfile.toString());
 
-      if (sqlIteResponse) {
-        debugPrint("Se creo correctamente ${sqlIteResponse.toString()}");
+      if (response.isNotEmpty) {
+        debugPrint("Se creo correctamente ${response.toString()}");
       }
       return loginRes;
     } catch (error) {
@@ -68,44 +68,39 @@ class AuthService extends AuthPort {
             fullName: registerRequest.fullName,
             balance: 0,
             inCloud: true);
-        await _sharedPreferences.setBool("isFirstLaunch", false);
 
-        await _userDaoPort.upsertUser(domainUser);
-        debugPrint("Usuario registrado y guardado en SQLite: ${res.user!.id}");
+        var resultados = await Future.wait([
+          _sharedPreferences.setBool("isFirstLaunch", false),
+          _userDaoPort.upsertUser(domainUser)
+        ]);
+        if (resultados.isNotEmpty) {
+          debugPrint(
+              "Usuario registrado y guardado en SQLite: ${res.user!.id}");
+        }
       }
 
       debugPrint(res.toString());
       return res;
     } catch (e) {
       debugPrint("ocurrio un error al intentar registrarse ${e.toString()}");
-      throw e;
+      rethrow;
     }
-  }
-
-  @override
-  Future<dynamic> acceptCouple(NewCoupleDto coupleDto) {
-    // TODO: implement acceptCouple
-    throw UnimplementedError();
   }
 
   @override
   Future<void> logout(String email) async {
     try {
-      // 1. Sign out from Supabase
       await _supabaseClient.auth.signOut();
       debugPrint("Usuario deslogueado de Supabase");
 
-      // 2. Delete all users from SQLite
-      final deleteResult = await _userDaoPort.deleteAllUsers();
-      if (deleteResult) {
-        debugPrint("Usuarios eliminados de SQLite");
+      var resultados = await Future.wait([
+        _userDaoPort.deleteAllUsers(),
+        _sharedPreferences.setBool('isFirstLaunch', true),
+        _sharedPreferences.setBool('isInSession', false)
+      ]);
+      if (resultados.isNotEmpty) {
+        debugPrint("SharedPreferences limpiado - isFirstLaunch reset");
       }
-
-      // 3. Clear SharedPreferences - reset to first launch
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isFirstLaunch', true);
-      await prefs.setBool('isInSession', false);
-      debugPrint("SharedPreferences limpiado - isFirstLaunch reset");
     } catch (e) {
       debugPrint("Error al hacer logout: $e");
       rethrow;

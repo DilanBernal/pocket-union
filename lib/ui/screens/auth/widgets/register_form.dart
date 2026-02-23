@@ -40,59 +40,55 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
       final authService = await ref.read(authServiceProvider.future);
       var res = await authService.register(
           RegisterDto(email: _email, fullName: _fullName, password: _password));
-      
-      if (mounted) {
-        // Marcar que la aplicación ya no es el primer lanzamiento
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isFirstLaunch', false);
-        
-        // Mostrar diálogo de confirmación de email
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("¡Cuenta creada exitosamente!"),
-              content: SingleChildScrollView(
-                child: ListBody(
-                  children: [
-                    const Text(
-                      "Se ha enviado un correo de confirmación a tu dirección de email.",
+
+      if (!mounted) return;
+
+      // Mostrar diálogo de confirmación de emailq
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("¡Cuenta creada exitosamente!"),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: [
+                  const Text(
+                    "Se ha enviado un correo de confirmación a tu dirección de email.",
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Por favor confirma tu correo ($_email) para poder iniciar sesión.",
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Una vez confirmes tu correo, podrás acceder a tu cuenta.",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Por favor confirma tu correo ($_email) para poder iniciar sesión.",
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Una vez confirmes tu correo, podrás acceder a tu cuenta.",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushReplacementNamed(context, AppRoutes.login);
-                  },
-                  child: const Text("Ir a inicio de sesión"),
-                ),
-              ],
-            );
-          },
-        );
-      }
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushReplacementNamed(context, AppRoutes.login);
+                },
+                child: const Text("Ir a inicio de sesión"),
+              ),
+            ],
+          );
+        },
+      );
     } catch (e) {
       if (mounted) {
         debugPrint("Error al registrarse: ${e.toString()}");
-        
+
         // Mostrar diálogo de error
         showDialog(
           context: context,

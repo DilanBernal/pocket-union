@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/core/providers.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:pocket_union/ui/screens/transactions/in/widgets/new_entry_form.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
-import 'package:pocket_union/ui/widgets/input_with_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NewEntryScreen extends ConsumerStatefulWidget {
@@ -19,9 +16,9 @@ class NewEntryScreen extends ConsumerStatefulWidget {
 }
 
 class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
-  List<String> _categoryNames = [];
-  Map<String, IconData> _categoryIcons = {};
-  Map<String, String> _categoriesId = {};
+  // List<String> _categoryNames = [];
+  // Map<String, IconData> _categoryIcons = {};
+  // Map<String, String> _categoriesId = {};
   bool _loadingCategories = true;
 
   @override
@@ -31,18 +28,19 @@ class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
   }
 
   Future<void> _loadCategories() async {
-    final categoryRepo = ref.read(categoryDaoProvider);
     try {
-      final categories = await _getAllCategories(categoryRepo);
+      final categories = await _getAllCategories();
       final names = await _getAllCategoriesNames(categories);
-      final icons = await _getAllCategoriesIcons(categories);
-      final ids = await _getAllCategoriesId(categories);
-      setState(() {
-        _categoryNames = names;
-        _categoryIcons = icons;
-        _categoriesId = ids;
-        _loadingCategories = false;
-      });
+      // final icons = await _getAllCategoriesIcons(categories);
+      // final ids = await _getAllCategoriesId(categories);
+      // setState(() {
+      //   _categoryNames = names;
+      //   _categoryIcons = icons;
+      //   _categoriesId = ids;
+      //   _loadingCategories = false;
+      // });
+      debugPrint(names.toString());
+      debugPrint("hola");
     } catch (e) {
       _loadingCategories = false;
       throw Exception(e);
@@ -51,39 +49,9 @@ class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final revenueRepo = ref.read(revenueDaoProvider);
-
     return Column(children: [
       FormTitle(title: "Agregar entrada de dinero"),
       _loadingCategories ? const CircularProgressIndicator() : NewEntryForm()
-      // : InputWithButton(
-      //     onSend: (values) {
-      //       _createEntry(values, revenueRepo);
-      //     },
-      //     fieldNames: [
-      //       "nombre",
-      //       "fecha",
-      //       "precio",
-      //       "categoria",
-      //       "descripcion"
-      //     ],
-      //     keyboardTypes: [
-      //       TextInputType.text,
-      //       TextInputType.datetime,
-      //       TextInputType.number,
-      //       TextInputType.multiline
-      //     ],
-      //     inputFormatters: [
-      //       [],
-      //       [],
-      //       [FilteringTextInputFormatter.digitsOnly],
-      //       []
-      //     ],
-      //     dropdownIcons: {'categoria': _categoryIcons},
-      //     buttonName: "Agregar gasto",
-      //     dropdownOptions: {'categoria': _categoryNames},
-      //     dropdownElementString: {'categoria': _categoriesId},
-      //   )
     ]);
   }
 
@@ -114,8 +82,9 @@ class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
     }
   }
 
-  Future<List<Category>> _getAllCategories(CategoryDaoSqlite catRepo) async {
+  Future<List<Category>> _getAllCategories() async {
     try {
+      var catRepo = ref.read(categoryDaoProvider);
       List<Category> categoryList = await catRepo.getAllCategories();
       return categoryList;
     } catch (e) {
