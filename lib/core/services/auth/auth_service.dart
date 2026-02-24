@@ -40,6 +40,21 @@ class AuthService extends AuthPort {
       ]);
       debugPrint(userProfile.toString());
 
+      // Guardar coupleId en SharedPreferences
+      try {
+        final coupleRows = await _supabaseClient
+            .from('couple')
+            .select('id')
+            .or('user1_id.eq.${loginRes.user!.id},user2_id.eq.${loginRes.user!.id}')
+            .limit(1);
+        if (coupleRows.isNotEmpty) {
+          await _sharedPreferences.setString(
+              'coupleId', coupleRows.first['id']);
+        }
+      } catch (e) {
+        debugPrint('No se pudo obtener coupleId: $e');
+      }
+
       if (response.isNotEmpty) {
         debugPrint("Se creo correctamente ${response.toString()}");
       }

@@ -1,3 +1,5 @@
+import 'package:pocket_union/domain/enum/sync_status.dart';
+
 class Income {
   final String id;
   final String? coupleId;
@@ -11,7 +13,11 @@ class Income {
   final bool isReceived;
   final Map<String, dynamic>? receivedIn;
   final DateTime createdAt;
-  bool inCloud;
+
+  /// Quién recibió el dinero. null = ambos (NOSOTROS).
+  final String? userRecipientId;
+  SyncStatus syncStatus;
+  bool isDeleted;
 
   Income({
     required this.id,
@@ -26,7 +32,9 @@ class Income {
     this.isReceived = true,
     this.receivedIn,
     required this.createdAt,
-    required this.inCloud,
+    this.userRecipientId,
+    this.syncStatus = SyncStatus.pending,
+    this.isDeleted = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -36,17 +44,20 @@ class Income {
       'name': name,
       'transaction_date': transactionDate.toIso8601String(),
       'description': description,
-      'amount': amount,
+      'amount': (amount * 100).round(),
       'category_id': categoryId,
       'is_recurring': isRecurring ? 1 : 0,
       'recurrence_interval': recurrenceInterval,
       'is_received': isReceived ? 1 : 0,
       'received_in': receivedIn,
       'created_at': createdAt.toIso8601String(),
-      'inCloud': inCloud ? 1 : 0,
+      'user_recipient_id': userRecipientId,
+      'sync_status': syncStatus.value,
+      'is_deleted': isDeleted ? 1 : 0,
     };
   }
 
+  /// Lee desde SQLite donde amount está almacenado en centavos.
   factory Income.fromMap(Map<String, dynamic> map) {
     return Income(
       id: map['id'],
@@ -54,14 +65,17 @@ class Income {
       name: map['name'],
       transactionDate: DateTime.parse(map['transaction_date']),
       description: map['description'],
-      amount: (map['amount'] as num).toDouble(),
+      amount: (map['amount'] as num).toDouble() / 100,
       categoryId: map['category_id'],
       isRecurring: map['is_recurring'] == 1,
       recurrenceInterval: map['recurrence_interval'],
       isReceived: map['is_received'] == 1,
       receivedIn: map['received_in'],
       createdAt: DateTime.parse(map['created_at']),
-      inCloud: map['inCloud'] == 1,
+      userRecipientId: map['user_recipient_id'],
+      syncStatus: SyncStatus.fromString(
+          (map['sync_status'] as String? ?? 'pending').toUpperCase()),
+      isDeleted: map['is_deleted'] == 1,
     );
   }
 
@@ -79,6 +93,7 @@ class Income {
       'is_received': isReceived,
       'received_in': receivedIn,
       'created_at': createdAt.toIso8601String(),
+      'user_recipient_id': userRecipientId,
     };
   }
 
@@ -96,7 +111,10 @@ class Income {
       isReceived: json['is_received'] ?? true,
       receivedIn: json['received_in'],
       createdAt: DateTime.parse(json['created_at']),
-      inCloud: json['inCloud'] == 1,
+      userRecipientId: json['user_recipient_id'],
+      syncStatus: SyncStatus.fromString(
+          (json['sync_status'] as String? ?? 'pending').toUpperCase()),
+      isDeleted: json['is_deleted'] == 1 || json['is_deleted'] == true,
     );
   }
 }

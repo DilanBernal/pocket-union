@@ -34,7 +34,7 @@ class Category {
       'color': color,
       'created_at': createdAt.toIso8601String(),
       'category_host': categoryHost.value,
-      'sync_status': syncStatus
+      'sync_status': syncStatus.value
     };
   }
 
@@ -48,7 +48,8 @@ class Category {
         color: map['color'],
         createdAt: DateTime.parse(map['created_at']),
         categoryHost: CategoryHost.fromString(map['category_host']),
-        syncStatus: map['sync_status']);
+        syncStatus: SyncStatus.fromString(
+            (map['sync_status'] as String? ?? 'pending').toUpperCase()));
   }
 
   Map<String, dynamic> toJson() {
@@ -74,6 +75,7 @@ class Category {
         color: json['color'],
         createdAt: DateTime.parse(json['created_at']),
         categoryHost: CategoryHost.fromString(json['category_host']),
-        syncStatus: json['sync_status']);
+        syncStatus: SyncStatus.fromString(
+            (json['sync_status'] as String? ?? 'pending').toUpperCase()));
   }
 }
