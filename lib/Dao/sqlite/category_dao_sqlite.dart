@@ -95,4 +95,21 @@ class CategoryDaoSqlite extends CategoryPort {
     // TODO: implement createCategories
     throw UnimplementedError();
   }
+
+  @override
+  Future<List<Category>> getCategoriesByHost(CategoryHost host) async {
+    final db = await _dbHelper.database;
+    try {
+      final List<Map<String, dynamic>> maps = await db.query(
+        'category',
+        where: 'category_host = ? AND is_deleted = 0',
+        whereArgs: [host.value],
+      );
+      return List.generate(maps.length, (int i) {
+        return Category.fromMap(maps[i]);
+      });
+    } catch (e) {
+      throw Exception("Error al obtener categorías por host: $e");
+    }
+  }
 }

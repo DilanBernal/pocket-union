@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocket_union/ui/screens/auth/login_screen.dart';
 import 'package:pocket_union/ui/screens/auth/register_screen.dart';
+import 'package:pocket_union/ui/screens/categories/new_category_screen.dart';
 import 'package:pocket_union/ui/screens/categories_screen.dart';
 import 'package:pocket_union/ui/screens/history_expenses_screen.dart';
 import 'package:pocket_union/ui/screens/history_income_screen.dart';
@@ -20,6 +21,7 @@ class AppRoutes {
   static const String historyIncome = '/history-income';
   static const String missions = '/missions';
   static const String categories = '/categories';
+  static const String newCategory = '/new-category';
 
   static Map<String, WidgetBuilder> routes = {
     start: (context) => const StartScreen(),
@@ -31,5 +33,6 @@ class AppRoutes {
     historyIncome: (context) => const HistoryIncomeScreen(),
     missions: (context) => const MissionsScreen(),
     categories: (context) => const CategoriesScreen(),
+    newCategory: (context) => const NewCategoryScreen(),
   };
 }

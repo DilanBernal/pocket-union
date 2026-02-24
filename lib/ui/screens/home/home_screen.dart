@@ -28,13 +28,13 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           switch (indexScreen) {
-            0 => NewEntryScreen(),
+            0 => Expanded(child: NewEntryScreen()),
             1 => Expanded(
                   child: StartHeroWidget(
                 name1: "1",
                 name2: "2",
               )),
-            2 => NewOutScreen(),
+            2 => Expanded(child: NewOutScreen()),
             int() => throw UnimplementedError(),
           }
         ],

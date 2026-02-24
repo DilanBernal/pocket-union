@@ -1,120 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/core/providers.dart';
-import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:pocket_union/ui/screens/transactions/in/widgets/new_entry_form.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class NewEntryScreen extends ConsumerStatefulWidget {
+class NewEntryScreen extends ConsumerWidget {
   const NewEntryScreen({super.key});
 
   @override
-  ConsumerState<NewEntryScreen> createState() => _NewEntryScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesAsync = ref.watch(incomeCategoriesProvider);
 
-class _NewEntryScreenState extends ConsumerState<NewEntryScreen> {
-  // List<String> _categoryNames = [];
-  // Map<String, IconData> _categoryIcons = {};
-  // Map<String, String> _categoriesId = {};
-  bool _loadingCategories = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCategories();
-  }
-
-  Future<void> _loadCategories() async {
-    try {
-      final categories = await _getAllCategories();
-      final names = await _getAllCategoriesNames(categories);
-      // final icons = await _getAllCategoriesIcons(categories);
-      // final ids = await _getAllCategoriesId(categories);
-      // setState(() {
-      //   _categoryNames = names;
-      //   _categoryIcons = icons;
-      //   _categoriesId = ids;
-      //   _loadingCategories = false;
-      // });
-      debugPrint(names.toString());
-      debugPrint("hola");
-    } catch (e) {
-      _loadingCategories = false;
-      throw Exception(e);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [
-      FormTitle(title: "Agregar entrada de dinero"),
-      _loadingCategories ? const CircularProgressIndicator() : NewEntryForm()
-    ]);
-  }
-
-  Future<void> _createEntry(
-      Map<String, String> values, IncomeDaoSqlite revRepo) async {
-    final prefs = await SharedPreferences.getInstance();
-    final idUser = prefs.getString('userId');
-    debugPrint(values as String?);
-    try {
-      final name = values['nombre']!;
-      final DateTime date =
-          DateTime.tryParse(values['fecha']!) ?? DateTime.now();
-      final price = double.tryParse(values['precio']!);
-      final description = values['descripcion'];
-      if (name.trim() != '' && price! > 50) {
-        final income = NewIncomeDto(
-            amount: price,
-            name: name,
-            importanceLevel: 3,
-            categoryId: "",
-            isRecurring: false,
-            isReceived: false);
-        int idGenerated = await revRepo.insertRevenue(income);
-        debugPrint(idGenerated as String?);
-      }
-    } catch (e) {
-      return;
-    }
-  }
-
-  Future<List<Category>> _getAllCategories() async {
-    try {
-      var catRepo = ref.read(categoryDaoProvider);
-      List<Category> categoryList = await catRepo.getAllCategories();
-      return categoryList;
-    } catch (e) {
-      return [];
-    }
-  }
-
-  Future<List<String>> _getAllCategoriesNames(
-      List<Category> categoryList) async {
-    return categoryList.map((category) => category.name).toList();
-  }
-
-  Future<Map<String, IconData>> _getAllCategoriesIcons(
-      List<Category> categoryList) async {
-    Map<String, IconData> categories = {};
-    for (var value in categoryList) {
-      final result = <String, IconData>{value.name: IconData(2)};
-      categories.addEntries(result.entries);
-    }
-    return categories;
-  }
-
-  Future<Map<String, String>> _getAllCategoriesId(
-      List<Category> categoryList) async {
-    Map<String, String> categories = {};
-
-    for (var value in categoryList) {
-      final result = <String, String>{value.name: value.id};
-      categories.addEntries(result.entries);
-    }
-    return categories;
+    return categoriesAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 12),
+            Text('Error al cargar categorías: $err'),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => ref.invalidate(incomeCategoriesProvider),
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      ),
+      data: (categories) => SingleChildScrollView(
+        child: Column(
+          children: [
+            const FormTitle(title: "Agregar entrada de dinero"),
+            NewEntryForm(categories: categories),
+          ],
+        ),
+      ),
+    );
   }
 }
