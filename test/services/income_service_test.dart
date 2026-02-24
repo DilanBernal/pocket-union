@@ -69,6 +69,7 @@ void main() {
       name: 'Sueldo enero',
       amount: 1500.00,
       categoryId: 'cat-uuid-1',
+      isRecurring: false,
       isReceived: true,
       userId: 'user-uuid-1',
       description: 'Pago mensual',
@@ -118,6 +119,7 @@ void main() {
         name: 'Bono',
         amount: 500.0,
         categoryId: 'cat-2',
+        isRecurring: false,
         isReceived: true,
         userId: 'user-1',
       );
@@ -140,6 +142,7 @@ void main() {
         name: 'Dividendos',
         amount: 2000.0,
         categoryId: 'cat-3',
+        isRecurring: false,
         isReceived: false,
         userId: null,
       );
@@ -162,6 +165,7 @@ void main() {
         name: 'Ingreso pareja',
         amount: 3000.0,
         categoryId: 'cat-4',
+        isRecurring: false,
         isReceived: false,
         userId: null,
         coupleId: 'couple-uuid-1',

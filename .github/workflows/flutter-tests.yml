@@ -1,0 +1,42 @@
+name: Flutter Tests
+
+on:
+  push:
+    branches: [ main, copilot/** ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Flutter Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Create .env placeholder for tests
+        run: |
+          echo "SUPABASE_API_URL=https://placeholder.supabase.co" > .env
+          echo "SUPABASE_ANON_KEY=placeholder_anon_key" >> .env
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate mocks with build_runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run unit and widget tests
+        run: flutter test test/ --reporter expanded
+
+      - name: Run integration tests
+        run: flutter test integration_test/ --reporter expanded

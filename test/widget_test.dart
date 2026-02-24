@@ -6,15 +6,23 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:pocket_union/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const PocketUnionApp(
-      isFirstLaunch: true,
-    ));
+  testWidgets('App smoke test: primera vez muestra StartScreen sin errores',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: PocketUnionApp(
+          isFirstLaunch: true,
+          isInSession: false,
+        ),
+      ),
+    );
+    // Verify the app renders without crashing
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }
