@@ -2,7 +2,7 @@ name: pocket_union
 version: 0.0.3
 
 environment:
-  sdk: ^3.6.2
+  sdk: ^3.8.0
 
 dependencies:
   flutter:
