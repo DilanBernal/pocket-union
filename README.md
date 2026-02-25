@@ -1,16 +1,31 @@
-# our_finances
+# Pocket Union 🎸
+### "Finanzas sin drama: Solo tú, tu pareja y vuestras metas."
 
-Una aplicacion personal para controlar las finanzas, pensada para mi pareja y yo
+**Pocket Union** es la aplicación definitiva para parejas que quieren tomar el control de su economía sin complicaciones. Olvida las hojas de cálculo aburridas y las discusiones por dinero; aquí las finanzas se gestionan con transparencia total y estilo.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🚀 El Problema
+La gestión financiera compartida suele ser una fuente de fricción en las relaciones. La falta de visibilidad en tiempo real, la dificultad para rastrear quién pagó qué y la ausencia de objetivos comunes generan estrés. Las aplicaciones actuales suelen ser o muy individuales o demasiado corporativas y frías.
 
-A few resources to get you started if this is your first Flutter project:
+## 🎯 Nuestros Objetivos
+1.  **Transparencia Total:** Ambos miembros ven la realidad financiera al instante.
+2.  **Misiones en Pareja:** Crear y cumplir metas de ahorro (Misiones) de forma conjunta.
+3.  **Libertad Offline:** Registra tus gastos incluso sin conexión (en el metro o de viaje), la app se sincronizará cuando vuelvas a tener señal.
+4.  **Cero Estrés:** Automatizar el balance de gastos e ingresos para que la pareja se enfoque en lo que importa: su futuro.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## ⚡ Estilo e Identidad (The Vibe)
+Pocket Union no es una app de banco gris. Se inspira en la estética **Synthwave/Metal**, con temas oscuros profundos, neones vibrantes y fuentes con personalidad (como *Bungee* y *Sixtyfour*). Es una herramienta potente pero con el alma de un amplificador a todo volumen.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 🛠️ Stack Tecnológico
+*   **Framework:** Flutter (iOS/Android)
+*   **Estado:** Riverpod ^2.6.1 (Arquitectura reactiva)
+*   **Backend:** Supabase (Auth, Realtime DB)
+*   **Local DB:** SQLite (Estrategia offline-first)
+*   **UI:** Google Fonts + Custom Grid Painter
+
+---
+
+*Desarrollado con ❤️ (y mucho Rock) por Dilan Bernal.*
