@@ -11,30 +11,36 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
   final isInSession = prefs.getBool('isInSession') ?? false;
+  final coupleId = prefs.getString('coupleId');
+  final hasCoupleReady = coupleId != null && coupleId.isNotEmpty;
+
+  String initialRoute;
+  if (isFirstLaunch) {
+    initialRoute = AppRoutes.start;
+  } else if (!isInSession) {
+    initialRoute = AppRoutes.login;
+  } else if (!hasCoupleReady) {
+    initialRoute = AppRoutes.coupleSetup;
+  } else {
+    initialRoute = AppRoutes.home;
+  }
 
   runApp(
     ProviderScope(
-      child: PocketUnionApp(
-          isFirstLaunch: isFirstLaunch, isInSession: isInSession),
+      child: PocketUnionApp(initialRoute: initialRoute),
     ),
   );
 }
 
 class PocketUnionApp extends StatelessWidget {
-  final bool isFirstLaunch;
-  final bool isInSession;
+  final String initialRoute;
 
-  const PocketUnionApp(
-      {super.key, required this.isFirstLaunch, required this.isInSession});
+  const PocketUnionApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: isFirstLaunch
-          ? AppRoutes.start
-          : !isInSession
-              ? AppRoutes.login
-              : AppRoutes.home,
+      initialRoute: initialRoute,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.blackDarkTheme,
       themeMode: ThemeMode.system,

@@ -1,9 +1,10 @@
-import 'package:flutter/rendering.dart';
+import 'package:flutter/material.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/port/feat/category_port.dart';
 import 'package:pocket_union/dto/new_category_dto.dart';
+import 'package:pocket_union/dto/update_category_dto.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/models/category.dart';
@@ -38,44 +39,51 @@ class CategoryDaoSqlite extends CategoryPort {
   }
 
   @override
-  Future createDefaultCategories(String idCouple) async {
-    try {
-      final idHealthCategory = _uuid.v4();
-      final idHomeCategory = _uuid.v4();
-      final idPetCategory = _uuid.v4();
+  Future<List<Category>> createDefaultCategories(String idCouple) async {
+    final now = DateTime.now();
 
-      final db = await _dbHelper.database;
+    final defaultCategories = [
+      Category(
+          id: _uuid.v4(),
+          coupleId: idCouple,
+          name: 'Salud',
+          icon: Icons.health_and_safety.codePoint.toString(),
+          color: '#FFF44336',
+          createdAt: now,
+          categoryHost: CategoryHost.expense,
+          syncStatus: SyncStatus.pending),
+      Category(
+          id: _uuid.v4(),
+          coupleId: idCouple,
+          name: 'Hogar',
+          icon: Icons.home.codePoint.toString(),
+          color: '#FF2196F3',
+          createdAt: now,
+          categoryHost: CategoryHost.expense,
+          syncStatus: SyncStatus.pending),
+      Category(
+          id: _uuid.v4(),
+          coupleId: idCouple,
+          name: 'Mascotas',
+          icon: Icons.pets.codePoint.toString(),
+          color: '#FF4CAF50',
+          createdAt: now,
+          categoryHost: CategoryHost.expense,
+          syncStatus: SyncStatus.pending),
+    ];
 
-      final healthCategory = Category(
-          id: idHealthCategory,
-          coupleId: idCouple,
-          name: "Salud",
-          createdAt: DateTime.now(),
-          categoryHost: CategoryHost.expense,
-          syncStatus: SyncStatus.pending);
-      final homeCategory = Category(
-          id: idHomeCategory,
-          coupleId: idCouple,
-          name: "Hogar",
-          createdAt: DateTime.now(),
-          categoryHost: CategoryHost.expense,
-          syncStatus: SyncStatus.pending);
-      final petCategory = Category(
-          id: idPetCategory,
-          coupleId: idCouple,
-          name: "Mascotas",
-          createdAt: DateTime.now(),
-          categoryHost: CategoryHost.expense,
-          syncStatus: SyncStatus.pending);
+    final db = await _dbHelper.database;
 
-      await Future.wait([
-        db.insert('category', healthCategory.toJson()),
-        db.insert('category', petCategory.toJson()),
-        db.insert('category', homeCategory.toJson())
-      ]);
-    } catch (e) {
-      debugPrint(e.toString());
-    }
+    var resultCouple = await db.query('couple');
+
+    await Future.wait(
+      defaultCategories.map(
+        (cat) => db.insert('category', cat.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace),
+      ),
+    );
+
+    return defaultCategories;
   }
 
   @override
@@ -111,5 +119,101 @@ class CategoryDaoSqlite extends CategoryPort {
     } catch (e) {
       throw Exception("Error al obtener categorías por host: $e");
     }
+  }
+
+  @override
+  Future<bool> updateCategory(UpdateCategoryDto dto) async {
+    final db = await _dbHelper.database;
+    try {
+      final updateData = dto.toUpdateMap();
+      updateData['local_updated_at'] = DateTime.now().toIso8601String();
+      updateData['sync_status'] = SyncStatus.pending.value.toLowerCase();
+
+      final count = await db.update(
+        'category',
+        updateData,
+        where: 'id = ?',
+        whereArgs: [dto.id],
+      );
+      return count > 0;
+    } catch (e) {
+      debugPrint('CategoryDaoSqlite: Error actualizando categoría: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> updateCategories(List<UpdateCategoryDto> dtos) async {
+    final db = await _dbHelper.database;
+    try {
+      await db.transaction((txn) async {
+        for (final dto in dtos) {
+          final updateData = dto.toUpdateMap();
+          updateData['local_updated_at'] = DateTime.now().toIso8601String();
+          updateData['sync_status'] = SyncStatus.pending.value.toLowerCase();
+
+          await txn.update(
+            'category',
+            updateData,
+            where: 'id = ?',
+            whereArgs: [dto.id],
+          );
+        }
+      });
+      return true;
+    } catch (e) {
+      debugPrint('CategoryDaoSqlite: Error actualizando categorías: $e');
+      return false;
+    }
+  }
+
+  /// Obtiene una categoría por ID.
+  Future<Category?> getCategoryById(String id) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query('category', where: 'id = ?', whereArgs: [id]);
+    if (maps.isEmpty) return null;
+    return Category.fromMap(maps.first);
+  }
+
+  /// Obtiene categorías que necesitan sincronización:
+  /// - sync_status = 'pending' (nunca sincronizadas — necesitan INSERT)
+  /// - last_sync_at IS NOT NULL AND local_updated_at > last_sync_at (ya sincronizadas con cambios locales — necesitan UPDATE)
+  Future<List<Category>> getCategoriesNeedingSync() async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'category',
+      where:
+          "is_deleted = 0 AND (sync_status = 'pending' OR (last_sync_at IS NOT NULL AND local_updated_at > last_sync_at))",
+    );
+    return maps.map((m) => Category.fromMap(m)).toList();
+  }
+
+  /// Actualiza el estado de sincronización de una categoría.
+  Future<void> updateSyncStatus(
+      String categoryId, SyncStatus status, {DateTime? lastSyncAt}) async {
+    final db = await _dbHelper.database;
+    final data = <String, dynamic>{
+      'sync_status': status.value.toLowerCase(),
+    };
+    if (lastSyncAt != null) {
+      data['last_sync_at'] = lastSyncAt.toIso8601String();
+    }
+    await db.update('category', data, where: 'id = ?', whereArgs: [categoryId]);
+  }
+
+  @override
+  Future<bool> syncCategory(String categoryId) {
+    // Sync solo se implementa en el Service
+    throw UnimplementedError(
+        'syncCategory solo se implementa en CategoryService');
+  }
+
+  @override
+  Future<Map<String, bool>> syncAllCategories() {
+    // Sync solo se implementa en el Service
+    throw UnimplementedError(
+        'syncAllCategories solo se implementa en CategoryService');
+  }
+}
   }
 }

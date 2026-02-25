@@ -5,6 +5,7 @@ class Couple {
   final DateTime createdAt;
   final String? user1Id;
   final String? user2Id;
+  final String? inviteCode;
   final CoupleUsableState isUsable;
 
   Couple({
@@ -12,6 +13,7 @@ class Couple {
     required this.createdAt,
     this.user1Id,
     this.user2Id,
+    this.inviteCode,
     this.isUsable = CoupleUsableState.waiting,
   });
 
@@ -21,6 +23,7 @@ class Couple {
       'created_at': createdAt.toIso8601String(),
       'user1_id': user1Id,
       'user2_id': user2Id,
+      'invite_code': inviteCode,
       'is_usable': isUsable.value,
     };
   }
@@ -31,7 +34,8 @@ class Couple {
       createdAt: DateTime.parse(map['created_at']),
       user1Id: map['user1_id'],
       user2Id: map['user2_id'],
-      isUsable: CoupleUsableState.fromString(map['is_usable']),
+      inviteCode: map['invite_code'],
+      isUsable: CoupleUsableState.fromString(map['is_usable'] ?? 'WAITING'),
     );
   }
 
@@ -41,6 +45,7 @@ class Couple {
       'created_at': createdAt.toIso8601String(),
       'user1_id': user1Id,
       'user2_id': user2Id,
+      'invite_code': inviteCode,
       'is_usable': isUsable.value,
     };
   }
@@ -51,7 +56,8 @@ class Couple {
       createdAt: DateTime.parse(json['created_at']),
       user1Id: json['user1_id'],
       user2Id: json['user2_id'],
-      isUsable: CoupleUsableState.fromString(json['is_usable']),
+      inviteCode: json['invite_code'],
+      isUsable: CoupleUsableState.fromString(json['is_usable'] ?? 'WAITING'),
     );
   }
 }

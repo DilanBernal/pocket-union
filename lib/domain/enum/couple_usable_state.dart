@@ -1,7 +1,7 @@
 enum CoupleUsableState {
   waiting('WAITING'),
-  active('ACTIVE'),
-  inactive('INACTIVE');
+  ready('READY'),
+  canceled('CANCELED');
 
   final String value;
 
@@ -9,7 +9,7 @@ enum CoupleUsableState {
 
   static CoupleUsableState fromString(String value) {
     return CoupleUsableState.values.firstWhere(
-      (e) => e.value == value,
+      (e) => e.value == value.toUpperCase(),
       orElse: () => CoupleUsableState.waiting,
     );
   }

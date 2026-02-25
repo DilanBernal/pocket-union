@@ -43,7 +43,7 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
 
       if (!mounted) return;
 
-      // Mostrar diálogo de confirmación de emailq
+      // Mostrar diálogo de confirmación de email
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -63,7 +63,8 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    "Una vez confirmes tu correo, podrás acceder a tu cuenta.",
+                    "Después de confirmar tu correo, inicia sesión para "
+                    "sincronizar con tu pareja. Este paso requiere internet.",
                     style: TextStyle(
                       fontSize: 12,
                       fontStyle: FontStyle.italic,

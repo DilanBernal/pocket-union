@@ -1,30 +1,187 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers.dart';
-import 'package:pocket_union/core/services/features/category_service.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
+import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/category.dart' as domain;
-import 'package:pocket_union/domain/port/feat/category_port.dart';
 import 'package:pocket_union/ui/router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class CategoriesListScreen extends ConsumerWidget {
+class CategoriesListScreen extends ConsumerStatefulWidget {
   const CategoriesListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CategoriesListScreen> createState() =>
+      _CategoriesListScreenState();
+}
+
+class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
+  bool _isCreatingDefaults = false;
+  bool _isSyncingAll = false;
+  final Set<String> _syncingIds = {};
+
+  Future<void> _navigateToNewCategory() async {
+    await Navigator.pushNamed(context, AppRoutes.newCategory);
+    ref.invalidate(allCategoriesProvider);
+    ref.invalidate(incomeCategoriesProvider);
+  }
+
+  Future<void> _createDefaultCategories() async {
+    setState(() => _isCreatingDefaults = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final coupleId = prefs.getString('coupleId') ?? '';
+
+      try {
+        final service = await ref.read(categoryServiceProvider.future);
+        await service.createDefaultCategories(coupleId);
+      } catch (_) {
+        final dao = ref.read(categoryDaoProvider);
+        await dao.createDefaultCategories(coupleId);
+      }
+
+      ref.invalidate(allCategoriesProvider);
+      ref.invalidate(incomeCategoriesProvider);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Categorías por defecto creadas exitosamente'),
+          backgroundColor: Colors.green,
+          duration: Durations.extralong4,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al crear categorías: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isCreatingDefaults = false);
+    }
+  }
+
+  Future<void> _syncSingleCategory(String categoryId) async {
+    if (_syncingIds.contains(categoryId)) return;
+    setState(() => _syncingIds.add(categoryId));
+
+    try {
+      final service = await ref.read(categoryServiceProvider.future);
+      final success = await service.syncCategory(categoryId);
+
+      ref.invalidate(allCategoriesProvider);
+      ref.invalidate(incomeCategoriesProvider);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success
+              ? 'Categoría sincronizada exitosamente'
+              : 'Error al sincronizar. Se marcó como conflicto.'),
+          backgroundColor: success ? Colors.green : Colors.orange,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al sincronizar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _syncingIds.remove(categoryId));
+    }
+  }
+
+  Future<void> _syncAllCategories() async {
+    setState(() => _isSyncingAll = true);
+
+    try {
+      final service = await ref.read(categoryServiceProvider.future);
+      final results = await service.syncAllCategories();
+
+      ref.invalidate(allCategoriesProvider);
+      ref.invalidate(incomeCategoriesProvider);
+
+      if (!mounted) return;
+
+      if (results.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Todas las categorías ya están sincronizadas'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+
+      final successCount = results.values.where((v) => v).length;
+      final failCount = results.values.where((v) => !v).length;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(failCount == 0
+              ? '$successCount categoría(s) sincronizada(s) exitosamente'
+              : '$successCount sincronizada(s), $failCount con conflicto'),
+          backgroundColor: failCount == 0 ? Colors.green : Colors.orange,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al sincronizar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSyncingAll = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(allCategoriesProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Categorías'),
         backgroundColor: const Color.fromRGBO(46, 0, 76, 0.75),
+        actions: [
+          IconButton(
+            onPressed: _isSyncingAll ? null : _syncAllCategories,
+            icon: _isSyncingAll
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.cloud_sync),
+            tooltip: 'Sincronizar todas las categorías',
+          ),
+          IconButton(
+            onPressed: _isCreatingDefaults ? null : _createDefaultCategories,
+            icon: _isCreatingDefaults
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.playlist_add),
+            tooltip: 'Crear categorías por defecto',
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.pushNamed(context, AppRoutes.newCategory);
-          ref.invalidate(allCategoriesProvider);
-          ref.invalidate(incomeCategoriesProvider);
-        },
+        onPressed: _navigateToNewCategory,
         child: const Icon(Icons.add),
       ),
       body: categoriesAsync.when(
@@ -59,25 +216,23 @@ class CategoriesListScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: () async {
-                      await Navigator.pushNamed(context, AppRoutes.newCategory);
-                      ref.invalidate(allCategoriesProvider);
-                      ref.invalidate(incomeCategoriesProvider);
-                    },
+                    onPressed: _navigateToNewCategory,
                     icon: const Icon(Icons.add),
                     label: const Text('Crear primera categoría'),
                   ),
+                  const SizedBox(height: 8),
                   ElevatedButton.icon(
-                    onPressed: () async {
-                      // await Navigator.pushNamed(context, AppRoutes.newCategory);
-                      ref.invalidate(allCategoriesProvider);
-                      ref.invalidate(incomeCategoriesProvider);
-                      final service =
-                          await ref.watch(categoryServiceProvider.future);
-                      await _createDefaultCategories(service);
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Crear categorías por defecto'),
+                    onPressed:
+                        _isCreatingDefaults ? null : _createDefaultCategories,
+                    icon: _isCreatingDefaults
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.playlist_add),
+                    label: Text(_isCreatingDefaults
+                        ? 'Creando...'
+                        : 'Crear categorías por defecto'),
                   ),
                 ],
               ),
@@ -160,37 +315,57 @@ class CategoriesListScreen extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             )
           : null,
-      trailing: _buildSyncBadge(category.syncStatus.value),
+      trailing: _buildSyncBadge(category),
     );
   }
 
-  Widget _buildSyncBadge(String syncStatus) {
+  Widget _buildSyncBadge(domain.Category category) {
+    final isSyncing = _syncingIds.contains(category.id);
+    final syncStatus = category.syncStatus;
+
+    if (isSyncing) {
+      return const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+
     final IconData icon;
     final Color color;
+    final bool isTappable;
 
     switch (syncStatus) {
-      case 'SYNCED':
+      case SyncStatus.synced:
         icon = Icons.cloud_done;
         color = Colors.green;
-      case 'PENDING':
+        isTappable = false;
+      case SyncStatus.pending:
         icon = Icons.cloud_upload_outlined;
         color = Colors.orange;
-      case 'CONFLICT':
+        isTappable = true;
+      case SyncStatus.conflict:
         icon = Icons.warning_amber;
         color = Colors.red;
-      default:
+        isTappable = true;
+      case SyncStatus.deleted:
         icon = Icons.cloud_off;
         color = Colors.grey;
+        isTappable = false;
+    }
+
+    if (isTappable) {
+      return IconButton(
+        onPressed: () => _syncSingleCategory(category.id),
+        icon: Icon(icon, color: color, size: 20),
+        tooltip: syncStatus == SyncStatus.conflict
+            ? 'Reintentar sincronización'
+            : 'Sincronizar',
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+      );
     }
 
     return Icon(icon, color: color, size: 20);
-  }
-
-  Future<void> _createDefaultCategories(CategoryPort categoryService) async {
-    try {
-      await categoryService.createDefaultCategories("");
-    } catch (e) {
-      debugPrint(e.toString());
-    }
   }
 }

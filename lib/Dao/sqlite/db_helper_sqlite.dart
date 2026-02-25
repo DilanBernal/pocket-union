@@ -74,6 +74,7 @@ class DbSqlite {
           created_at TEXT NOT NULL,
           user1_id TEXT,
           user2_id TEXT,
+          invite_code TEXT UNIQUE,
           is_usable TEXT NOT NULL DEFAULT 'WAITING',
           FOREIGN KEY(user1_id) REFERENCES profile(id) ON DELETE SET NULL,
           FOREIGN KEY(user2_id) REFERENCES profile(id) ON DELETE SET NULL
@@ -94,7 +95,7 @@ class DbSqlite {
           -- Campos de sincronización
           sync_status TEXT NOT NULL DEFAULT 'pending' CHECK(sync_status IN ('pending', 'synced', 'conflict')),
           last_sync_at TEXT,
-          local_updated_at TEXT NOT NULL,
+          local_updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
           is_deleted INTEGER NOT NULL DEFAULT 0,
           FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE
         )
@@ -166,18 +167,18 @@ class DbSqlite {
           amount INTEGER NOT NULL,  -- En centavos
           description TEXT,
           category_id TEXT NOT NULL,
-          transaction_date TEXT NOT NULL,
+          transaction_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
           is_recurring INTEGER NOT NULL DEFAULT 0,
           recurrence_interval TEXT,  -- JSON serializado
           is_received INTEGER NOT NULL DEFAULT 1,
           received_in TEXT,  -- JSON serializado
           created_at TEXT NOT NULL,
           name TEXT NOT NULL CHECK(length(name) < 100),
-          user_recipient_id TEXT NOT NULL,
+          user_recipient_id TEXT NULL,
           -- Campos de sincronización
           sync_status TEXT NOT NULL DEFAULT 'pending',
           last_sync_at TEXT,
-          local_updated_at TEXT NOT NULL,
+          local_updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
           is_deleted INTEGER NOT NULL DEFAULT 0,
           FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
           FOREIGN KEY(category_id) REFERENCES category(id) ON DELETE RESTRICT,

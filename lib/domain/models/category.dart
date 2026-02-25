@@ -11,6 +11,8 @@ class Category {
   final DateTime createdAt;
   final CategoryHost categoryHost;
   SyncStatus syncStatus;
+  DateTime? lastSyncAt;
+  DateTime localUpdatedAt;
 
   Category({
     required this.id,
@@ -22,7 +24,9 @@ class Category {
     required this.createdAt,
     required this.categoryHost,
     required this.syncStatus,
-  });
+    this.lastSyncAt,
+    DateTime? localUpdatedAt,
+  }) : localUpdatedAt = localUpdatedAt ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
     return {
@@ -30,11 +34,13 @@ class Category {
       'couple_id': coupleId,
       'name': name,
       'icon': icon,
-      'short_description': shortDescription,
+      'short_description': shortDescription ?? '',
       'color': color,
       'created_at': createdAt.toIso8601String(),
       'category_host': categoryHost.value,
-      'sync_status': syncStatus.value
+      'sync_status': syncStatus.value.toLowerCase(),
+      'last_sync_at': lastSyncAt?.toIso8601String(),
+      'local_updated_at': localUpdatedAt.toIso8601String(),
     };
   }
 
@@ -49,7 +55,13 @@ class Category {
         createdAt: DateTime.parse(map['created_at']),
         categoryHost: CategoryHost.fromString(map['category_host']),
         syncStatus: SyncStatus.fromString(
-            (map['sync_status'] as String? ?? 'pending').toUpperCase()));
+            (map['sync_status'] as String? ?? 'pending').toUpperCase()),
+        lastSyncAt: map['last_sync_at'] != null
+            ? DateTime.parse(map['last_sync_at'])
+            : null,
+        localUpdatedAt: map['local_updated_at'] != null
+            ? DateTime.parse(map['local_updated_at'])
+            : DateTime.now());
   }
 
   Map<String, dynamic> toJson() {
@@ -71,7 +83,7 @@ class Category {
         coupleId: json['couple_id'],
         name: json['name'],
         icon: json['icon'],
-        shortDescription: json['short_description'],
+        shortDescription: json['short_description'] ?? '',
         color: json['color'],
         createdAt: DateTime.parse(json['created_at']),
         categoryHost: CategoryHost.fromString(json['category_host']),

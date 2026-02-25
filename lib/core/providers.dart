@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/couple_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/income_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
 import 'package:pocket_union/core/services/auth/auth_service.dart';
+import 'package:pocket_union/core/services/auth/couple_service.dart';
 import 'package:pocket_union/core/services/features/category_service.dart';
 import 'package:pocket_union/core/services/features/income_service.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/models/category.dart';
+import 'package:pocket_union/domain/models/couple.dart';
 import 'package:pocket_union/domain/models/income.dart';
 import 'package:pocket_union/domain/models/user.dart';
+import 'package:pocket_union/domain/port/auth/couple_port.dart';
 import 'package:pocket_union/domain/port/feat/category_port.dart';
 import 'package:pocket_union/domain/port/feat/income_port.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,6 +45,12 @@ final userDaoProvider = Provider<UserPort>((ref) {
 final categoryDaoProvider = Provider<CategoryDaoSqlite>((ref) {
   final dbHelper = ref.read(sqliteDbProvider);
   return CategoryDaoSqlite(dbHelper: dbHelper);
+});
+
+// CoupleDaoSqlite provider
+final coupleDaoProvider = Provider<CoupleDaoSqlite>((ref) {
+  final dbHelper = ref.read(sqliteDbProvider);
+  return CoupleDaoSqlite(dbHelper: dbHelper);
 });
 
 // SharedPreferences provider with lazy initialization
@@ -90,8 +100,35 @@ final currentUserProvider = FutureProvider<DomainUser?>((ref) async {
   return await userDao.getCurrentUser();
 });
 
+// CoupleService provider (requiere internet para create/join)
+final coupleServiceProvider = FutureProvider<CouplePort>((ref) async {
+  final supabaseClient = await ref.watch(supabaseClientProvider.future);
+  final coupleDao = ref.watch(coupleDaoProvider);
+  final prefs = await ref.watch(sharedPreferencesProvider.future);
+  return CoupleService(coupleDao, supabaseClient, prefs);
+});
+
+// Estado actual del couple del usuario
+final currentCoupleProvider = FutureProvider<Couple?>((ref) async {
+  final prefs = await ref.watch(sharedPreferencesProvider.future);
+  final userId = prefs.getString('idUser');
+  if (userId == null) return null;
+
+  try {
+    final coupleService = await ref.watch(coupleServiceProvider.future);
+    final couple = await coupleService.getCoupleByUserId(userId);
+    if (couple != null) {
+      await prefs.setString('coupleId', couple.id);
+    }
+    return couple;
+  } catch (_) {
+    final coupleDao = ref.watch(coupleDaoProvider);
+    return coupleDao.getCoupleByUserId(userId);
+  }
+});
+
 // CategoryService provider (offline-first)
-final categoryServiceProvider = FutureProvider<CategoryPort>((ref) async {
+final categoryServiceProvider = FutureProvider<CategoryService>((ref) async {
   final supabaseClient = await ref.watch(supabaseClientProvider.future);
   final categoryDao = ref.watch(categoryDaoProvider);
   return CategoryService(categoryDao, supabaseClient);

@@ -3,10 +3,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers.dart';
+import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginForm extends ConsumerStatefulWidget {
@@ -57,15 +59,53 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
         // Mostrar notificación de bienvenida
         if (mounted && response.session != null) {
+          // Check couple status to decide where to navigate
+          final prefs = await SharedPreferences.getInstance();
+          final coupleId = prefs.getString('coupleId');
+
+          String targetRoute;
+          String welcomeMessage;
+
+          if (coupleId != null && coupleId.isNotEmpty) {
+            // Has couple — check if it's READY
+            try {
+              final coupleService =
+                  await ref.read(coupleServiceProvider.future);
+              final couple = await coupleService.getCoupleByUserId(
+                  response.user!.id);
+
+              if (couple != null &&
+                  couple.isUsable == CoupleUsableState.ready) {
+                targetRoute = AppRoutes.home;
+                welcomeMessage =
+                    '¡Bienvenido de vuelta! Ya puedes usar la aplicación.';
+              } else {
+                targetRoute = AppRoutes.coupleSetup;
+                welcomeMessage =
+                    'Aún falta que tu pareja se una. Completa la configuración.';
+              }
+            } catch (_) {
+              // If we can't check, go to couple setup to verify
+              targetRoute = AppRoutes.coupleSetup;
+              welcomeMessage =
+                  'Verifica la conexión con tu pareja.';
+            }
+          } else {
+            // No couple yet — must set up
+            targetRoute = AppRoutes.coupleSetup;
+            welcomeMessage =
+                '¡Bienvenido! Ahora sincroniza con tu pareja para comenzar.';
+          }
+
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text(
-                  "¡Bienvenido! Ya puedes empezar a usar la aplicación."),
+              content: Text(welcomeMessage),
               backgroundColor: Colors.green.shade600,
               duration: const Duration(seconds: 3),
             ),
           );
-          Navigator.pushReplacementNamed(context, AppRoutes.home);
+          Navigator.pushReplacementNamed(context, targetRoute);
         }
       }
     } on AuthException catch (error) {

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pocket_union/ui/screens/auth/login_screen.dart';
 import 'package:pocket_union/ui/screens/auth/register_screen.dart';
+import 'package:pocket_union/ui/screens/categories/categories_list_screen.dart';
 import 'package:pocket_union/ui/screens/categories/new_category_screen.dart';
-import 'package:pocket_union/ui/screens/categories_screen.dart';
+import 'package:pocket_union/ui/screens/couple/couple_setup_screen.dart';
 import 'package:pocket_union/ui/screens/history_expenses_screen.dart';
 import 'package:pocket_union/ui/screens/history_income_screen.dart';
 import 'package:pocket_union/ui/screens/home/home_screen.dart';
@@ -22,6 +23,7 @@ class AppRoutes {
   static const String missions = '/missions';
   static const String categories = '/categories';
   static const String newCategory = '/new-category';
+  static const String coupleSetup = '/couple-setup';
 
   static Map<String, WidgetBuilder> routes = {
     start: (context) => const StartScreen(),
@@ -32,7 +34,8 @@ class AppRoutes {
     historyExpenses: (context) => const HistoryExpensesScreen(),
     historyIncome: (context) => const HistoryIncomeScreen(),
     missions: (context) => const MissionsScreen(),
-    categories: (context) => const CategoriesScreen(),
+    categories: (context) => const CategoriesListScreen(),
     newCategory: (context) => const NewCategoryScreen(),
+    coupleSetup: (context) => const CoupleSetupScreen(),
   };
 }

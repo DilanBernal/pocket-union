@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/domain/models/user.dart';
 import 'package:pocket_union/domain/port/auth/auth_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
@@ -44,12 +45,30 @@ class AuthService extends AuthPort {
       try {
         final coupleRows = await _supabaseClient
             .from('couple')
-            .select('id')
+            .select('id, user1_id, user2_id, is_usable')
             .or('user1_id.eq.${loginRes.user!.id},user2_id.eq.${loginRes.user!.id}')
             .limit(1);
         if (coupleRows.isNotEmpty) {
           await _sharedPreferences.setString(
               'coupleId', coupleRows.first['id']);
+          if (coupleRows.first['is_usable'] == CoupleUsableState.ready.value) {
+            final idToSearch = loginRes.user!.id == coupleRows.first['user1_id']
+                ? coupleRows.first['user2_id']
+                : coupleRows.first['user1_id'];
+            DomainUser coupleProfile = DomainUser.fromMap(await _supabaseClient
+                .from('profile')
+                .select()
+                .eq('id', idToSearch)
+                .single());
+
+            coupleProfile.inCloud = true;
+
+            await Future.wait([
+              _userDaoPort.upsertUser(coupleProfile),
+              _sharedPreferences.setString(
+                  "coupleProfile", coupleProfile.toString())
+            ]);
+          }
         }
       } catch (e) {
         debugPrint('No se pudo obtener coupleId: $e');
@@ -111,7 +130,11 @@ class AuthService extends AuthPort {
       var resultados = await Future.wait([
         _userDaoPort.deleteAllUsers(),
         _sharedPreferences.setBool('isFirstLaunch', true),
-        _sharedPreferences.setBool('isInSession', false)
+        _sharedPreferences.setBool('isInSession', false),
+        _sharedPreferences.remove('coupleId'),
+        _sharedPreferences.remove('inviteCode'),
+        _sharedPreferences.remove('idUser'),
+        _sharedPreferences.remove('coupleProfile'),
       ]);
       if (resultados.isNotEmpty) {
         debugPrint("SharedPreferences limpiado - isFirstLaunch reset");
