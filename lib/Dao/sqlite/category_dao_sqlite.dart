@@ -20,8 +20,11 @@ class CategoryDaoSqlite extends CategoryPort {
     final db = await _dbHelper.database;
     var id = _uuid.v4();
     var categoryEntity = NewCategoryDto.toCategoryDomain(category, id);
-    await db.insert('category', categoryEntity.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+      'category',
+      categoryEntity.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
     return id;
   }
 
@@ -44,32 +47,35 @@ class CategoryDaoSqlite extends CategoryPort {
 
     final defaultCategories = [
       Category(
-          id: _uuid.v4(),
-          coupleId: idCouple,
-          name: 'Salud',
-          icon: Icons.health_and_safety.codePoint.toString(),
-          color: '#FFF44336',
-          createdAt: now,
-          categoryHost: CategoryHost.expense,
-          syncStatus: SyncStatus.pending),
+        id: _uuid.v4(),
+        coupleId: idCouple,
+        name: 'Salud',
+        icon: Icons.health_and_safety.codePoint.toString(),
+        color: '#FFF44336',
+        createdAt: now,
+        categoryHost: CategoryHost.expense,
+        syncStatus: SyncStatus.pending,
+      ),
       Category(
-          id: _uuid.v4(),
-          coupleId: idCouple,
-          name: 'Hogar',
-          icon: Icons.home.codePoint.toString(),
-          color: '#FF2196F3',
-          createdAt: now,
-          categoryHost: CategoryHost.expense,
-          syncStatus: SyncStatus.pending),
+        id: _uuid.v4(),
+        coupleId: idCouple,
+        name: 'Hogar',
+        icon: Icons.home.codePoint.toString(),
+        color: '#FF2196F3',
+        createdAt: now,
+        categoryHost: CategoryHost.expense,
+        syncStatus: SyncStatus.pending,
+      ),
       Category(
-          id: _uuid.v4(),
-          coupleId: idCouple,
-          name: 'Mascotas',
-          icon: Icons.pets.codePoint.toString(),
-          color: '#FF4CAF50',
-          createdAt: now,
-          categoryHost: CategoryHost.expense,
-          syncStatus: SyncStatus.pending),
+        id: _uuid.v4(),
+        coupleId: idCouple,
+        name: 'Mascotas',
+        icon: Icons.pets.codePoint.toString(),
+        color: '#FF4CAF50',
+        createdAt: now,
+        categoryHost: CategoryHost.expense,
+        syncStatus: SyncStatus.pending,
+      ),
     ];
 
     final db = await _dbHelper.database;
@@ -78,8 +84,11 @@ class CategoryDaoSqlite extends CategoryPort {
 
     await Future.wait(
       defaultCategories.map(
-        (cat) => db.insert('category', cat.toMap(),
-            conflictAlgorithm: ConflictAlgorithm.replace),
+        (cat) => db.insert(
+          'category',
+          cat.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        ),
       ),
     );
 
@@ -190,11 +199,12 @@ class CategoryDaoSqlite extends CategoryPort {
 
   /// Actualiza el estado de sincronización de una categoría.
   Future<void> updateSyncStatus(
-      String categoryId, SyncStatus status, {DateTime? lastSyncAt}) async {
+    String categoryId,
+    SyncStatus status, {
+    DateTime? lastSyncAt,
+  }) async {
     final db = await _dbHelper.database;
-    final data = <String, dynamic>{
-      'sync_status': status.value.toLowerCase(),
-    };
+    final data = <String, dynamic>{'sync_status': status.value.toLowerCase()};
     if (lastSyncAt != null) {
       data['last_sync_at'] = lastSyncAt.toIso8601String();
     }
@@ -205,15 +215,15 @@ class CategoryDaoSqlite extends CategoryPort {
   Future<bool> syncCategory(String categoryId) {
     // Sync solo se implementa en el Service
     throw UnimplementedError(
-        'syncCategory solo se implementa en CategoryService');
+      'syncCategory solo se implementa en CategoryService',
+    );
   }
 
   @override
   Future<Map<String, bool>> syncAllCategories() {
     // Sync solo se implementa en el Service
     throw UnimplementedError(
-        'syncAllCategories solo se implementa en CategoryService');
-  }
-}
+      'syncAllCategories solo se implementa en CategoryService',
+    );
   }
 }
