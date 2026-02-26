@@ -235,15 +235,15 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                               Navigator.pushReplacementNamed(
                                   context, AppRoutes.login);
                             },
-                          text: "¿Ya tienes una cuenta?\n",
+                          text: "¿Aun no tienes una cuenta?\n",
                           style: TextStyle(),
                           children: [
                             TextSpan(
-                              text: "¡Inicia sesión!",
+                              text: "¡Registrate!",
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
                                   Navigator.pushReplacementNamed(
-                                      context, AppRoutes.login);
+                                      context, AppRoutes.register);
                                 },
                             )
                           ]))

@@ -39,9 +39,31 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
     try {
       final authService = await ref.read(authServiceProvider.future);
       var res = await authService.register(
-          RegisterDto(email: _email, fullName: _fullName, password: _password));
+        RegisterDto(email: _email, fullName: _fullName, password: _password),
+      );
 
       if (!mounted) return;
+      if (res == null) {
+        showDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("¡Ocurrio un error al registrarse!"),
+              content: SingleChildScrollView(
+                child: ListBody(
+                  children: [
+                    const Text(
+                      "Se ha enviado un correo de confirmación a tu dirección de email.",
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+        return;
+      }
 
       // Mostrar diálogo de confirmación de email
       showDialog(
@@ -96,9 +118,7 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text("Error al registrarse"),
-              content: Text(
-                e.toString().replaceAll('Exception: ', ''),
-              ),
+              content: Text(e.toString().replaceAll('Exception: ', '')),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -113,7 +133,9 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
   }
 
   Future<void> _createUser(
-      Map<String, String> values, UserDaoSqlite userRepo) async {
+    Map<String, String> values,
+    UserDaoSqlite userRepo,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final bool isFirst = prefs.getBool('isFirstLaunch') ?? true;
     try {
@@ -121,7 +143,11 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
       final balance = double.tryParse(values['dinero']!) ?? 0.0;
       if (name.trim() != '' && isFirst == true) {
         final user = DomainUser(
-            id: '', fullName: name, balance: balance, inCloud: false);
+          id: '',
+          fullName: name,
+          balance: balance,
+          inCloud: false,
+        );
         var idGenerated = await userRepo.upsertUser(user);
         await prefs.setBool('userId', idGenerated);
         await prefs.setBool('isFirstLaunch', false);
@@ -138,136 +164,143 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
       key: widget._formKey,
       autovalidateMode: AutovalidateMode.onUnfocus,
       child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 20,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            FormTitle(
-              title: "Crea tu cuenta",
-              shadowColor: Colors.green,
-              textColor: Colors.white,
-              gradientColors: [Colors.purple.shade600, Colors.pink.shade700],
-            ),
-            Text(
-              "El futuro de vuestras finanzas comienza aqui.",
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge!
-                  .copyWith(fontSize: 19),
-            ),
-            AuthTextFormField(
-              colorFocusBorderInput: widget.colorFocusBorderInput,
-              icon: Icons.person_outline,
-              fieldLabel: "Nombres completos",
-              colorEnabledBorderInput: widget.colorEnabledBorderInput,
-              onSaved: (text) {
-                _fullName = text ?? '';
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return "Por favor, ingresa tu email.";
-                }
-                // if (!value.contains('@')) {
-                //   return 'Por favor, ingresa un email válido.';
-                // }
-                return null;
-              },
-            ),
-            AuthTextFormField(
-              colorFocusBorderInput: widget.colorFocusBorderInput,
-              colorEnabledBorderInput: widget.colorEnabledBorderInput,
-              icon: Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
-              fieldLabel: "Email",
-              onSaved: (text) {
-                _email = text ?? '';
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return "Por favor, ingresa tu email.";
-                }
-                if (!value.contains('@')) {
-                  return 'Por favor, ingresa un email válido.';
-                }
-                return null;
-              },
-            ),
-            AuthTextFormField(
-              colorFocusBorderInput: widget.colorFocusBorderInput,
-              colorEnabledBorderInput: widget.colorEnabledBorderInput,
-              keyboardType: TextInputType.visiblePassword,
-              icon: Icons.key,
-              fieldLabel: "Contraseña",
-              onSaved: (value) {
-                _password = value ?? '';
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return "Por favor, ingresa tu email.";
-                }
-                // if (!value.contains('@')) {
-                //   return 'Por favor, ingresa un email válido.';
-                // }
-                return null;
-              },
-            ),
-            Material(
-              borderOnForeground: false,
-              color: Colors.transparent,
-              type: MaterialType.button,
-              child: DecoratedBox(
-                position: DecorationPosition.background,
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [
-                      Color.fromARGB(255, 116, 11, 218),
-                      Color.fromRGBO(251, 0, 204, 1)
-                    ]),
-                    borderRadius: BorderRadiusGeometry.circular(20)),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: SizedBox(
-                    width: 300,
-                    child: Ink(
-                      child: InkWell(
-                        splashColor: Colors.blue,
-                        onTap: _handleCreateUser,
-                        child: Center(
-                            child: Text("Crear cuenta",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: (Theme.of(context)
-                                                .textTheme
-                                                .titleLarge!
-                                                .fontSize ??
-                                            40) *
-                                        1.3))),
+        mainAxisSize: MainAxisSize.min,
+        spacing: 20,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          FormTitle(
+            title: "Crea tu cuenta",
+            shadowColor: Colors.green,
+            textColor: Colors.white,
+            gradientColors: [Colors.purple.shade600, Colors.pink.shade700],
+          ),
+          Text(
+            "El futuro de vuestras finanzas comienza aqui.",
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge!.copyWith(fontSize: 19),
+          ),
+          AuthTextFormField(
+            colorFocusBorderInput: widget.colorFocusBorderInput,
+            icon: Icons.person_outline,
+            fieldLabel: "Nombres completos",
+            colorEnabledBorderInput: widget.colorEnabledBorderInput,
+            onSaved: (text) {
+              _fullName = text ?? '';
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return "Por favor, ingresa tu email.";
+              }
+              // if (!value.contains('@')) {
+              //   return 'Por favor, ingresa un email válido.';
+              // }
+              return null;
+            },
+          ),
+          AuthTextFormField(
+            colorFocusBorderInput: widget.colorFocusBorderInput,
+            colorEnabledBorderInput: widget.colorEnabledBorderInput,
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            fieldLabel: "Email",
+            onSaved: (text) {
+              _email = text ?? '';
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return "Por favor, ingresa tu email.";
+              }
+              if (!value.contains('@')) {
+                return 'Por favor, ingresa un email válido.';
+              }
+              return null;
+            },
+          ),
+          AuthTextFormField(
+            colorFocusBorderInput: widget.colorFocusBorderInput,
+            colorEnabledBorderInput: widget.colorEnabledBorderInput,
+            keyboardType: TextInputType.visiblePassword,
+            icon: Icons.key,
+            fieldLabel: "Contraseña",
+            onSaved: (value) {
+              _password = value ?? '';
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return "Por favor, ingresa tu email.";
+              }
+              // if (!value.contains('@')) {
+              //   return 'Por favor, ingresa un email válido.';
+              // }
+              return null;
+            },
+          ),
+          Material(
+            borderOnForeground: false,
+            color: Colors.transparent,
+            type: MaterialType.button,
+            child: DecoratedBox(
+              position: DecorationPosition.background,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color.fromARGB(255, 116, 11, 218),
+                    Color.fromRGBO(251, 0, 204, 1),
+                  ],
+                ),
+                borderRadius: BorderRadiusGeometry.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: SizedBox(
+                  width: 300,
+                  child: Ink(
+                    child: InkWell(
+                      splashColor: Colors.blue,
+                      onTap: _handleCreateUser,
+                      child: Center(
+                        child: Text(
+                          "Crear cuenta",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize:
+                                (Theme.of(
+                                      context,
+                                    ).textTheme.titleLarge!.fontSize ??
+                                    40) *
+                                1.3,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-            RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () {
-                        Navigator.pushReplacementNamed(
-                            context, AppRoutes.login);
-                      },
-                    text: "¿Ya tienes una cuenta?\n",
-                    style: TextStyle(),
-                    children: [
-                      TextSpan(
-                        text: "¡Inicia sesión!",
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            Navigator.pushReplacementNamed(
-                                context, AppRoutes.login);
-                          },
-                      )
-                    ]))
-          ]),
+          ),
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  Navigator.pushReplacementNamed(context, AppRoutes.login);
+                },
+              text: "¿Ya tienes una cuenta?\n",
+              style: TextStyle(),
+              children: [
+                TextSpan(
+                  text: "¡Inicia sesión!",
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      Navigator.pushReplacementNamed(context, AppRoutes.login);
+                    },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
