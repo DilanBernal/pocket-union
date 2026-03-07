@@ -54,8 +54,9 @@ final coupleDaoProvider = Provider<CoupleDaoSqlite>((ref) {
 });
 
 // SharedPreferences provider with lazy initialization
-final sharedPreferencesProvider =
-    FutureProvider<SharedPreferences>((ref) async {
+final sharedPreferencesProvider = FutureProvider<SharedPreferences>((
+  ref,
+) async {
   final instance = await SharedPreferences.getInstance();
   var isInSession = instance.getBool("isInSession");
   if (isInSession == null) {
@@ -145,6 +146,8 @@ final incomeServiceProvider = FutureProvider<IncomePort>((ref) async {
 final incomeCategoriesProvider = FutureProvider<List<Category>>((ref) async {
   try {
     final categoryService = await ref.watch(categoryServiceProvider.future);
+    final currentCoupleS = await ref.watch(currentCoupleProvider.future);
+    final idCouple = currentCoupleS?.id;
     return categoryService.getCategoriesByHost(CategoryHost.income);
   } catch (_) {
     final categoryDao = ref.watch(categoryDaoProvider);

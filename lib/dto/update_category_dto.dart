@@ -1,4 +1,5 @@
 import 'package:pocket_union/domain/enum/category_host.dart';
+import 'package:pocket_union/domain/enum/sync_status.dart';
 
 class UpdateCategoryDto {
   final String id;
@@ -7,6 +8,7 @@ class UpdateCategoryDto {
   final String? shortDescription;
   final String? color;
   final CategoryHost? host;
+  final SyncStatus? status;
 
   UpdateCategoryDto({
     required this.id,
@@ -15,6 +17,7 @@ class UpdateCategoryDto {
     this.shortDescription,
     this.color,
     this.host,
+    this.status = SyncStatus.pending,
   });
 
   /// Convierte solo los campos no-nulos a un Map para SQLite update.
@@ -25,6 +28,7 @@ class UpdateCategoryDto {
     if (shortDescription != null) map['short_description'] = shortDescription;
     if (color != null) map['color'] = color;
     if (host != null) map['category_host'] = host!.value;
+    if (status != null) map['sync_status'] = status!.value;
     return map;
   }
 

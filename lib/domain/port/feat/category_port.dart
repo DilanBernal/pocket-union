@@ -10,7 +10,11 @@ abstract class CategoryPort {
   Future deleteAllCategories();
   Future<bool> createCategories(List<NewCategoryDto> categories);
   Future<List<Category>> getAllCategories();
-  Future<List<Category>> getCategoriesByHost(CategoryHost host);
+  Future<List<Category>> getAllCategoriesByCouple({String? coupleId});
+  Future<List<Category>> getCategoriesByHost(
+    CategoryHost host, {
+    String? coupleId,
+  });
 
   /// Actualiza una sola categoría.
   Future<bool> updateCategory(UpdateCategoryDto dto);

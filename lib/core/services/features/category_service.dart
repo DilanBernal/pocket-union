@@ -67,11 +67,56 @@ class CategoryService implements CategoryPort {
 
   @override
   Future<List<Category>> getAllCategories() async {
-    return await _categoryDao.getAllCategories();
+    var categoriesInLocal = await _categoryDao.getAllCategories();
+
+    try {
+      final response = await _supabaseClient.from('category').select();
+      final List<Category> categoriesInCloud = (response as List)
+          // .map(toElement)
+          .map((e) => Category.fromJson(e)..syncStatus = SyncStatus.synced)
+          .toList();
+      List<Category> categoriesNewsInCloudNotLocal = [];
+      for (var categoryInCloud in categoriesInCloud) {
+        if (!categoriesInLocal.any((c) => c.id == categoryInCloud.id)) {
+          categoriesNewsInCloudNotLocal.add(categoryInCloud);
+        }
+      }
+      if (categoriesNewsInCloudNotLocal.isNotEmpty) {
+        await _categoryDao.updateCategories(
+          categoriesNewsInCloudNotLocal
+              .map(
+                (c) => UpdateCategoryDto(
+                  id: c.id,
+                  color: c.color,
+                  name: c.name,
+                  host: c.categoryHost,
+                  icon: c.icon,
+                  shortDescription: c.shortDescription,
+                  status: SyncStatus.synced,
+                ),
+              )
+              .toList(),
+        );
+        categoriesInLocal.addAll(categoriesNewsInCloudNotLocal);
+      }
+    } catch (e) {
+      debugPrint("Ocurrio un error con supabase, {e.toString()}");
+    }
+    return categoriesInLocal;
   }
 
   @override
-  Future<List<Category>> getCategoriesByHost(CategoryHost host) async {
+  Future<List<Category>> getAllCategoriesByCouple({String? coupleId}) async {
+    throw UnimplementedError(
+      'getAllCategoriesByCouple solo se implementa en CategoryService',
+    );
+  }
+
+  @override
+  Future<List<Category>> getCategoriesByHost(
+    CategoryHost host, {
+    String? coupleId,
+  }) async {
     return await _categoryDao.getCategoriesByHost(host);
   }
 
@@ -92,8 +137,11 @@ class CategoryService implements CategoryPort {
             .eq('id', dto.id);
 
         // Si Supabase fue exitoso, marcar como synced
-        await _categoryDao.updateSyncStatus(dto.id, SyncStatus.synced,
-            lastSyncAt: DateTime.now());
+        await _categoryDao.updateSyncStatus(
+          dto.id,
+          SyncStatus.synced,
+          lastSyncAt: DateTime.now(),
+        );
       }
     } catch (e) {
       debugPrint('CategoryService: Supabase update falló (no crítico): $e');
@@ -119,8 +167,11 @@ class CategoryService implements CategoryPort {
               .update(supabaseData)
               .eq('id', dto.id);
 
-          await _categoryDao.updateSyncStatus(dto.id, SyncStatus.synced,
-              lastSyncAt: DateTime.now());
+          await _categoryDao.updateSyncStatus(
+            dto.id,
+            SyncStatus.synced,
+            lastSyncAt: DateTime.now(),
+          );
         }
       } catch (e) {
         debugPrint('CategoryService: Supabase update falló para ${dto.id}: $e');
@@ -157,8 +208,11 @@ class CategoryService implements CategoryPort {
       }
 
       // Éxito — marcar como synced
-      await _categoryDao.updateSyncStatus(categoryId, SyncStatus.synced,
-          lastSyncAt: DateTime.now());
+      await _categoryDao.updateSyncStatus(
+        categoryId,
+        SyncStatus.synced,
+        lastSyncAt: DateTime.now(),
+      );
       return true;
     } catch (e) {
       debugPrint('CategoryService: syncCategory falló para $categoryId: $e');

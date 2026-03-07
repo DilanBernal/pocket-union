@@ -42,6 +42,36 @@ class CategoryDaoSqlite extends CategoryPort {
   }
 
   @override
+  Future<List<Category>> getAllCategoriesByCouple({String? coupleId}) async {
+    final db = await _dbHelper.database;
+    try {
+      if (coupleId == null) {
+        final coupleResult = await db.query(
+          'couple',
+          columns: ['couple_id'],
+          limit: 1,
+        );
+        if (coupleResult.firstOrNull == null) {
+          throw ArgumentError(
+            "No se pueden traer las categorias sin una couple",
+          );
+        }
+        coupleId = coupleResult.first as String;
+      }
+      final List<Map<String, dynamic>> maps = await db.query(
+        'category',
+        where: 'couple_id = ? AND is_deleted = 0',
+        whereArgs: [coupleId],
+      );
+      return List.generate(maps.length, (int i) {
+        return Category.fromMap(maps[i]);
+      });
+    } catch (e) {
+      throw Exception("Ocurrio un error $e");
+    }
+  }
+
+  @override
   Future<List<Category>> createDefaultCategories(String idCouple) async {
     final now = DateTime.now();
 
@@ -76,11 +106,20 @@ class CategoryDaoSqlite extends CategoryPort {
         categoryHost: CategoryHost.expense,
         syncStatus: SyncStatus.pending,
       ),
+
+      Category(
+        id: _uuid.v4(),
+        coupleId: idCouple,
+        name: 'Trabajo',
+        icon: Icons.business_center.codePoint.toString(),
+        color: '#FF4CAF50',
+        createdAt: now,
+        categoryHost: CategoryHost.income,
+        syncStatus: SyncStatus.pending,
+      ),
     ];
 
     final db = await _dbHelper.database;
-
-    var resultCouple = await db.query('couple');
 
     await Future.wait(
       defaultCategories.map(
@@ -114,7 +153,10 @@ class CategoryDaoSqlite extends CategoryPort {
   }
 
   @override
-  Future<List<Category>> getCategoriesByHost(CategoryHost host) async {
+  Future<List<Category>> getCategoriesByHost(
+    CategoryHost host, {
+    String? coupleId,
+  }) async {
     final db = await _dbHelper.database;
     try {
       final List<Map<String, dynamic>> maps = await db.query(
@@ -159,13 +201,14 @@ class CategoryDaoSqlite extends CategoryPort {
         for (final dto in dtos) {
           final updateData = dto.toUpdateMap();
           updateData['local_updated_at'] = DateTime.now().toIso8601String();
-          updateData['sync_status'] = SyncStatus.pending.value.toLowerCase();
+          updateData['sync_status'] ??= SyncStatus.pending.value.toLowerCase();
 
           await txn.update(
             'category',
             updateData,
             where: 'id = ?',
             whereArgs: [dto.id],
+            conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
       });

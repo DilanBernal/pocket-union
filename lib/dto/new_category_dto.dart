@@ -19,18 +19,22 @@ class NewCategoryDto {
     this.color,
   });
 
-  static Category toCategoryDomain(NewCategoryDto dto, String id,
-      {bool isSync = false}) {
+  static Category toCategoryDomain(
+    NewCategoryDto dto,
+    String id, {
+    bool isSync = false,
+  }) {
     var status = isSync ? SyncStatus.pending : SyncStatus.synced;
     return Category(
-        id: id,
-        coupleId: dto.coupleId ?? '',
-        name: dto.name,
-        createdAt: DateTime.now(),
-        categoryHost: dto.host,
-        icon: dto.icon,
-        shortDescription: dto.shortDescription,
-        color: dto.color,
-        syncStatus: status);
+      id: id,
+      coupleId: dto.coupleId ?? '',
+      name: dto.name,
+      createdAt: DateTime.now(),
+      categoryHost: dto.host,
+      icon: dto.icon,
+      shortDescription: dto.shortDescription,
+      color: dto.color,
+      syncStatus: status,
+    );
   }
 }
