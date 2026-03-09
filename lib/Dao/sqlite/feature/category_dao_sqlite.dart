@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
-import 'package:pocket_union/domain/port/cloud/feat/category_port_cloud.dart';
+import 'package:pocket_union/domain/port/local/category_port_local.dart';
 import 'package:pocket_union/dto/new_category_dto.dart';
 import 'package:pocket_union/dto/update_category_dto.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 import '../../../domain/models/category.dart';
 
-class CategoryDaoSqlite extends CategoryCloudPort {
+class CategoryDaoSqlite extends CategoryLocalPort {
   final DbSqlite _dbHelper;
   final Uuid _uuid = Uuid();
 
@@ -252,21 +252,5 @@ class CategoryDaoSqlite extends CategoryCloudPort {
       data['last_sync_at'] = lastSyncAt.toIso8601String();
     }
     await db.update('category', data, where: 'id = ?', whereArgs: [categoryId]);
-  }
-
-  @override
-  Future<bool> syncCategory(String categoryId) {
-    // Sync solo se implementa en el Service
-    throw UnimplementedError(
-      'syncCategory solo se implementa en CategoryService',
-    );
-  }
-
-  @override
-  Future<Map<String, bool>> syncAllCategories() {
-    // Sync solo se implementa en el Service
-    throw UnimplementedError(
-      'syncAllCategories solo se implementa en CategoryService',
-    );
   }
 }

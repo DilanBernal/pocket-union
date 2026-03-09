@@ -4,8 +4,8 @@ import 'package:pocket_union/Dao/sqlite/feature/couple_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/feature/income_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/feature/user_dao_sqlite.dart';
+import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/core/providers/utils_providers.dart';
-import 'package:pocket_union/core/services/features/category_service.dart';
 import 'package:pocket_union/core/services/features/income_service.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/models/category.dart';
@@ -41,13 +41,6 @@ final categoryDaoProvider = Provider<CategoryDaoSqlite>((ref) {
 final coupleDaoProvider = Provider<CoupleDaoSqlite>((ref) {
   final dbHelper = ref.read(sqliteDbProvider);
   return CoupleDaoSqlite(dbHelper: dbHelper);
-});
-
-// CategoryService provider (offline-first)
-final categoryServiceProvider = FutureProvider<CategoryService>((ref) async {
-  final supabaseClient = await ref.watch(supabaseClientProvider.future);
-  final categoryDao = ref.watch(categoryDaoProvider);
-  return CategoryService(categoryDao, supabaseClient);
 });
 
 // IncomeService provider (offline-first)

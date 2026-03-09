@@ -1,3 +1,4 @@
+import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/dto/new_category_dto.dart';
 import 'package:pocket_union/dto/update_category_dto.dart';
@@ -9,11 +10,17 @@ abstract class CategoryCloudPort {
   ///Elimina una categoria en el cloud usando el id de la categoria
   Future<bool> deleteCategory(String idCategory);
 
+  ///Limpia todas las categorias existentes en el almacenamiento local
+  Future deleteAllCategories();
+
   ///Crea varias categorias en el cloud, usando una lista de categorias
   Future<bool> createCategories(List<NewCategoryDto> categories);
 
   ///Trae todas las categorias disponibles en el cloud
   Future<List<Category>> getAllCategories();
+
+  ///Trae todas las categorias pero filtrandolas por el CategoryHost
+  Future<List<Category>> getCategoriesByHost(CategoryHost host);
 
   /// Actualiza una sola categoría.
   Future<bool> updateCategory(UpdateCategoryDto dto);
