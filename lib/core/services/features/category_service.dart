@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart' hide Category;
-import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/feature/category_dao_sqlite.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/domain/port/feat/category_port.dart';
+import 'package:pocket_union/domain/port/cloud/feat/category_port_cloud.dart';
 import 'package:pocket_union/dto/new_category_dto.dart';
 import 'package:pocket_union/dto/update_category_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class CategoryService implements CategoryPort {
+class CategoryService implements CategoryCloudPort {
   final CategoryDaoSqlite _categoryDao;
   final SupabaseClient _supabaseClient;
 

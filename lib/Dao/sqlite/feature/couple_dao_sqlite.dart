@@ -1,7 +1,7 @@
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/domain/models/couple.dart';
-import 'package:pocket_union/domain/port/auth/couple_port.dart';
+import 'package:pocket_union/domain/port/cloud/auth/couple_port.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
@@ -22,8 +22,11 @@ class CoupleDaoSqlite implements CouplePort {
       isUsable: CoupleUsableState.waiting,
     );
 
-    await db.insert('couple', couple.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+      'couple',
+      couple.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
 
     return couple;
   }
@@ -59,10 +62,7 @@ class CoupleDaoSqlite implements CouplePort {
 
     await db.update(
       'couple',
-      {
-        'user2_id': userId,
-        'is_usable': CoupleUsableState.ready.value,
-      },
+      {'user2_id': userId, 'is_usable': CoupleUsableState.ready.value},
       where: 'id = ?',
       whereArgs: [couple.id],
     );
@@ -102,8 +102,11 @@ class CoupleDaoSqlite implements CouplePort {
   Future<bool> upsertCouple(Couple couple) async {
     final db = await _dbHelper.database;
     try {
-      await db.insert('couple', couple.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        'couple',
+        couple.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
       return true;
     } catch (_) {
       return false;

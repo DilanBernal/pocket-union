@@ -1,11 +1,11 @@
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/domain/models/income.dart';
-import 'package:pocket_union/domain/port/feat/income_port.dart';
+import 'package:pocket_union/domain/port/local/income_port_local.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
-class IncomeDaoSqlite implements IncomePort {
+class IncomeDaoSqlite implements IncomeLocalPort {
   final DbSqlite dbHelper;
   final _uuid = Uuid();
 
@@ -29,8 +29,11 @@ class IncomeDaoSqlite implements IncomePort {
       createdAt: now,
       userRecipientId: dto.userId,
     );
-    await db.insert('income', income.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+      'income',
+      income.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
     return id;
   }
 
@@ -55,13 +58,17 @@ class IncomeDaoSqlite implements IncomePort {
   Future<int> insertRevenue(NewIncomeDto revenueDto) async {
     final db = await dbHelper.database;
     final revenue = Income(
-        id: _uuid.v4(),
-        name: revenueDto.name,
-        transactionDate: DateTime.now(),
-        amount: revenueDto.amount,
-        createdAt: DateTime.now());
-    int id = await db.insert('income', revenue.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+      id: _uuid.v4(),
+      name: revenueDto.name,
+      transactionDate: DateTime.now(),
+      amount: revenueDto.amount,
+      createdAt: DateTime.now(),
+    );
+    int id = await db.insert(
+      'income',
+      revenue.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
     return id;
   }
 }

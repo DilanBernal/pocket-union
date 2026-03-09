@@ -5,13 +5,13 @@ import 'package:pocket_union/core/services/features/category_service.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/domain/port/feat/category_port.dart';
+import 'package:pocket_union/domain/port/cloud/feat/category_port_cloud.dart';
 import 'package:pocket_union/dto/new_category_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'category_service_test.mocks.dart';
 
-@GenerateMocks([CategoryPort, SupabaseClient])
+@GenerateMocks([CategoryCloudPort, SupabaseClient])
 void main() {
   late CategoryService categoryService;
   late MockCategoryPort mockCategoryDao;
@@ -43,8 +43,9 @@ void main() {
 
   group('CategoryService - getAllCategories', () {
     test('retorna lista de categorías desde el DAO local', () async {
-      when(mockCategoryDao.getAllCategories())
-          .thenAnswer((_) async => [incomeCategory, expenseCategory]);
+      when(
+        mockCategoryDao.getAllCategories(),
+      ).thenAnswer((_) async => [incomeCategory, expenseCategory]);
 
       final result = await categoryService.getAllCategories();
 
@@ -65,57 +66,64 @@ void main() {
     test('propaga excepción del DAO', () async {
       when(mockCategoryDao.getAllCategories()).thenThrow(Exception('DB error'));
 
-      expect(
-        () => categoryService.getAllCategories(),
-        throwsException,
-      );
+      expect(() => categoryService.getAllCategories(), throwsException);
     });
   });
 
   group('CategoryService - getCategoriesByHost', () {
     test('retorna solo categorías del host indicado (INCOME)', () async {
-      when(mockCategoryDao.getCategoriesByHost(CategoryHost.income))
-          .thenAnswer((_) async => [incomeCategory]);
+      when(
+        mockCategoryDao.getCategoriesByHost(CategoryHost.income),
+      ).thenAnswer((_) async => [incomeCategory]);
 
-      final result =
-          await categoryService.getCategoriesByHost(CategoryHost.income);
+      final result = await categoryService.getCategoriesByHost(
+        CategoryHost.income,
+      );
 
       expect(result, hasLength(1));
       expect(result.first.categoryHost, CategoryHost.income);
       expect(result.first.name, 'Salario');
-      verify(mockCategoryDao.getCategoriesByHost(CategoryHost.income))
-          .called(1);
+      verify(
+        mockCategoryDao.getCategoriesByHost(CategoryHost.income),
+      ).called(1);
     });
 
     test('retorna solo categorías del host indicado (EXPENSE)', () async {
-      when(mockCategoryDao.getCategoriesByHost(CategoryHost.expense))
-          .thenAnswer((_) async => [expenseCategory]);
+      when(
+        mockCategoryDao.getCategoriesByHost(CategoryHost.expense),
+      ).thenAnswer((_) async => [expenseCategory]);
 
-      final result =
-          await categoryService.getCategoriesByHost(CategoryHost.expense);
+      final result = await categoryService.getCategoriesByHost(
+        CategoryHost.expense,
+      );
 
       expect(result, hasLength(1));
       expect(result.first.categoryHost, CategoryHost.expense);
       expect(result.first.name, 'Comida');
-      verify(mockCategoryDao.getCategoriesByHost(CategoryHost.expense))
-          .called(1);
+      verify(
+        mockCategoryDao.getCategoriesByHost(CategoryHost.expense),
+      ).called(1);
     });
 
     test('retorna lista vacía si no hay categorías del host', () async {
-      when(mockCategoryDao.getCategoriesByHost(CategoryHost.income))
-          .thenAnswer((_) async => []);
+      when(
+        mockCategoryDao.getCategoriesByHost(CategoryHost.income),
+      ).thenAnswer((_) async => []);
 
-      final result =
-          await categoryService.getCategoriesByHost(CategoryHost.income);
+      final result = await categoryService.getCategoriesByHost(
+        CategoryHost.income,
+      );
 
       expect(result, isEmpty);
-      verify(mockCategoryDao.getCategoriesByHost(CategoryHost.income))
-          .called(1);
+      verify(
+        mockCategoryDao.getCategoriesByHost(CategoryHost.income),
+      ).called(1);
     });
 
     test('propaga excepción del DAO', () async {
-      when(mockCategoryDao.getCategoriesByHost(any))
-          .thenThrow(Exception('DB error'));
+      when(
+        mockCategoryDao.getCategoriesByHost(any),
+      ).thenThrow(Exception('DB error'));
 
       expect(
         () => categoryService.getCategoriesByHost(CategoryHost.income),
@@ -133,8 +141,9 @@ void main() {
 
     test('inserta en SQLite y devuelve el ID generado', () async {
       const generatedId = 'new-uuid-123';
-      when(mockCategoryDao.createCategory(any))
-          .thenAnswer((_) async => generatedId);
+      when(
+        mockCategoryDao.createCategory(any),
+      ).thenAnswer((_) async => generatedId);
       // Supabase falla en silencio (offline-first)
       when(mockSupabaseClient.from(any)).thenThrow(Exception('offline'));
 
@@ -146,8 +155,9 @@ void main() {
 
     test('retorna ID aunque falle la sincronización con Supabase', () async {
       const generatedId = 'new-uuid-456';
-      when(mockCategoryDao.createCategory(any))
-          .thenAnswer((_) async => generatedId);
+      when(
+        mockCategoryDao.createCategory(any),
+      ).thenAnswer((_) async => generatedId);
       when(mockSupabaseClient.from(any)).thenThrow(Exception('Network error'));
 
       final result = await categoryService.createCategory(newCategoryDto);
@@ -157,8 +167,9 @@ void main() {
     });
 
     test('lanza excepción si el DAO falla', () async {
-      when(mockCategoryDao.createCategory(any))
-          .thenThrow(Exception('SQLite error'));
+      when(
+        mockCategoryDao.createCategory(any),
+      ).thenThrow(Exception('SQLite error'));
 
       expect(
         () => categoryService.createCategory(newCategoryDto),

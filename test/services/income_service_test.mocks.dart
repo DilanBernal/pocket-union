@@ -8,7 +8,7 @@ import 'dart:async' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
 import 'package:pocket_union/domain/models/income.dart' as _i7;
-import 'package:pocket_union/domain/port/feat/income_port.dart' as _i3;
+import 'package:pocket_union/domain/port/cloud/feat/income_port.dart' as _i3;
 import 'package:pocket_union/dto/new_income_dto.dart' as _i5;
 import 'package:supabase/supabase.dart' as _i2;
 
@@ -29,100 +29,55 @@ import 'package:supabase/supabase.dart' as _i2;
 
 class _FakeFunctionsClient_0 extends _i1.SmartFake
     implements _i2.FunctionsClient {
-  _FakeFunctionsClient_0(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeFunctionsClient_0(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 class _FakeSupabaseStorageClient_1 extends _i1.SmartFake
     implements _i2.SupabaseStorageClient {
-  _FakeSupabaseStorageClient_1(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeSupabaseStorageClient_1(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 class _FakeRealtimeClient_2 extends _i1.SmartFake
     implements _i2.RealtimeClient {
-  _FakeRealtimeClient_2(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeRealtimeClient_2(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 class _FakePostgrestClient_3 extends _i1.SmartFake
     implements _i2.PostgrestClient {
-  _FakePostgrestClient_3(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakePostgrestClient_3(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 class _FakeGoTrueClient_4 extends _i1.SmartFake implements _i2.GoTrueClient {
-  _FakeGoTrueClient_4(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeGoTrueClient_4(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 class _FakeSupabaseQueryBuilder_5 extends _i1.SmartFake
     implements _i2.SupabaseQueryBuilder {
-  _FakeSupabaseQueryBuilder_5(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeSupabaseQueryBuilder_5(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 class _FakeSupabaseQuerySchema_6 extends _i1.SmartFake
     implements _i2.SupabaseQuerySchema {
-  _FakeSupabaseQuerySchema_6(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeSupabaseQuerySchema_6(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 class _FakePostgrestFilterBuilder_7<T1> extends _i1.SmartFake
     implements _i2.PostgrestFilterBuilder<T1> {
-  _FakePostgrestFilterBuilder_7(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakePostgrestFilterBuilder_7(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 class _FakeRealtimeChannel_8 extends _i1.SmartFake
     implements _i2.RealtimeChannel {
-  _FakeRealtimeChannel_8(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeRealtimeChannel_8(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 /// A class which mocks [IncomePort].
@@ -134,28 +89,25 @@ class MockIncomePort extends _i1.Mock implements _i3.IncomePort {
   }
 
   @override
-  _i4.Future<String> createIncome(_i5.NewIncomeDto? dto) => (super.noSuchMethod(
-        Invocation.method(
-          #createIncome,
-          [dto],
-        ),
-        returnValue: _i4.Future<String>.value(_i6.dummyValue<String>(
-          this,
-          Invocation.method(
-            #createIncome,
-            [dto],
-          ),
-        )),
-      ) as _i4.Future<String>);
+  _i4.Future<String> createIncome(_i5.NewIncomeDto? dto) =>
+      (super.noSuchMethod(
+            Invocation.method(#createIncome, [dto]),
+            returnValue: _i4.Future<String>.value(
+              _i6.dummyValue<String>(
+                this,
+                Invocation.method(#createIncome, [dto]),
+              ),
+            ),
+          )
+          as _i4.Future<String>);
 
   @override
-  _i4.Future<List<_i7.Income>> getAllIncomes() => (super.noSuchMethod(
-        Invocation.method(
-          #getAllIncomes,
-          [],
-        ),
-        returnValue: _i4.Future<List<_i7.Income>>.value(<_i7.Income>[]),
-      ) as _i4.Future<List<_i7.Income>>);
+  _i4.Future<List<_i7.Income>> getAllIncomes() =>
+      (super.noSuchMethod(
+            Invocation.method(#getAllIncomes, []),
+            returnValue: _i4.Future<List<_i7.Income>>.value(<_i7.Income>[]),
+          )
+          as _i4.Future<List<_i7.Income>>);
 }
 
 /// A class which mocks [SupabaseClient].
@@ -167,130 +119,113 @@ class MockSupabaseClient extends _i1.Mock implements _i2.SupabaseClient {
   }
 
   @override
-  _i2.FunctionsClient get functions => (super.noSuchMethod(
-        Invocation.getter(#functions),
-        returnValue: _FakeFunctionsClient_0(
-          this,
-          Invocation.getter(#functions),
-        ),
-      ) as _i2.FunctionsClient);
+  _i2.FunctionsClient get functions =>
+      (super.noSuchMethod(
+            Invocation.getter(#functions),
+            returnValue: _FakeFunctionsClient_0(
+              this,
+              Invocation.getter(#functions),
+            ),
+          )
+          as _i2.FunctionsClient);
 
   @override
-  _i2.SupabaseStorageClient get storage => (super.noSuchMethod(
-        Invocation.getter(#storage),
-        returnValue: _FakeSupabaseStorageClient_1(
-          this,
-          Invocation.getter(#storage),
-        ),
-      ) as _i2.SupabaseStorageClient);
+  _i2.SupabaseStorageClient get storage =>
+      (super.noSuchMethod(
+            Invocation.getter(#storage),
+            returnValue: _FakeSupabaseStorageClient_1(
+              this,
+              Invocation.getter(#storage),
+            ),
+          )
+          as _i2.SupabaseStorageClient);
 
   @override
-  _i2.RealtimeClient get realtime => (super.noSuchMethod(
-        Invocation.getter(#realtime),
-        returnValue: _FakeRealtimeClient_2(
-          this,
-          Invocation.getter(#realtime),
-        ),
-      ) as _i2.RealtimeClient);
+  _i2.RealtimeClient get realtime =>
+      (super.noSuchMethod(
+            Invocation.getter(#realtime),
+            returnValue: _FakeRealtimeClient_2(
+              this,
+              Invocation.getter(#realtime),
+            ),
+          )
+          as _i2.RealtimeClient);
 
   @override
-  _i2.PostgrestClient get rest => (super.noSuchMethod(
-        Invocation.getter(#rest),
-        returnValue: _FakePostgrestClient_3(
-          this,
-          Invocation.getter(#rest),
-        ),
-      ) as _i2.PostgrestClient);
+  _i2.PostgrestClient get rest =>
+      (super.noSuchMethod(
+            Invocation.getter(#rest),
+            returnValue: _FakePostgrestClient_3(this, Invocation.getter(#rest)),
+          )
+          as _i2.PostgrestClient);
 
   @override
-  Map<String, String> get headers => (super.noSuchMethod(
-        Invocation.getter(#headers),
-        returnValue: <String, String>{},
-      ) as Map<String, String>);
+  Map<String, String> get headers =>
+      (super.noSuchMethod(
+            Invocation.getter(#headers),
+            returnValue: <String, String>{},
+          )
+          as Map<String, String>);
 
   @override
-  _i2.GoTrueClient get auth => (super.noSuchMethod(
-        Invocation.getter(#auth),
-        returnValue: _FakeGoTrueClient_4(
-          this,
-          Invocation.getter(#auth),
-        ),
-      ) as _i2.GoTrueClient);
+  _i2.GoTrueClient get auth =>
+      (super.noSuchMethod(
+            Invocation.getter(#auth),
+            returnValue: _FakeGoTrueClient_4(this, Invocation.getter(#auth)),
+          )
+          as _i2.GoTrueClient);
 
   @override
   set functions(_i2.FunctionsClient? value) => super.noSuchMethod(
-        Invocation.setter(
-          #functions,
-          value,
-        ),
-        returnValueForMissingStub: null,
-      );
+    Invocation.setter(#functions, value),
+    returnValueForMissingStub: null,
+  );
 
   @override
   set storage(_i2.SupabaseStorageClient? value) => super.noSuchMethod(
-        Invocation.setter(
-          #storage,
-          value,
-        ),
-        returnValueForMissingStub: null,
-      );
+    Invocation.setter(#storage, value),
+    returnValueForMissingStub: null,
+  );
 
   @override
   set realtime(_i2.RealtimeClient? value) => super.noSuchMethod(
-        Invocation.setter(
-          #realtime,
-          value,
-        ),
-        returnValueForMissingStub: null,
-      );
+    Invocation.setter(#realtime, value),
+    returnValueForMissingStub: null,
+  );
 
   @override
   set rest(_i2.PostgrestClient? value) => super.noSuchMethod(
-        Invocation.setter(
-          #rest,
-          value,
-        ),
-        returnValueForMissingStub: null,
-      );
+    Invocation.setter(#rest, value),
+    returnValueForMissingStub: null,
+  );
 
   @override
   set headers(Map<String, String>? headers) => super.noSuchMethod(
-        Invocation.setter(
-          #headers,
-          headers,
-        ),
-        returnValueForMissingStub: null,
-      );
+    Invocation.setter(#headers, headers),
+    returnValueForMissingStub: null,
+  );
 
   @override
-  _i2.SupabaseQueryBuilder from(String? table) => (super.noSuchMethod(
-        Invocation.method(
-          #from,
-          [table],
-        ),
-        returnValue: _FakeSupabaseQueryBuilder_5(
-          this,
-          Invocation.method(
-            #from,
-            [table],
-          ),
-        ),
-      ) as _i2.SupabaseQueryBuilder);
+  _i2.SupabaseQueryBuilder from(String? table) =>
+      (super.noSuchMethod(
+            Invocation.method(#from, [table]),
+            returnValue: _FakeSupabaseQueryBuilder_5(
+              this,
+              Invocation.method(#from, [table]),
+            ),
+          )
+          as _i2.SupabaseQueryBuilder);
 
   @override
-  _i2.SupabaseQuerySchema schema(String? schema) => (super.noSuchMethod(
-        Invocation.method(
-          #schema,
-          [schema],
-        ),
-        returnValue: _FakeSupabaseQuerySchema_6(
-          this,
-          Invocation.method(
-            #schema,
-            [schema],
-          ),
-        ),
-      ) as _i2.SupabaseQuerySchema);
+  _i2.SupabaseQuerySchema schema(String? schema) =>
+      (super.noSuchMethod(
+            Invocation.method(#schema, [schema]),
+            returnValue: _FakeSupabaseQuerySchema_6(
+              this,
+              Invocation.method(#schema, [schema]),
+            ),
+          )
+          as _i2.SupabaseQuerySchema);
 
   @override
   _i2.PostgrestFilterBuilder<T> rpc<T>(
@@ -299,26 +234,13 @@ class MockSupabaseClient extends _i1.Mock implements _i2.SupabaseClient {
     dynamic get = false,
   }) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #rpc,
-          [fn],
-          {
-            #params: params,
-            #get: get,
-          },
-        ),
-        returnValue: _FakePostgrestFilterBuilder_7<T>(
-          this,
-          Invocation.method(
-            #rpc,
-            [fn],
-            {
-              #params: params,
-              #get: get,
-            },
-          ),
-        ),
-      ) as _i2.PostgrestFilterBuilder<T>);
+            Invocation.method(#rpc, [fn], {#params: params, #get: get}),
+            returnValue: _FakePostgrestFilterBuilder_7<T>(
+              this,
+              Invocation.method(#rpc, [fn], {#params: params, #get: get}),
+            ),
+          )
+          as _i2.PostgrestFilterBuilder<T>);
 
   @override
   _i2.RealtimeChannel channel(
@@ -326,62 +248,49 @@ class MockSupabaseClient extends _i1.Mock implements _i2.SupabaseClient {
     _i2.RealtimeChannelConfig? opts = const _i2.RealtimeChannelConfig(),
   }) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #channel,
-          [name],
-          {#opts: opts},
-        ),
-        returnValue: _FakeRealtimeChannel_8(
-          this,
-          Invocation.method(
-            #channel,
-            [name],
-            {#opts: opts},
-          ),
-        ),
-      ) as _i2.RealtimeChannel);
+            Invocation.method(#channel, [name], {#opts: opts}),
+            returnValue: _FakeRealtimeChannel_8(
+              this,
+              Invocation.method(#channel, [name], {#opts: opts}),
+            ),
+          )
+          as _i2.RealtimeChannel);
 
   @override
-  List<_i2.RealtimeChannel> getChannels() => (super.noSuchMethod(
-        Invocation.method(
-          #getChannels,
-          [],
-        ),
-        returnValue: <_i2.RealtimeChannel>[],
-      ) as List<_i2.RealtimeChannel>);
+  List<_i2.RealtimeChannel> getChannels() =>
+      (super.noSuchMethod(
+            Invocation.method(#getChannels, []),
+            returnValue: <_i2.RealtimeChannel>[],
+          )
+          as List<_i2.RealtimeChannel>);
 
   @override
   _i4.Future<String> removeChannel(_i2.RealtimeChannel? channel) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #removeChannel,
-          [channel],
-        ),
-        returnValue: _i4.Future<String>.value(_i6.dummyValue<String>(
-          this,
-          Invocation.method(
-            #removeChannel,
-            [channel],
-          ),
-        )),
-      ) as _i4.Future<String>);
+            Invocation.method(#removeChannel, [channel]),
+            returnValue: _i4.Future<String>.value(
+              _i6.dummyValue<String>(
+                this,
+                Invocation.method(#removeChannel, [channel]),
+              ),
+            ),
+          )
+          as _i4.Future<String>);
 
   @override
-  _i4.Future<List<String>> removeAllChannels() => (super.noSuchMethod(
-        Invocation.method(
-          #removeAllChannels,
-          [],
-        ),
-        returnValue: _i4.Future<List<String>>.value(<String>[]),
-      ) as _i4.Future<List<String>>);
+  _i4.Future<List<String>> removeAllChannels() =>
+      (super.noSuchMethod(
+            Invocation.method(#removeAllChannels, []),
+            returnValue: _i4.Future<List<String>>.value(<String>[]),
+          )
+          as _i4.Future<List<String>>);
 
   @override
-  _i4.Future<void> dispose() => (super.noSuchMethod(
-        Invocation.method(
-          #dispose,
-          [],
-        ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+  _i4.Future<void> dispose() =>
+      (super.noSuchMethod(
+            Invocation.method(#dispose, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
 }

@@ -1,3 +1,3 @@
-abstract class ExpensePort {
+abstract class ExpenseCloudPort {
   Future<String> createExpense();
 }

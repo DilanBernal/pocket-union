@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers.dart';
+import 'package:pocket_union/core/providers/auth_service_provider.dart';
+import 'package:pocket_union/core/providers/data_local_providers.dart';
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/ui/router.dart';
@@ -24,8 +25,9 @@ class LoginForm extends ConsumerStatefulWidget {
   @override
   // ignore: no_logic_in_create_state
   ConsumerState<LoginForm> createState() => _LoginFormState(
-      colorEnabledBorderInput: colorEnabledBorderInput,
-      colorFocusBorderInput: colorFocusBorderInput);
+    colorEnabledBorderInput: colorEnabledBorderInput,
+    colorFocusBorderInput: colorFocusBorderInput,
+  );
 }
 
 class _LoginFormState extends ConsumerState<LoginForm> {
@@ -54,8 +56,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       });
       final authService = await ref.read(authServiceProvider.future);
       if (mounted) {
-        var response = await authService
-            .login(LoginDto(email: _email, password: _password));
+        var response = await authService.login(
+          LoginDto(email: _email, password: _password),
+        );
 
         // Mostrar notificación de bienvenida
         if (mounted && response.session != null) {
@@ -69,10 +72,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           if (coupleId != null && coupleId.isNotEmpty) {
             // Has couple — check if it's READY
             try {
-              final coupleService =
-                  await ref.read(coupleServiceProvider.future);
+              final coupleService = await ref.read(
+                coupleServiceProvider.future,
+              );
               final couple = await coupleService.getCoupleByUserId(
-                  response.user!.id);
+                response.user!.id,
+              );
 
               if (couple != null &&
                   couple.isUsable == CoupleUsableState.ready) {
@@ -87,8 +92,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             } catch (_) {
               // If we can't check, go to couple setup to verify
               targetRoute = AppRoutes.coupleSetup;
-              welcomeMessage =
-                  'Verifica la conexión con tu pareja.';
+              welcomeMessage = 'Verifica la conexión con tu pareja.';
             }
           } else {
             // No couple yet — must set up
@@ -125,7 +129,8 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(
-                "Ocurrió un error inesperado. Por favor intenta nuevamente."),
+              "Ocurrió un error inesperado. Por favor intenta nuevamente.",
+            ),
             backgroundColor: Colors.red.shade600,
             duration: const Duration(seconds: 3),
           ),
@@ -154,100 +159,110 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             key: _formKey,
             autovalidateMode: AutovalidateMode.onUnfocus,
             child: Column(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 20,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FormTitle(
-                    title: "Inicia sesión",
-                    shadowColor: Colors.green,
-                    textColor: Colors.white,
-                    gradientColors: [
-                      Colors.purple.shade600,
-                      Colors.pink.shade700
-                    ],
-                  ),
-                  AuthTextFormField(
-                    colorFocusBorderInput: colorFocusBorderInput,
-                    colorEnabledBorderInput: colorEnabledBorderInput,
-                    icon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                    fieldLabel: "Email",
-                    onSaved: (newEmail) {
-                      _email = newEmail ?? '';
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Por favor, ingresa tu email.";
-                      }
-                      if (!value.contains('@')) {
-                        return 'Por favor, ingresa un email válido.';
-                      }
-                      return null;
-                    },
-                  ),
-                  AuthTextFormField(
-                    colorFocusBorderInput: colorFocusBorderInput,
-                    colorEnabledBorderInput: colorEnabledBorderInput,
-                    keyboardType: TextInputType.visiblePassword,
-                    icon: Icons.key,
-                    fieldLabel: "Contraseña",
-                    onSaved: (newPassword) {
-                      _password = newPassword ?? '';
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Por favor, ingresa tu email.";
-                      }
-                      return null;
-                    },
-                  ),
-                  Material(
-                    borderOnForeground: false,
-                    color: Colors.transparent,
-                    type: MaterialType.button,
-                    child: DecoratedBox(
-                      position: DecorationPosition.background,
-                      decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [
-                            Color.fromARGB(255, 116, 11, 218),
-                            Color.fromRGBO(251, 0, 204, 1)
-                          ]),
-                          borderRadius: BorderRadiusGeometry.circular(20)),
-                      child: SizedBox(
-                        width: 300,
-                        height: 40,
-                        child: Ink(
-                          child: InkWell(
-                            splashColor: Colors.blue,
-                            onTap: _handleSignin,
-                            child: Center(child: Text("ACCEDER")),
-                          ),
+              mainAxisSize: MainAxisSize.min,
+              spacing: 20,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FormTitle(
+                  title: "Inicia sesión",
+                  shadowColor: Colors.green,
+                  textColor: Colors.white,
+                  gradientColors: [
+                    Colors.purple.shade600,
+                    Colors.pink.shade700,
+                  ],
+                ),
+                AuthTextFormField(
+                  colorFocusBorderInput: colorFocusBorderInput,
+                  colorEnabledBorderInput: colorEnabledBorderInput,
+                  icon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                  fieldLabel: "Email",
+                  onSaved: (newEmail) {
+                    _email = newEmail ?? '';
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Por favor, ingresa tu email.";
+                    }
+                    if (!value.contains('@')) {
+                      return 'Por favor, ingresa un email válido.';
+                    }
+                    return null;
+                  },
+                ),
+                AuthTextFormField(
+                  colorFocusBorderInput: colorFocusBorderInput,
+                  colorEnabledBorderInput: colorEnabledBorderInput,
+                  keyboardType: TextInputType.visiblePassword,
+                  icon: Icons.key,
+                  fieldLabel: "Contraseña",
+                  onSaved: (newPassword) {
+                    _password = newPassword ?? '';
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Por favor, ingresa tu email.";
+                    }
+                    return null;
+                  },
+                ),
+                Material(
+                  borderOnForeground: false,
+                  color: Colors.transparent,
+                  type: MaterialType.button,
+                  child: DecoratedBox(
+                    position: DecorationPosition.background,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color.fromARGB(255, 116, 11, 218),
+                          Color.fromRGBO(251, 0, 204, 1),
+                        ],
+                      ),
+                      borderRadius: BorderRadiusGeometry.circular(20),
+                    ),
+                    child: SizedBox(
+                      width: 300,
+                      height: 40,
+                      child: Ink(
+                        child: InkWell(
+                          splashColor: Colors.blue,
+                          onTap: _handleSignin,
+                          child: Center(child: Text("ACCEDER")),
                         ),
                       ),
                     ),
                   ),
-                  RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              Navigator.pushReplacementNamed(
-                                  context, AppRoutes.login);
-                            },
-                          text: "¿Aun no tienes una cuenta?\n",
-                          style: TextStyle(),
-                          children: [
-                            TextSpan(
-                              text: "¡Registrate!",
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.pushReplacementNamed(
-                                      context, AppRoutes.register);
-                                },
-                            )
-                          ]))
-                ]),
+                ),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.login,
+                        );
+                      },
+                    text: "¿Aun no tienes una cuenta?\n",
+                    style: TextStyle(),
+                    children: [
+                      TextSpan(
+                        text: "¡Registrate!",
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Navigator.pushReplacementNamed(
+                              context,
+                              AppRoutes.register,
+                            );
+                          },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           );
   }
 

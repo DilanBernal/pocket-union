@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/Dao/sqlite/user_dao_sqlite.dart';
-import 'package:pocket_union/core/providers.dart';
+import 'package:pocket_union/Dao/sqlite/feature/user_dao_sqlite.dart';
+import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/domain/models/user.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:pocket_union/ui/router.dart';

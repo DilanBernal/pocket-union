@@ -1,9 +1,9 @@
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/domain/models/user.dart';
-import 'package:pocket_union/domain/port/feat/user_port.dart';
+import 'package:pocket_union/domain/port/local/user_port_local.dart';
 import 'package:sqflite/sqflite.dart';
 
-class UserDaoSqlite extends UserPort {
+class UserDaoSqlite extends UserPortLocal {
   final DbSqlite dbHelper;
 
   UserDaoSqlite({required this.dbHelper});

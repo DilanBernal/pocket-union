@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/domain/models/couple.dart';
-import 'package:pocket_union/domain/port/auth/couple_port.dart';
+import 'package:pocket_union/domain/port/cloud/auth/couple_port.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -38,7 +38,8 @@ class CoupleService implements CouplePort {
 
     if (response == null) {
       throw Exception(
-          'No se pudo crear la pareja. Verifica tu conexión e intenta de nuevo.');
+        'No se pudo crear la pareja. Verifica tu conexión e intenta de nuevo.',
+      );
     }
 
     final couple = Couple.fromJson(response);
@@ -80,7 +81,8 @@ class CoupleService implements CouplePort {
 
     // 2. Update couple in Supabase: set user2 + READY
     debugPrint(
-        'CoupleService: Uniendo userId=$userId a couple=${coupleData['id']}');
+      'CoupleService: Uniendo userId=$userId a couple=${coupleData['id']}',
+    );
     final updated = await _supabaseClient
         .from('couple')
         .update({
@@ -92,8 +94,9 @@ class CoupleService implements CouplePort {
         .maybeSingle();
     if (updated == null) {
       throw Exception(
-          'No se pudo unir a la pareja. Es posible que ya haya sido tomada o '
-          'que no tengas permisos. Intenta de nuevo.');
+        'No se pudo unir a la pareja. Es posible que ya haya sido tomada o '
+        'que no tengas permisos. Intenta de nuevo.',
+      );
     }
 
     final couple = Couple.fromJson(updated);
@@ -102,7 +105,7 @@ class CoupleService implements CouplePort {
     try {
       Future.wait([
         _coupleDao.upsertCouple(couple),
-        _sharedPreferences.setString('coupleId', couple.id)
+        _sharedPreferences.setString('coupleId', couple.id),
       ]);
     } catch (e) {
       debugPrint('CoupleService: Error guardando couple en SQLite: $e');

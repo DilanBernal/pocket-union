@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers.dart';
+import 'package:pocket_union/core/providers/data_local_providers.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/category.dart' as domain;
@@ -79,9 +79,11 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success
-              ? 'Categoría sincronizada exitosamente'
-              : 'Error al sincronizar. Se marcó como conflicto.'),
+          content: Text(
+            success
+                ? 'Categoría sincronizada exitosamente'
+                : 'Error al sincronizar. Se marcó como conflicto.',
+          ),
           backgroundColor: success ? Colors.green : Colors.orange,
           duration: const Duration(seconds: 2),
         ),
@@ -127,9 +129,11 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(failCount == 0
-              ? '$successCount categoría(s) sincronizada(s) exitosamente'
-              : '$successCount sincronizada(s), $failCount con conflicto'),
+          content: Text(
+            failCount == 0
+                ? '$successCount categoría(s) sincronizada(s) exitosamente'
+                : '$successCount sincronizada(s), $failCount con conflicto',
+          ),
           backgroundColor: failCount == 0 ? Colors.green : Colors.orange,
           duration: const Duration(seconds: 3),
         ),
@@ -163,7 +167,10 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : const Icon(Icons.cloud_sync),
             tooltip: 'Sincronizar todas las categorías',
           ),
@@ -174,7 +181,10 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : const Icon(Icons.playlist_add),
             tooltip: 'Crear categorías por defecto',
           ),
@@ -207,8 +217,11 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.category_outlined,
-                      size: 64, color: Colors.grey),
+                  const Icon(
+                    Icons.category_outlined,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'No hay categorías creadas',
@@ -222,17 +235,21 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
-                    onPressed:
-                        _isCreatingDefaults ? null : _createDefaultCategories,
+                    onPressed: _isCreatingDefaults
+                        ? null
+                        : _createDefaultCategories,
                     icon: _isCreatingDefaults
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Icon(Icons.playlist_add),
-                    label: Text(_isCreatingDefaults
-                        ? 'Creando...'
-                        : 'Crear categorías por defecto'),
+                    label: Text(
+                      _isCreatingDefaults
+                          ? 'Creando...'
+                          : 'Crear categorías por defecto',
+                    ),
                   ),
                 ],
               ),
@@ -256,12 +273,20 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
               children: [
                 if (incomeCategories.isNotEmpty) ...[
                   _buildSectionHeader(
-                      context, 'Ingresos', Icons.arrow_downward, Colors.green),
+                    context,
+                    'Ingresos',
+                    Icons.arrow_downward,
+                    Colors.green,
+                  ),
                   ...incomeCategories.map((c) => _buildCategoryTile(c)),
                 ],
                 if (expenseCategories.isNotEmpty) ...[
                   _buildSectionHeader(
-                      context, 'Gastos', Icons.arrow_upward, Colors.red),
+                    context,
+                    'Gastos',
+                    Icons.arrow_upward,
+                    Colors.red,
+                  ),
                   ...expenseCategories.map((c) => _buildCategoryTile(c)),
                 ],
               ],
@@ -273,7 +298,11 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
   }
 
   Widget _buildSectionHeader(
-      BuildContext context, String title, IconData icon, Color color) {
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color color,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: Row(
@@ -283,9 +312,9 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
         ],
       ),
@@ -307,7 +336,8 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
         child: Icon(iconData, color: color),
       ),
       title: Text(category.name),
-      subtitle: category.shortDescription != null &&
+      subtitle:
+          category.shortDescription != null &&
               category.shortDescription!.isNotEmpty
           ? Text(
               category.shortDescription!,

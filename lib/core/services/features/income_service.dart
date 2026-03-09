@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:pocket_union/domain/models/income.dart';
-import 'package:pocket_union/domain/port/feat/income_port.dart';
+import 'package:pocket_union/domain/port/cloud/feat/income_port_cloud.dart';
+import 'package:pocket_union/domain/port/local/income_port_local.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class IncomeService implements IncomePort {
-  final IncomePort _incomeDao;
+class IncomeService implements IncomeCloudPort {
+  final IncomeLocalPort _incomeDao;
   final SupabaseClient _supabaseClient;
 
   IncomeService(this._incomeDao, this._supabaseClient);

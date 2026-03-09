@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers.dart';
+import 'package:pocket_union/core/providers/data_local_providers.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -85,9 +85,9 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al crear ingreso: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al crear ingreso: $e')));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -128,8 +128,9 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
                 hintText: '0.00',
                 prefixIcon: Icon(Icons.attach_money),
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'El monto es requerido';
