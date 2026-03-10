@@ -1,19 +1,25 @@
-import 'package:flutter/foundation.dart';
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/domain/models/user.dart';
-import 'package:pocket_union/domain/port/cloud/auth/auth_port.dart';
+import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/domain/port/local/user_port_local.dart';
+import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AuthService extends AuthPort {
+class AuthService extends IAuthPort {
   final SupabaseClient _supabaseClient;
-  final UserPortLocal _userDaoPort;
+  final UserLocalPort _userDaoPort;
   final SharedPreferences _sharedPreferences;
+  final LoggerPort _logger;
 
-  AuthService(this._supabaseClient, this._userDaoPort, this._sharedPreferences);
+  AuthService(
+    this._supabaseClient,
+    this._userDaoPort,
+    this._sharedPreferences,
+    this._logger,
+  );
 
   @override
   Future<AuthResponse> login(LoginDto loginRequest) async {
@@ -40,7 +46,7 @@ class AuthService extends AuthPort {
         _userDaoPort.upsertUser(userProfile),
         _sharedPreferences.setString("userProfile", userProfile.toString()),
       ]);
-      debugPrint(userProfile.toString());
+      _logger.info('AuthService: Login exitoso para ${loginRes.user!.id}');
 
       // Guardar coupleId en SharedPreferences
       try {
@@ -80,15 +86,15 @@ class AuthService extends AuthPort {
           }
         }
       } catch (e) {
-        debugPrint('No se pudo obtener coupleId: $e');
+        _logger.error('AuthService: No se pudo obtener coupleId', error: e);
       }
 
       if (response.isNotEmpty) {
-        debugPrint("Se creo correctamente ${response.toString()}");
+        _logger.info('AuthService: Datos de sesión guardados correctamente');
       }
       return loginRes;
     } catch (error) {
-      debugPrint(error.toString());
+      _logger.error('AuthService: Error en login', error: error);
     }
     return AuthResponse();
   }
@@ -119,16 +125,16 @@ class AuthService extends AuthPort {
           _userDaoPort.upsertUser(domainUser),
         ]);
         if (resultados.isNotEmpty) {
-          debugPrint(
-            "Usuario registrado y guardado en SQLite: ${res.user!.id}",
+          _logger.info(
+            'AuthService: Usuario registrado y guardado en SQLite: ${res.user!.id}',
           );
         }
       }
 
-      debugPrint(res.toString());
+      _logger.info('AuthService: Registro completado');
       return res;
     } catch (e) {
-      debugPrint("ocurrio un error al intentar registrarse ${e.toString()}");
+      _logger.error('AuthService: Error al intentar registrarse', error: e);
       rethrow;
     }
   }
@@ -137,7 +143,7 @@ class AuthService extends AuthPort {
   Future<void> logout(String email) async {
     try {
       await _supabaseClient.auth.signOut();
-      debugPrint("Usuario deslogueado de Supabase");
+      _logger.info('AuthService: Usuario deslogueado de Supabase');
 
       var resultados = await Future.wait([
         _userDaoPort.deleteAllUsers(),
@@ -149,10 +155,10 @@ class AuthService extends AuthPort {
         _sharedPreferences.remove('coupleProfile'),
       ]);
       if (resultados.isNotEmpty) {
-        debugPrint("SharedPreferences limpiado - isFirstLaunch reset");
+        _logger.info('AuthService: SharedPreferences limpiado');
       }
     } catch (e) {
-      debugPrint("Error al hacer logout: $e");
+      _logger.error('AuthService: Error al hacer logout', error: e);
       rethrow;
     }
   }

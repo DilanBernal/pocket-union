@@ -12,15 +12,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocket_union/main.dart';
 
 void main() {
-  testWidgets('App smoke test: primera vez muestra StartScreen sin errores',
-      (WidgetTester tester) async {
+  testWidgets('App smoke test: primera vez muestra StartScreen sin errores', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: PocketUnionApp(
-          isFirstLaunch: true,
-          isInSession: false,
-        ),
-      ),
+      const ProviderScope(child: PocketUnionApp(initialRoute: '/')),
     );
     // Verify the app renders without crashing
     expect(find.byType(MaterialApp), findsOneWidget);

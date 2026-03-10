@@ -5,17 +5,19 @@ import 'package:pocket_union/core/services/features/category_service.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/domain/port/cloud/feat/category_port_cloud.dart';
+import 'package:pocket_union/domain/port/local/category_port_local.dart';
+import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/new_category_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'category_service_test.mocks.dart';
 
-@GenerateMocks([CategoryCloudPort, SupabaseClient])
+@GenerateMocks([CategoryLocalPort, SupabaseClient, LoggerPort])
 void main() {
   late CategoryService categoryService;
-  late MockCategoryPort mockCategoryDao;
+  late MockCategoryLocalPort mockCategoryDao;
   late MockSupabaseClient mockSupabaseClient;
+  late MockLoggerPort mockLogger;
 
   final incomeCategory = Category(
     id: 'cat-uuid-1',
@@ -36,9 +38,14 @@ void main() {
   );
 
   setUp(() {
-    mockCategoryDao = MockCategoryPort();
+    mockCategoryDao = MockCategoryLocalPort();
     mockSupabaseClient = MockSupabaseClient();
-    categoryService = CategoryService(mockCategoryDao, mockSupabaseClient);
+    mockLogger = MockLoggerPort();
+    categoryService = CategoryService(
+      mockCategoryDao,
+      mockSupabaseClient,
+      mockLogger,
+    );
   });
 
   group('CategoryService - getAllCategories', () {

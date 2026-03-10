@@ -1,15 +1,15 @@
-import 'package:pocket_union/Dao/sqlite/feature/category_dao_sqlite.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/domain/port/cloud/feat/category_port_cloud.dart';
+import 'package:pocket_union/domain/port/cloud/feat/i_category_port.dart';
+import 'package:pocket_union/domain/port/local/category_port_local.dart';
 import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/new_category_dto.dart';
 import 'package:pocket_union/dto/update_category_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class CategoryService implements CategoryCloudPort {
-  final CategoryDaoSqlite _categoryDao;
+class CategoryService implements ICategoryPort {
+  final CategoryLocalPort _categoryDao;
   final SupabaseClient _supabaseClient;
   final LoggerPort _logger;
 
@@ -221,9 +221,12 @@ class CategoryService implements CategoryCloudPort {
   Future<List<Category>> getCategoriesByHost(CategoryHost host) async {
     final categoriesInLocal = await _categoryDao.getCategoriesByHost(host);
     try {
-      final categoriesInCloud = await _supabaseClient.from('category').select().eq('host', )
+      final categoriesInCloud = await _supabaseClient
+          .from('category')
+          .select()
+          .eq('host', host);
     } catch (e) {
-      
+      _logger.logObject(e, label: "Error en category Service");
     }
     return categoriesInLocal;
   }

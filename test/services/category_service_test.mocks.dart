@@ -8,10 +8,13 @@ import 'dart:async' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
 import 'package:pocket_union/domain/enum/category_host.dart' as _i8;
+import 'package:pocket_union/domain/enum/sync_status.dart' as _i11;
 import 'package:pocket_union/domain/models/category.dart' as _i7;
-import 'package:pocket_union/domain/port/cloud/feat/category_port_cloud.dart'
-    as _i3;
+import 'package:pocket_union/domain/port/local/category_port_local.dart' as _i3;
+import 'package:pocket_union/domain/port/utils/logger_port.dart' as _i12;
+import 'package:pocket_union/dto/filter/category_filter_dto.dart' as _i9;
 import 'package:pocket_union/dto/new_category_dto.dart' as _i5;
+import 'package:pocket_union/dto/update_category_dto.dart' as _i10;
 import 'package:supabase/supabase.dart' as _i2;
 
 // ignore_for_file: type=lint
@@ -82,11 +85,11 @@ class _FakeRealtimeChannel_8 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
-/// A class which mocks [CategoryPort].
+/// A class which mocks [CategoryLocalPort].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockCategoryPort extends _i1.Mock implements _i3.CategoryCloudPort {
-  MockCategoryPort() {
+class MockCategoryLocalPort extends _i1.Mock implements _i3.CategoryLocalPort {
+  MockCategoryLocalPort() {
     _i1.throwOnMissingStub(this);
   }
 
@@ -104,20 +107,20 @@ class MockCategoryPort extends _i1.Mock implements _i3.CategoryCloudPort {
           as _i4.Future<String>);
 
   @override
+  _i4.Future<_i7.Category?> getCategoryById(String? id) =>
+      (super.noSuchMethod(
+            Invocation.method(#getCategoryById, [id]),
+            returnValue: _i4.Future<_i7.Category?>.value(),
+          )
+          as _i4.Future<_i7.Category?>);
+
+  @override
   _i4.Future<bool> deleteCategory(String? idCategory) =>
       (super.noSuchMethod(
             Invocation.method(#deleteCategory, [idCategory]),
             returnValue: _i4.Future<bool>.value(false),
           )
           as _i4.Future<bool>);
-
-  @override
-  _i4.Future<List<_i7.Category>> createDefaultCategories(String? idCouple) =>
-      (super.noSuchMethod(
-            Invocation.method(#createDefaultCategories, [idCouple]),
-            returnValue: _i4.Future<List<_i7.Category>>.value(<_i7.Category>[]),
-          )
-          as _i4.Future<List<_i7.Category>>);
 
   @override
   _i4.Future<dynamic> deleteAllCategories() =>
@@ -136,6 +139,14 @@ class MockCategoryPort extends _i1.Mock implements _i3.CategoryCloudPort {
           as _i4.Future<bool>);
 
   @override
+  _i4.Future<List<_i7.Category>> createDefaultCategories(String? idCouple) =>
+      (super.noSuchMethod(
+            Invocation.method(#createDefaultCategories, [idCouple]),
+            returnValue: _i4.Future<List<_i7.Category>>.value(<_i7.Category>[]),
+          )
+          as _i4.Future<List<_i7.Category>>);
+
+  @override
   _i4.Future<List<_i7.Category>> getAllCategories() =>
       (super.noSuchMethod(
             Invocation.method(#getAllCategories, []),
@@ -144,12 +155,78 @@ class MockCategoryPort extends _i1.Mock implements _i3.CategoryCloudPort {
           as _i4.Future<List<_i7.Category>>);
 
   @override
-  _i4.Future<List<_i7.Category>> getCategoriesByHost(_i8.CategoryHost? host) =>
+  _i4.Future<List<_i7.Category>> getAllCategoriesByCouple({String? coupleId}) =>
       (super.noSuchMethod(
-            Invocation.method(#getCategoriesByHost, [host]),
+            Invocation.method(#getAllCategoriesByCouple, [], {
+              #coupleId: coupleId,
+            }),
             returnValue: _i4.Future<List<_i7.Category>>.value(<_i7.Category>[]),
           )
           as _i4.Future<List<_i7.Category>>);
+
+  @override
+  _i4.Future<List<_i7.Category>> getCategoriesByHost(
+    _i8.CategoryHost? host, {
+    String? coupleId,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #getCategoriesByHost,
+              [host],
+              {#coupleId: coupleId},
+            ),
+            returnValue: _i4.Future<List<_i7.Category>>.value(<_i7.Category>[]),
+          )
+          as _i4.Future<List<_i7.Category>>);
+
+  @override
+  _i4.Future<List<_i7.Category>> getByFilter(_i9.CategoryFilterDto? filter) =>
+      (super.noSuchMethod(
+            Invocation.method(#getByFilter, [filter]),
+            returnValue: _i4.Future<List<_i7.Category>>.value(<_i7.Category>[]),
+          )
+          as _i4.Future<List<_i7.Category>>);
+
+  @override
+  _i4.Future<bool> updateCategory(_i10.UpdateCategoryDto? dto) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateCategory, [dto]),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
+
+  @override
+  _i4.Future<bool> updateCategories(List<_i10.UpdateCategoryDto>? dtos) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateCategories, [dtos]),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
+
+  @override
+  _i4.Future<List<_i7.Category>> getCategoriesNeedingSync() =>
+      (super.noSuchMethod(
+            Invocation.method(#getCategoriesNeedingSync, []),
+            returnValue: _i4.Future<List<_i7.Category>>.value(<_i7.Category>[]),
+          )
+          as _i4.Future<List<_i7.Category>>);
+
+  @override
+  _i4.Future<void> updateSyncStatus(
+    String? categoryId,
+    _i11.SyncStatus? status, {
+    DateTime? lastSyncAt,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #updateSyncStatus,
+              [categoryId, status],
+              {#lastSyncAt: lastSyncAt},
+            ),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
 }
 
 /// A class which mocks [SupabaseClient].
@@ -335,4 +412,48 @@ class MockSupabaseClient extends _i1.Mock implements _i2.SupabaseClient {
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
           as _i4.Future<void>);
+}
+
+/// A class which mocks [LoggerPort].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockLoggerPort extends _i1.Mock implements _i12.LoggerPort {
+  MockLoggerPort() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  void info(String? message) => super.noSuchMethod(
+    Invocation.method(#info, [message]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void debug(String? message) => super.noSuchMethod(
+    Invocation.method(#debug, [message]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void warning(String? message) => super.noSuchMethod(
+    Invocation.method(#warning, [message]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void error(String? message, {Object? error, StackTrace? stackTrace}) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #error,
+          [message],
+          {#error: error, #stackTrace: stackTrace},
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void logObject(Object? object, {String? label}) => super.noSuchMethod(
+    Invocation.method(#logObject, [object], {#label: label}),
+    returnValueForMissingStub: null,
+  );
 }

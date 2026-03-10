@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocket_union/domain/port/cloud/auth/auth_port.dart';
+import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:pocket_union/core/providers/providers.dart';
@@ -10,8 +10,8 @@ import 'package:pocket_union/ui/screens/auth/login_screen.dart';
 import 'package:pocket_union/ui/screens/start/start_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Fake de AuthPort que no llama a servicios externos.
-class _FakeAuthPort implements AuthPort {
+/// Fake de IAuthPort que no llama a servicios externos.
+class _FakeAuthPort implements IAuthPort {
   @override
   Future<AuthResponse> login(LoginDto loginRequest) async => AuthResponse();
 
@@ -104,9 +104,7 @@ void main() {
       'Happy path: primera vez → ruta inicial es StartScreen (contiene "Empezar ahora")',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          const ProviderScope(
-            child: PocketUnionApp(isFirstLaunch: true, isInSession: false),
-          ),
+          const ProviderScope(child: PocketUnionApp(initialRoute: '/')),
         );
         await tester.pump();
 
@@ -124,10 +122,7 @@ void main() {
                 (ref) => Future.value(_FakeAuthPort()),
               ),
             ],
-            child: const PocketUnionApp(
-              isFirstLaunch: false,
-              isInSession: false,
-            ),
+            child: const PocketUnionApp(initialRoute: '/login'),
           ),
         );
         await tester.pump();

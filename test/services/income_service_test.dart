@@ -4,17 +4,19 @@ import 'package:mockito/mockito.dart';
 import 'package:pocket_union/core/services/features/income_service.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/income.dart';
-import 'package:pocket_union/domain/port/cloud/feat/income_port.dart';
+import 'package:pocket_union/domain/port/local/income_port_local.dart';
+import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'income_service_test.mocks.dart';
 
-@GenerateMocks([IncomePort, SupabaseClient])
+@GenerateMocks([IncomeLocalPort, SupabaseClient, LoggerPort])
 void main() {
   late IncomeService incomeService;
-  late MockIncomePort mockIncomeDao;
+  late MockIncomeLocalPort mockIncomeDao;
   late MockSupabaseClient mockSupabaseClient;
+  late MockLoggerPort mockLogger;
 
   final testIncome = Income(
     id: 'income-uuid-1',
@@ -29,9 +31,14 @@ void main() {
   );
 
   setUp(() {
-    mockIncomeDao = MockIncomePort();
+    mockIncomeDao = MockIncomeLocalPort();
     mockSupabaseClient = MockSupabaseClient();
-    incomeService = IncomeService(mockIncomeDao, mockSupabaseClient);
+    mockLogger = MockLoggerPort();
+    incomeService = IncomeService(
+      mockIncomeDao,
+      mockSupabaseClient,
+      mockLogger,
+    );
   });
 
   group('IncomeService - getAllIncomes', () {

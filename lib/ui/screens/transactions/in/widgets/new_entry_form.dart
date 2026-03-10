@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocket_union/core/providers/auth_service_provider.dart';
+import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/core/providers/data_local_providers.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
@@ -60,7 +62,7 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
         final service = await ref.read(incomeServiceProvider.future);
         await service.createIncome(dto);
       } catch (_) {
-        final dao = ref.read(revenueDaoProvider);
+        final dao = ref.read(incomeDaoProvider);
         await dao.createIncome(dto);
       }
 

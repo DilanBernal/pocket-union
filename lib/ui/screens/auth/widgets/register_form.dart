@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/auth_service_provider.dart';
+import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
@@ -107,8 +107,6 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
       );
     } catch (e) {
       if (mounted) {
-        debugPrint("Error al registrarse: ${e.toString()}");
-
         // Mostrar diálogo de error
         showDialog(
           context: context,

@@ -1,15 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:pocket_union/domain/models/income.dart';
-import 'package:pocket_union/domain/port/cloud/feat/income_port_cloud.dart';
+import 'package:pocket_union/domain/port/cloud/feat/i_income_port.dart';
 import 'package:pocket_union/domain/port/local/income_port_local.dart';
+import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class IncomeService implements IncomeCloudPort {
+class IncomeService implements IIncomePort {
   final IncomeLocalPort _incomeDao;
   final SupabaseClient _supabaseClient;
+  final LoggerPort _logger;
 
-  IncomeService(this._incomeDao, this._supabaseClient);
+  IncomeService(this._incomeDao, this._supabaseClient, this._logger);
 
   @override
   Future<List<Income>> getAllIncomes() async {
@@ -36,7 +37,10 @@ class IncomeService implements IncomeCloudPort {
         'user_recipient_id': dto.userId,
       });
     } catch (e) {
-      debugPrint('IncomeService: no se pudo sincronizar con Supabase: $e');
+      _logger.error(
+        'IncomeService: no se pudo sincronizar con Supabase',
+        error: e,
+      );
     }
 
     return id;

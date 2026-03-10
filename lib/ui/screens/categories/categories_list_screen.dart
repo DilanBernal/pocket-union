@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocket_union/core/providers/auth_service_provider.dart';
+import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/core/providers/data_local_providers.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
@@ -34,7 +36,7 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
       final coupleId = prefs.getString('coupleId') ?? '';
 
       try {
-        final service = await ref.read(categoryServiceProvider.future);
+        final service = await ref.read(categoryDaoProvider);
         await service.createDefaultCategories(coupleId);
       } catch (_) {
         final dao = ref.read(categoryDaoProvider);

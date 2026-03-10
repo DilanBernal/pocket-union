@@ -1,84 +1,73 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/Dao/sqlite/feature/category_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/feature/couple_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/feature/expense_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/feature/expense_share_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/feature/goal_contribution_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/feature/goal_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/feature/income_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/feature/user_dao_sqlite.dart';
-import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/core/providers/utils_providers.dart';
-import 'package:pocket_union/core/services/features/income_service.dart';
-import 'package:pocket_union/domain/enum/category_host.dart';
-import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/domain/models/income.dart';
-import 'package:pocket_union/domain/port/cloud/feat/income_port_cloud.dart';
+import 'package:pocket_union/domain/port/local/category_port_local.dart';
+import 'package:pocket_union/domain/port/local/couple_local_port.dart';
+import 'package:pocket_union/domain/port/local/expense_local_port.dart';
+import 'package:pocket_union/domain/port/local/expense_share_local_port.dart';
+import 'package:pocket_union/domain/port/local/goal_contribution_local_port.dart';
+import 'package:pocket_union/domain/port/local/goal_local_port.dart';
 import 'package:pocket_union/domain/port/local/income_port_local.dart';
 import 'package:pocket_union/domain/port/local/user_port_local.dart';
 
-// SQLite provider (existing)
+// SQLite provider
 final sqliteDbProvider = Provider<DbSqlite>((ref) {
   return DbSqlite.instance;
 });
 
-// RevenueDaoSqlite provider
-final revenueDaoProvider = Provider<IncomeLocalPort>((ref) {
+// DAO providers — all use abstract local port types
+final incomeDaoProvider = Provider<IncomeLocalPort>((ref) {
   final dbHelper = ref.read(sqliteDbProvider);
-  return IncomeDaoSqlite(dbHelper: dbHelper);
+  final logger = ref.read(loggerProvider);
+  return IncomeDaoSqlite(dbHelper: dbHelper, logger: logger);
 });
 
-// UserDaoSqlite provider
-final userDaoProvider = Provider<UserPortLocal>((ref) {
+final userDaoProvider = Provider<UserLocalPort>((ref) {
   final dbHelper = ref.read(sqliteDbProvider);
-  return UserDaoSqlite(dbHelper: dbHelper);
+  final logger = ref.read(loggerProvider);
+  return UserDaoSqlite(dbHelper: dbHelper, logger: logger);
 });
 
-// CategoryDaoSqlite provider
-final categoryDaoProvider = Provider<CategoryDaoSqlite>((ref) {
+final categoryDaoProvider = Provider<CategoryLocalPort>((ref) {
   final dbHelper = ref.read(sqliteDbProvider);
-  return CategoryDaoSqlite(dbHelper: dbHelper);
+  final logger = ref.read(loggerProvider);
+  return CategoryDaoSqlite(dbHelper: dbHelper, logger: logger);
 });
 
-// CoupleDaoSqlite provider
-final coupleDaoProvider = Provider<CoupleDaoSqlite>((ref) {
+final coupleDaoProvider = Provider<CoupleLocalPort>((ref) {
   final dbHelper = ref.read(sqliteDbProvider);
-  return CoupleDaoSqlite(dbHelper: dbHelper);
+  final logger = ref.read(loggerProvider);
+  return CoupleDaoSqlite(dbHelper: dbHelper, logger: logger);
 });
 
-// IncomeService provider (offline-first)
-final incomeServiceProvider = FutureProvider<IncomeCloudPort>((ref) async {
-  final supabaseClient = await ref.watch(supabaseClientProvider.future);
-  final incomeDao = ref.watch(revenueDaoProvider);
-  return IncomeService(incomeDao, supabaseClient);
+final expenseDaoProvider = Provider<ExpenseLocalPort>((ref) {
+  final dbHelper = ref.read(sqliteDbProvider);
+  final logger = ref.read(loggerProvider);
+  return ExpenseDaoSqlite(dbHelper: dbHelper, logger: logger);
 });
 
-// Categorías filtradas por CategoryHost.income (offline-first con fallback)
-final incomeCategoriesProvider = FutureProvider<List<Category>>((ref) async {
-  try {
-    final categoryService = await ref.watch(categoryServiceProvider.future);
-    return categoryService.getCategoriesByHost(CategoryHost.income);
-  } catch (_) {
-    final categoryDao = ref.watch(categoryDaoProvider);
-    return categoryDao.getCategoriesByHost(CategoryHost.income);
-  }
+final expenseShareDaoProvider = Provider<ExpenseShareLocalPort>((ref) {
+  final dbHelper = ref.read(sqliteDbProvider);
+  final logger = ref.read(loggerProvider);
+  return ExpenseShareDaoSqlite(dbHelper: dbHelper, logger: logger);
 });
 
-// Todas las categorías (para la pantalla de listado)
-final allCategoriesProvider = FutureProvider<List<Category>>((ref) async {
-  try {
-    final categoryService = await ref.watch(categoryServiceProvider.future);
-    return categoryService.getAllCategories();
-  } catch (_) {
-    final categoryDao = ref.watch(categoryDaoProvider);
-    return categoryDao.getAllCategories();
-  }
+final goalDaoProvider = Provider<GoalLocalPort>((ref) {
+  final dbHelper = ref.read(sqliteDbProvider);
+  final logger = ref.read(loggerProvider);
+  return GoalDaoSqlite(dbHelper: dbHelper, logger: logger);
 });
 
-// Todos los ingresos (para la pantalla de listado)
-final allIncomesProvider = FutureProvider<List<Income>>((ref) async {
-  try {
-    final incomeService = await ref.watch(incomeServiceProvider.future);
-    return incomeService.getAllIncomes();
-  } catch (_) {
-    final incomeDao = ref.watch(revenueDaoProvider);
-    return incomeDao.getAllIncomes();
-  }
+final goalContributionDaoProvider = Provider<GoalContributionLocalPort>((ref) {
+  final dbHelper = ref.read(sqliteDbProvider);
+  final logger = ref.read(loggerProvider);
+  return GoalContributionDaoSqlite(dbHelper: dbHelper, logger: logger);
 });

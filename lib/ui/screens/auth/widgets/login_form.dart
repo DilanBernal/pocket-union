@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/auth_service_provider.dart';
+import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/ui/router.dart';
@@ -113,7 +113,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       }
     } on AuthException catch (error) {
       if (mounted) {
-        debugPrint(error.message);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Error: ${error.message}"),
@@ -124,7 +123,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       }
     } catch (error) {
       if (mounted) {
-        debugPrint("Error durante el login: $error");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(

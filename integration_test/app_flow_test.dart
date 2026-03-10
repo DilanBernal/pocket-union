@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:pocket_union/core/providers/providers.dart';
-import 'package:pocket_union/domain/port/cloud/auth/auth_port.dart';
+import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:pocket_union/main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Fake de AuthPort que no depende de Supabase ni SQLite.
-class _FakeAuthPort implements AuthPort {
+/// Fake de IAuthPort que no depende de Supabase ni SQLite.
+class _FakeAuthPort implements IAuthPort {
   final bool shouldLoginFail;
 
   _FakeAuthPort({this.shouldLoginFail = false});
@@ -39,9 +39,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: PocketUnionApp(isFirstLaunch: true, isInSession: false),
-        ),
+        const ProviderScope(child: PocketUnionApp(initialRoute: '/')),
       );
       await tester.pump();
 
@@ -59,10 +57,7 @@ void main() {
                 (ref) => Future.value(_FakeAuthPort()),
               ),
             ],
-            child: const PocketUnionApp(
-              isFirstLaunch: false,
-              isInSession: false,
-            ),
+            child: const PocketUnionApp(initialRoute: '/login'),
           ),
         );
         await tester.pump();
@@ -84,10 +79,7 @@ void main() {
                 (ref) => Future.value(_FakeAuthPort()),
               ),
             ],
-            child: const PocketUnionApp(
-              isFirstLaunch: false,
-              isInSession: false,
-            ),
+            child: const PocketUnionApp(initialRoute: '/login'),
           ),
         );
         await tester.pump();
@@ -111,10 +103,7 @@ void main() {
                 (ref) => Future.value(_FakeAuthPort()),
               ),
             ],
-            child: const PocketUnionApp(
-              isFirstLaunch: false,
-              isInSession: false,
-            ),
+            child: const PocketUnionApp(initialRoute: '/login'),
           ),
         );
         await tester.pump();

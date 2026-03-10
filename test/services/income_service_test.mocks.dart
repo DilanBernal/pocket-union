@@ -8,7 +8,9 @@ import 'dart:async' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
 import 'package:pocket_union/domain/models/income.dart' as _i7;
-import 'package:pocket_union/domain/port/cloud/feat/income_port.dart' as _i3;
+import 'package:pocket_union/domain/port/local/income_port_local.dart' as _i3;
+import 'package:pocket_union/domain/port/utils/logger_port.dart' as _i9;
+import 'package:pocket_union/dto/filter/income_filter_dto.dart' as _i8;
 import 'package:pocket_union/dto/new_income_dto.dart' as _i5;
 import 'package:supabase/supabase.dart' as _i2;
 
@@ -80,11 +82,11 @@ class _FakeRealtimeChannel_8 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
-/// A class which mocks [IncomePort].
+/// A class which mocks [IncomeLocalPort].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockIncomePort extends _i1.Mock implements _i3.IncomePort {
-  MockIncomePort() {
+class MockIncomeLocalPort extends _i1.Mock implements _i3.IncomeLocalPort {
+  MockIncomeLocalPort() {
     _i1.throwOnMissingStub(this);
   }
 
@@ -102,12 +104,44 @@ class MockIncomePort extends _i1.Mock implements _i3.IncomePort {
           as _i4.Future<String>);
 
   @override
+  _i4.Future<_i7.Income?> getIncomeById(String? id) =>
+      (super.noSuchMethod(
+            Invocation.method(#getIncomeById, [id]),
+            returnValue: _i4.Future<_i7.Income?>.value(),
+          )
+          as _i4.Future<_i7.Income?>);
+
+  @override
   _i4.Future<List<_i7.Income>> getAllIncomes() =>
       (super.noSuchMethod(
             Invocation.method(#getAllIncomes, []),
             returnValue: _i4.Future<List<_i7.Income>>.value(<_i7.Income>[]),
           )
           as _i4.Future<List<_i7.Income>>);
+
+  @override
+  _i4.Future<List<_i7.Income>> getByFilter(_i8.IncomeFilterDto? filter) =>
+      (super.noSuchMethod(
+            Invocation.method(#getByFilter, [filter]),
+            returnValue: _i4.Future<List<_i7.Income>>.value(<_i7.Income>[]),
+          )
+          as _i4.Future<List<_i7.Income>>);
+
+  @override
+  _i4.Future<bool> updateIncome(_i7.Income? income) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateIncome, [income]),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
+
+  @override
+  _i4.Future<bool> deleteIncome(String? id) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteIncome, [id]),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
 }
 
 /// A class which mocks [SupabaseClient].
@@ -293,4 +327,48 @@ class MockSupabaseClient extends _i1.Mock implements _i2.SupabaseClient {
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
           as _i4.Future<void>);
+}
+
+/// A class which mocks [LoggerPort].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockLoggerPort extends _i1.Mock implements _i9.LoggerPort {
+  MockLoggerPort() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  void info(String? message) => super.noSuchMethod(
+    Invocation.method(#info, [message]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void debug(String? message) => super.noSuchMethod(
+    Invocation.method(#debug, [message]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void warning(String? message) => super.noSuchMethod(
+    Invocation.method(#warning, [message]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void error(String? message, {Object? error, StackTrace? stackTrace}) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #error,
+          [message],
+          {#error: error, #stackTrace: stackTrace},
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void logObject(Object? object, {String? label}) => super.noSuchMethod(
+    Invocation.method(#logObject, [object], {#label: label}),
+    returnValueForMissingStub: null,
+  );
 }

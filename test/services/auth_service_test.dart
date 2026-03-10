@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pocket_union/core/services/auth/auth_service.dart';
-import 'package:pocket_union/domain/port/cloud/feat/user_port.dart';
+import 'package:pocket_union/domain/port/local/user_port_local.dart';
+import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,12 +11,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_service_test.mocks.dart';
 
-@GenerateMocks([SupabaseClient, GoTrueClient, UserPort])
+@GenerateMocks([SupabaseClient, GoTrueClient, UserLocalPort, LoggerPort])
 void main() {
   late AuthService authService;
   late MockSupabaseClient mockSupabaseClient;
   late MockGoTrueClient mockGoTrueClient;
-  late MockUserPort mockUserPort;
+  late MockUserLocalPort mockUserPort;
+  late MockLoggerPort mockLogger;
   late SharedPreferences sharedPreferences;
 
   setUp(() async {
@@ -23,12 +25,14 @@ void main() {
     sharedPreferences = await SharedPreferences.getInstance();
     mockSupabaseClient = MockSupabaseClient();
     mockGoTrueClient = MockGoTrueClient();
-    mockUserPort = MockUserPort();
+    mockUserPort = MockUserLocalPort();
+    mockLogger = MockLoggerPort();
     when(mockSupabaseClient.auth).thenReturn(mockGoTrueClient);
     authService = AuthService(
       mockSupabaseClient,
       mockUserPort,
       sharedPreferences,
+      mockLogger,
     );
   });
 
