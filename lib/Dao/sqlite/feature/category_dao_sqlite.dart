@@ -293,4 +293,23 @@ class CategoryDaoSqlite extends CategoryLocalPort {
     }
     await db.update('category', data, where: 'id = ?', whereArgs: [categoryId]);
   }
+
+  @override
+  Future<bool> upsertFromCloud(Category category) async {
+    final db = await _dbHelper.database;
+    try {
+      final map = category.toMap();
+      map['sync_status'] = SyncStatus.synced.value.toLowerCase();
+      map['last_sync_at'] = DateTime.now().toIso8601String();
+      await db.insert(
+        'category',
+        map,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      return true;
+    } catch (e) {
+      _logger.error('CategoryDaoSqlite: upsertFromCloud falló', error: e);
+      return false;
+    }
+  }
 }

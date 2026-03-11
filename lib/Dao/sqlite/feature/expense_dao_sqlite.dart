@@ -21,26 +21,40 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
     final db = await _dbHelper.database;
     final id = _uuid.v4();
     final now = DateTime.now();
-    final expense = Expense(
-      id: id,
-      coupleId: '',
-      createdBy: '',
-      name: dto.name,
-      transactionDate: now,
-      description: dto.description,
-      amount: dto.amount,
-      categoryId: dto.categoryId,
-      isFixed: dto.isFixed,
-      importanceLevel: dto.importanceLevel,
-      isPlaned: dto.isPlaned,
-      createdAt: now,
-      inCloud: false,
-    );
-    await db.insert(
-      'expense',
-      expense.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+
+    await db.transaction((txn) async {
+      // 1. Insertar en expense
+      await txn.insert('expense', {
+        'id': id,
+        'couple_id': dto.coupleId ?? '',
+        'created_by': dto.createdBy ?? '',
+        'name': dto.name,
+        'transaction_date': now.toIso8601String(),
+        'description': dto.description,
+        'amount': (dto.amount * 100).round(),
+        'created_at': now.toIso8601String(),
+        'sync_status': 'pending',
+        'local_updated_at': now.toIso8601String(),
+        'is_deleted': 0,
+      });
+
+      // 2. Insertar en expense_info
+      await txn.insert('expense_info', {
+        'id': id,
+        'is_fixed': dto.isFixed ? 1 : 0,
+        'is_planed': dto.isPlaned ? 1 : 0,
+        'importance_level': dto.importanceLevel,
+      });
+
+      // 3. Insertar en expense_category (N:N)
+      for (final categoryId in dto.categoryIds) {
+        await txn.insert('expense_category', {
+          'expense_id': id,
+          'category_id': categoryId,
+        });
+      }
+    });
+
     return id;
   }
 
@@ -48,14 +62,29 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
   Future<Expense?> getExpenseById(String id) async {
     final db = await _dbHelper.database;
     try {
-      final maps = await db.query(
-        'expense',
-        where: 'id = ?',
-        whereArgs: [id],
-        limit: 1,
+      final maps = await db.rawQuery(
+        '''
+        SELECT e.*, ei.is_fixed, ei.is_planed, ei.importance_level
+        FROM expense e
+        LEFT JOIN expense_info ei ON e.id = ei.id
+        WHERE e.id = ? AND e.is_deleted = 0
+        LIMIT 1
+      ''',
+        [id],
       );
+
       if (maps.isEmpty) return null;
-      return Expense.fromMap(maps.first);
+
+      final categoryMaps = await db.query(
+        'expense_category',
+        where: 'expense_id = ?',
+        whereArgs: [id],
+      );
+      final categoryIds = categoryMaps
+          .map((m) => m['category_id'] as String)
+          .toList();
+
+      return Expense.fromMap(maps.first, categoryIds: categoryIds);
     } catch (e) {
       _logger.error('ExpenseDaoSqlite: Error al buscar gasto por id', error: e);
       return null;
@@ -66,8 +95,23 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
   Future<List<Expense>> getAllExpenses() async {
     final db = await _dbHelper.database;
     try {
-      final maps = await db.query('expense', orderBy: 'transaction_date DESC');
-      return maps.map((m) => Expense.fromMap(m)).toList();
+      final maps = await db.rawQuery('''
+        SELECT e.*, ei.is_fixed, ei.is_planed, ei.importance_level
+        FROM expense e
+        LEFT JOIN expense_info ei ON e.id = ei.id
+        WHERE e.is_deleted = 0
+        ORDER BY e.transaction_date DESC
+      ''');
+
+      if (maps.isEmpty) return [];
+
+      final expenseIds = maps.map((m) => m['id'] as String).toList();
+      final categoryMap = await _loadCategoryIds(db, expenseIds);
+
+      return maps.map((m) {
+        final id = m['id'] as String;
+        return Expense.fromMap(m, categoryIds: categoryMap[id] ?? []);
+      }).toList();
     } catch (e) {
       _logger.error('ExpenseDaoSqlite: Error al obtener gastos', error: e);
       throw Exception("Error al obtener gastos: $e");
@@ -77,54 +121,89 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
   @override
   Future<List<Expense>> getByFilter(ExpenseFilterDto filter) async {
     final db = await _dbHelper.database;
-    final where = <String>[];
+    final where = <String>['e.is_deleted = 0'];
     final whereArgs = <dynamic>[];
 
     if (filter.id != null) {
-      where.add('id = ?');
+      where.add('e.id = ?');
       whereArgs.add(filter.id);
     }
     if (filter.coupleId != null) {
-      where.add('couple_id = ?');
+      where.add('e.couple_id = ?');
       whereArgs.add(filter.coupleId);
     }
     if (filter.categoryId != null) {
-      where.add('category_id = ?');
+      where.add(
+        'EXISTS (SELECT 1 FROM expense_category ec WHERE ec.expense_id = e.id AND ec.category_id = ?)',
+      );
       whereArgs.add(filter.categoryId);
     }
     if (filter.isFixed != null) {
-      where.add('is_fixed = ?');
+      where.add('ei.is_fixed = ?');
       whereArgs.add(filter.isFixed! ? 1 : 0);
     }
     if (filter.dateFrom != null) {
-      where.add('transaction_date >= ?');
+      where.add('e.transaction_date >= ?');
       whereArgs.add(filter.dateFrom!.toIso8601String());
     }
     if (filter.dateTo != null) {
-      where.add('transaction_date <= ?');
+      where.add('e.transaction_date <= ?');
       whereArgs.add(filter.dateTo!.toIso8601String());
     }
 
-    final maps = await db.query(
-      'expense',
-      where: where.isNotEmpty ? where.join(' AND ') : null,
-      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
-      orderBy: 'transaction_date DESC',
-    );
-    return maps.map((m) => Expense.fromMap(m)).toList();
+    final maps = await db.rawQuery('''
+      SELECT e.*, ei.is_fixed, ei.is_planed, ei.importance_level
+      FROM expense e
+      LEFT JOIN expense_info ei ON e.id = ei.id
+      WHERE ${where.join(' AND ')}
+      ORDER BY e.transaction_date DESC
+    ''', whereArgs.isNotEmpty ? whereArgs : null);
+
+    if (maps.isEmpty) return [];
+
+    final expenseIds = maps.map((m) => m['id'] as String).toList();
+    final categoryMap = await _loadCategoryIds(db, expenseIds);
+
+    return maps.map((m) {
+      final id = m['id'] as String;
+      return Expense.fromMap(m, categoryIds: categoryMap[id] ?? []);
+    }).toList();
   }
 
   @override
   Future<bool> updateExpense(Expense expense) async {
     final db = await _dbHelper.database;
     try {
-      final count = await db.update(
-        'expense',
-        expense.toMap(),
-        where: 'id = ?',
-        whereArgs: [expense.id],
-      );
-      return count > 0;
+      await db.transaction((txn) async {
+        // Actualizar tabla expense
+        await txn.update(
+          'expense',
+          expense.toMap(),
+          where: 'id = ?',
+          whereArgs: [expense.id],
+        );
+
+        // Upsert expense_info
+        await txn.insert(
+          'expense_info',
+          expense.toExpenseInfoMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        // Reemplazar categorías
+        await txn.delete(
+          'expense_category',
+          where: 'expense_id = ?',
+          whereArgs: [expense.id],
+        );
+        for (final categoryId in expense.categoryIds) {
+          await txn.insert('expense_category', {
+            'expense_id': expense.id,
+            'category_id': categoryId,
+          });
+        }
+      });
+      return true;
     } catch (e) {
       _logger.error('ExpenseDaoSqlite: Error al actualizar gasto', error: e);
       return false;
@@ -135,8 +214,9 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
   Future<bool> deleteExpense(String id) async {
     final db = await _dbHelper.database;
     try {
-      final count = await db.delete(
+      final count = await db.update(
         'expense',
+        {'is_deleted': 1},
         where: 'id = ?',
         whereArgs: [id],
       );
@@ -160,5 +240,27 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
       );
       return false;
     }
+  }
+
+  /// Carga category_ids en batch para una lista de expense IDs.
+  Future<Map<String, List<String>>> _loadCategoryIds(
+    Database db,
+    List<String> expenseIds,
+  ) async {
+    if (expenseIds.isEmpty) return {};
+
+    final placeholders = List.filled(expenseIds.length, '?').join(',');
+    final rows = await db.rawQuery(
+      'SELECT expense_id, category_id FROM expense_category WHERE expense_id IN ($placeholders)',
+      expenseIds,
+    );
+
+    final result = <String, List<String>>{};
+    for (final row in rows) {
+      final expenseId = row['expense_id'] as String;
+      final categoryId = row['category_id'] as String;
+      result.putIfAbsent(expenseId, () => []).add(categoryId);
+    }
+    return result;
   }
 }

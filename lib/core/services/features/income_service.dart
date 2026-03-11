@@ -23,6 +23,8 @@ class IncomeService implements IIncomePort {
 
     try {
       final now = DateTime.now().toIso8601String();
+
+      // 1. income table
       await _supabaseClient.from('income').insert({
         'id': id,
         'couple_id': dto.coupleId,
@@ -30,12 +32,29 @@ class IncomeService implements IIncomePort {
         'transaction_date': now,
         'description': dto.description,
         'amount': (dto.amount * 100).round(),
-        'category_id': dto.categoryId,
-        'is_recurring': dto.isRecurring,
         'is_received': dto.isReceived,
         'created_at': now,
         'user_recipient_id': dto.userId,
       });
+
+      // 2. income_info table
+      await _supabaseClient.from('income_info').insert({
+        'income_id': id,
+        'is_recurring': dto.isRecurring,
+        'is_received': dto.isReceived,
+        'received_in': dto.receivedIn,
+      });
+
+      // 3. income_category table (N:N)
+      if (dto.categoryIds.isNotEmpty) {
+        await _supabaseClient
+            .from('income_category')
+            .insert(
+              dto.categoryIds
+                  .map((catId) => {'income_id': id, 'category_id': catId})
+                  .toList(),
+            );
+      }
     } catch (e) {
       _logger.error(
         'IncomeService: no se pudo sincronizar con Supabase',

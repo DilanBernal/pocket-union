@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/core/providers/data_cloud_providers.dart';
-import 'package:pocket_union/core/providers/data_local_providers.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
+import 'package:pocket_union/ui/widgets/category_horizontal_list.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NewEntryForm extends ConsumerStatefulWidget {
@@ -21,7 +21,7 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  String? _selectedCategoryId;
+  List<String> _selectedCategoryIds = [];
   bool _isReceived = true; // YO por defecto
   bool _isSubmitting = false;
 
@@ -46,7 +46,7 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
       final dto = NewIncomeDto(
         name: _nameController.text.trim(),
         amount: double.parse(_amountController.text.trim()),
-        categoryId: _selectedCategoryId ?? '',
+        categoryIds: _selectedCategoryIds,
         isRecurring: false,
         isReceived: _isReceived,
         description: _descriptionController.text.trim().isEmpty
@@ -57,14 +57,8 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
         userId: _isReceived ? userId : null,
       );
 
-      // Offline-first: intenta el service, fallback al DAO
-      try {
-        final service = await ref.read(incomeServiceProvider.future);
-        await service.createIncome(dto);
-      } catch (_) {
-        final dao = ref.read(incomeDaoProvider);
-        await dao.createIncome(dto);
-      }
+      final service = await ref.read(incomeServiceProvider.future);
+      await service.createIncome(dto);
 
       ref.invalidate(allIncomesProvider);
 
@@ -82,7 +76,7 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
       _amountController.clear();
       _descriptionController.clear();
       setState(() {
-        _selectedCategoryId = null;
+        _selectedCategoryIds = [];
         _isReceived = true;
       });
     } catch (e) {
@@ -147,26 +141,13 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
             const SizedBox(height: 16),
 
             // --- Categoría ---
-            DropdownButtonFormField<String>(
-              value: _selectedCategoryId,
-              decoration: const InputDecoration(
-                labelText: 'Categoría',
-                prefixIcon: Icon(Icons.category),
-              ),
-              items: widget.categories.map((cat) {
-                return DropdownMenuItem<String>(
-                  value: cat.id,
-                  child: Text(cat.name),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() => _selectedCategoryId = value);
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Selecciona una categoría';
-                }
-                return null;
+            Text('Categorías', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            CategoryHorizontalList(
+              categories: widget.categories,
+              selectedIds: _selectedCategoryIds,
+              onChanged: (ids) {
+                setState(() => _selectedCategoryIds = ids);
               },
             ),
             const SizedBox(height: 16),

@@ -7,6 +7,7 @@ import 'package:pocket_union/Dao/sqlite/feature/goal_contribution_dao_sqlite.dar
 import 'package:pocket_union/Dao/sqlite/feature/goal_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/feature/income_dao_sqlite.dart';
+import 'package:pocket_union/Dao/sqlite/feature/recurrent_income_dao_sqlite.dart';
 import 'package:pocket_union/Dao/sqlite/feature/user_dao_sqlite.dart';
 import 'package:pocket_union/core/providers/utils_providers.dart';
 import 'package:pocket_union/domain/port/local/category_port_local.dart';
@@ -16,6 +17,7 @@ import 'package:pocket_union/domain/port/local/expense_share_local_port.dart';
 import 'package:pocket_union/domain/port/local/goal_contribution_local_port.dart';
 import 'package:pocket_union/domain/port/local/goal_local_port.dart';
 import 'package:pocket_union/domain/port/local/income_port_local.dart';
+import 'package:pocket_union/domain/port/local/recurrent_income_port_local.dart';
 import 'package:pocket_union/domain/port/local/user_port_local.dart';
 
 // SQLite provider
@@ -70,4 +72,10 @@ final goalContributionDaoProvider = Provider<GoalContributionLocalPort>((ref) {
   final dbHelper = ref.read(sqliteDbProvider);
   final logger = ref.read(loggerProvider);
   return GoalContributionDaoSqlite(dbHelper: dbHelper, logger: logger);
+});
+
+final recurrentIncomeDaoProvider = Provider<RecurrentIncomeLocalPort>((ref) {
+  final dbHelper = ref.read(sqliteDbProvider);
+  final logger = ref.read(loggerProvider);
+  return RecurrentIncomeDaoSqlite(dbHelper: dbHelper, logger: logger);
 });

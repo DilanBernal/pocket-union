@@ -44,6 +44,17 @@ final incomeCategoriesProvider = FutureProvider<List<Category>>((ref) async {
   }
 });
 
+// Categories filtered by CategoryHost.expense
+final expenseCategoriesProvider = FutureProvider<List<Category>>((ref) async {
+  try {
+    final categoryService = await ref.watch(categoryServiceProvider.future);
+    return categoryService.getCategoriesByHost(CategoryHost.expense);
+  } catch (_) {
+    final categoryDao = ref.watch(categoryDaoProvider);
+    return categoryDao.getCategoriesByHost(CategoryHost.expense);
+  }
+});
+
 // All categories
 final allCategoriesProvider = FutureProvider<List<Category>>((ref) async {
   try {
@@ -54,6 +65,10 @@ final allCategoriesProvider = FutureProvider<List<Category>>((ref) async {
     return categoryDao.getAllCategories();
   }
 });
+
+/// Controla si las categorías por defecto ya se crearon en esta sesión.
+/// Se resetea al reiniciar la app.
+final defaultCategoriesCreatedProvider = StateProvider<bool>((ref) => false);
 
 // All incomes
 final allIncomesProvider = FutureProvider<List<Income>>((ref) async {

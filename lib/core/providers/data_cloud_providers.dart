@@ -9,6 +9,7 @@ import 'package:pocket_union/core/services/features/expense_share_service.dart';
 import 'package:pocket_union/core/services/features/goal_contribution_service.dart';
 import 'package:pocket_union/core/services/features/goal_service.dart';
 import 'package:pocket_union/core/services/features/income_service.dart';
+import 'package:pocket_union/core/services/features/recurrent_income_service.dart';
 import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/domain/port/cloud/auth/i_couple_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_category_port.dart';
@@ -17,6 +18,7 @@ import 'package:pocket_union/domain/port/cloud/feat/i_expense_share_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_goal_contribution_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_goal_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_income_port.dart';
+import 'package:pocket_union/domain/port/cloud/feat/i_recurrent_income_port.dart';
 
 // Auth services
 final authServiceProvider = FutureProvider<IAuthPort>((ref) async {
@@ -80,4 +82,13 @@ final goalContributionServiceProvider = FutureProvider<IGoalContributionPort>((
   final contributionDao = ref.watch(goalContributionDaoProvider);
   final logger = ref.watch(loggerProvider);
   return GoalContributionService(contributionDao, supabaseClient, logger);
+});
+
+final recurrentIncomeServiceProvider = FutureProvider<IRecurrentIncomePort>((
+  ref,
+) async {
+  final supabaseClient = await ref.watch(supabaseClientProvider.future);
+  final recurrentIncomeDao = ref.watch(recurrentIncomeDaoProvider);
+  final logger = ref.watch(loggerProvider);
+  return RecurrentIncomeService(recurrentIncomeDao, supabaseClient, logger);
 });

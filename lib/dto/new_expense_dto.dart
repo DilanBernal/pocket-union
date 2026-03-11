@@ -3,17 +3,21 @@ class NewExpenseDto {
   final String name;
   final int importanceLevel;
   String? description;
-  final String categoryId;
+  final List<String> categoryIds;
   final bool isFixed;
   final bool isPlaned;
+  String? coupleId;
+  String? createdBy;
 
   NewExpenseDto({
     required this.amount,
     required this.name,
     required this.importanceLevel,
-    required this.categoryId,
+    required this.categoryIds,
     required this.isFixed,
     required this.isPlaned,
     this.description,
+    this.coupleId,
+    this.createdBy,
   });
 }

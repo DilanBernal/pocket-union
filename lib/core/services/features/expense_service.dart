@@ -23,17 +23,37 @@ class ExpenseService implements IExpensePort {
 
     try {
       final now = DateTime.now().toIso8601String();
+
+      // 1. expense table
       await _supabaseClient.from('expense').insert({
         'id': id,
+        'couple_id': dto.coupleId,
+        'created_by': dto.createdBy,
         'name': dto.name,
+        'transaction_date': now,
         'description': dto.description,
         'amount': (dto.amount * 100).round(),
-        'category_id': dto.categoryId,
-        'is_fixed': dto.isFixed,
-        'importance_level': dto.importanceLevel,
-        'is_planed': dto.isPlaned,
         'created_at': now,
       });
+
+      // 2. expense_info table
+      await _supabaseClient.from('expense_info').insert({
+        'id': id,
+        'is_fixed': dto.isFixed,
+        'is_planed': dto.isPlaned,
+        'importance_level': dto.importanceLevel,
+      });
+
+      // 3. expense_category table (N:N)
+      if (dto.categoryIds.isNotEmpty) {
+        await _supabaseClient
+            .from('expense_category')
+            .insert(
+              dto.categoryIds
+                  .map((catId) => {'expense_id': id, 'category_id': catId})
+                  .toList(),
+            );
+      }
     } catch (e) {
       _logger.error(
         'ExpenseService: no se pudo sincronizar con Supabase',

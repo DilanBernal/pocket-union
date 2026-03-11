@@ -7,9 +7,8 @@ class Income {
   DateTime transactionDate;
   String? description;
   final double amount;
-  final String? categoryId;
+  final List<String> categoryIds;
   final bool isRecurring;
-  final Map<String, dynamic>? recurrenceInterval;
   final bool isReceived;
   final Map<String, dynamic>? receivedIn;
   final DateTime createdAt;
@@ -26,9 +25,8 @@ class Income {
     required this.transactionDate,
     this.description,
     required this.amount,
-    this.categoryId,
+    this.categoryIds = const [],
     this.isRecurring = false,
-    this.recurrenceInterval,
     this.isReceived = true,
     this.receivedIn,
     required this.createdAt,
@@ -37,6 +35,7 @@ class Income {
     this.isDeleted = false,
   });
 
+  /// Mapa para la tabla `income` en SQLite (sin campos de income_info ni income_category).
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -45,11 +44,7 @@ class Income {
       'transaction_date': transactionDate.toIso8601String(),
       'description': description,
       'amount': (amount * 100).round(),
-      'category_id': categoryId,
-      'is_recurring': isRecurring ? 1 : 0,
-      'recurrence_interval': recurrenceInterval,
       'is_received': isReceived ? 1 : 0,
-      'received_in': receivedIn,
       'created_at': createdAt.toIso8601String(),
       'user_recipient_id': userRecipientId,
       'sync_status': syncStatus.value,
@@ -57,8 +52,23 @@ class Income {
     };
   }
 
+  /// Mapa para la tabla `income_info` en SQLite.
+  Map<String, dynamic> toIncomeInfoMap() {
+    return {
+      'income_id': id,
+      'is_recurring': isRecurring ? 1 : 0,
+      'received_in': receivedIn,
+      'is_received': isReceived ? 1 : 0,
+    };
+  }
+
   /// Lee desde SQLite donde amount está almacenado en centavos.
-  factory Income.fromMap(Map<String, dynamic> map) {
+  /// [map] contiene campos de income LEFT JOIN income_info.
+  /// [categoryIds] se provee aparte desde income_category.
+  factory Income.fromMap(
+    Map<String, dynamic> map, {
+    List<String> categoryIds = const [],
+  }) {
     return Income(
       id: map['id'],
       coupleId: map['couple_id'],
@@ -66,15 +76,15 @@ class Income {
       transactionDate: DateTime.parse(map['transaction_date']),
       description: map['description'],
       amount: (map['amount'] as num).toDouble() / 100,
-      categoryId: map['category_id'],
+      categoryIds: categoryIds,
       isRecurring: map['is_recurring'] == 1,
-      recurrenceInterval: map['recurrence_interval'],
       isReceived: map['is_received'] == 1,
       receivedIn: map['received_in'],
       createdAt: DateTime.parse(map['created_at']),
       userRecipientId: map['user_recipient_id'],
       syncStatus: SyncStatus.fromString(
-          (map['sync_status'] as String? ?? 'pending').toUpperCase()),
+        (map['sync_status'] as String? ?? 'pending').toUpperCase(),
+      ),
       isDeleted: map['is_deleted'] == 1,
     );
   }
@@ -87,9 +97,8 @@ class Income {
       'transaction_date': transactionDate.toIso8601String(),
       'description': description,
       'amount': amount,
-      'category_id': categoryId,
+      'category_ids': categoryIds,
       'is_recurring': isRecurring,
-      'recurrence_interval': recurrenceInterval,
       'is_received': isReceived,
       'received_in': receivedIn,
       'created_at': createdAt.toIso8601String(),
@@ -105,15 +114,19 @@ class Income {
       transactionDate: DateTime.parse(json['transaction_date']),
       description: json['description'],
       amount: (json['amount'] as num).toDouble(),
-      categoryId: json['category_id'],
+      categoryIds:
+          (json['category_ids'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       isRecurring: json['is_recurring'] ?? false,
-      recurrenceInterval: json['recurrence_interval'],
       isReceived: json['is_received'] ?? true,
       receivedIn: json['received_in'],
       createdAt: DateTime.parse(json['created_at']),
       userRecipientId: json['user_recipient_id'],
       syncStatus: SyncStatus.fromString(
-          (json['sync_status'] as String? ?? 'pending').toUpperCase()),
+        (json['sync_status'] as String? ?? 'pending').toUpperCase(),
+      ),
       isDeleted: json['is_deleted'] == 1 || json['is_deleted'] == true,
     );
   }

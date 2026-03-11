@@ -2,9 +2,8 @@ class NewIncomeDto {
   final String name;
   final double amount;
   String? description;
-  final String categoryId;
+  final List<String> categoryIds;
   final bool isRecurring;
-  Object? recurrenceInterval;
   final bool isReceived;
   Object? receivedIn;
   String? coupleId;
@@ -15,11 +14,10 @@ class NewIncomeDto {
   NewIncomeDto({
     required this.amount,
     required this.name,
-    required this.categoryId,
+    required this.categoryIds,
     required this.isRecurring,
     required this.isReceived,
     this.description,
-    this.recurrenceInterval,
     this.receivedIn,
     this.coupleId,
     this.userId,
