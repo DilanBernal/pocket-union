@@ -4,17 +4,19 @@ import 'package:mockito/mockito.dart';
 import 'package:pocket_union/core/services/features/income_service.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/income.dart';
-import 'package:pocket_union/domain/port/feat/income_port.dart';
+import 'package:pocket_union/domain/port/local/income_port_local.dart';
+import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'income_service_test.mocks.dart';
 
-@GenerateMocks([IncomePort, SupabaseClient])
+@GenerateMocks([IncomeLocalPort, SupabaseClient, LoggerPort])
 void main() {
   late IncomeService incomeService;
-  late MockIncomePort mockIncomeDao;
+  late MockIncomeLocalPort mockIncomeDao;
   late MockSupabaseClient mockSupabaseClient;
+  late MockLoggerPort mockLogger;
 
   final testIncome = Income(
     id: 'income-uuid-1',
@@ -29,9 +31,14 @@ void main() {
   );
 
   setUp(() {
-    mockIncomeDao = MockIncomePort();
+    mockIncomeDao = MockIncomeLocalPort();
     mockSupabaseClient = MockSupabaseClient();
-    incomeService = IncomeService(mockIncomeDao, mockSupabaseClient);
+    mockLogger = MockLoggerPort();
+    incomeService = IncomeService(
+      mockIncomeDao,
+      mockSupabaseClient,
+      mockLogger,
+    );
   });
 
   group('IncomeService - getAllIncomes', () {
@@ -57,10 +64,7 @@ void main() {
     test('propaga excepción del DAO', () async {
       when(mockIncomeDao.getAllIncomes()).thenThrow(Exception('DB error'));
 
-      expect(
-        () => incomeService.getAllIncomes(),
-        throwsException,
-      );
+      expect(() => incomeService.getAllIncomes(), throwsException);
     });
   });
 
@@ -78,8 +82,9 @@ void main() {
 
     test('inserta en SQLite y devuelve el ID generado', () async {
       const generatedId = 'income-uuid-new';
-      when(mockIncomeDao.createIncome(any))
-          .thenAnswer((_) async => generatedId);
+      when(
+        mockIncomeDao.createIncome(any),
+      ).thenAnswer((_) async => generatedId);
       // Supabase falla en silencio (offline-first)
       when(mockSupabaseClient.from(any)).thenThrow(Exception('offline'));
 
@@ -91,8 +96,9 @@ void main() {
 
     test('retorna ID aunque falle la sincronización con Supabase', () async {
       const generatedId = 'income-uuid-offline';
-      when(mockIncomeDao.createIncome(any))
-          .thenAnswer((_) async => generatedId);
+      when(
+        mockIncomeDao.createIncome(any),
+      ).thenAnswer((_) async => generatedId);
       when(mockSupabaseClient.from(any)).thenThrow(Exception('Network error'));
 
       final result = await incomeService.createIncome(newIncomeDto);
@@ -102,13 +108,11 @@ void main() {
     });
 
     test('lanza excepción si el DAO falla', () async {
-      when(mockIncomeDao.createIncome(any))
-          .thenThrow(Exception('SQLite error'));
+      when(
+        mockIncomeDao.createIncome(any),
+      ).thenThrow(Exception('SQLite error'));
 
-      expect(
-        () => incomeService.createIncome(newIncomeDto),
-        throwsException,
-      );
+      expect(() => incomeService.createIncome(newIncomeDto), throwsException);
     });
 
     test('isReceived=true (solo yo) pasa userId al DAO', () async {
@@ -126,9 +130,9 @@ void main() {
 
       await incomeService.createIncome(dto);
 
-      final captured = verify(mockIncomeDao.createIncome(captureAny))
-          .captured
-          .single as NewIncomeDto;
+      final captured =
+          verify(mockIncomeDao.createIncome(captureAny)).captured.single
+              as NewIncomeDto;
       expect(captured.isReceived, isTrue);
       expect(captured.userId, 'user-1');
       expect(captured.name, 'Bono');
@@ -149,16 +153,17 @@ void main() {
 
       await incomeService.createIncome(dto);
 
-      final captured = verify(mockIncomeDao.createIncome(captureAny))
-          .captured
-          .single as NewIncomeDto;
+      final captured =
+          verify(mockIncomeDao.createIncome(captureAny)).captured.single
+              as NewIncomeDto;
       expect(captured.isReceived, isFalse);
       expect(captured.userId, isNull);
     });
 
     test('coupleId se pasa correctamente al DAO', () async {
-      when(mockIncomeDao.createIncome(any))
-          .thenAnswer((_) async => 'id-couple');
+      when(
+        mockIncomeDao.createIncome(any),
+      ).thenAnswer((_) async => 'id-couple');
       when(mockSupabaseClient.from(any)).thenThrow(Exception('offline'));
 
       final dto = NewIncomeDto(
@@ -173,9 +178,9 @@ void main() {
 
       await incomeService.createIncome(dto);
 
-      final captured = verify(mockIncomeDao.createIncome(captureAny))
-          .captured
-          .single as NewIncomeDto;
+      final captured =
+          verify(mockIncomeDao.createIncome(captureAny)).captured.single
+              as NewIncomeDto;
       expect(captured.coupleId, 'couple-uuid-1');
       expect(captured.userId, isNull);
     });

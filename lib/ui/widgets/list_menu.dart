@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers.dart';
+import 'package:pocket_union/core/providers/auth_service_provider.dart';
+import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/ui/router.dart';
 
 class ListMenu extends ConsumerStatefulWidget {
@@ -73,12 +74,12 @@ class _ListMenuState extends ConsumerState<ListMenu> {
                   radius: 30,
                   backgroundColor: Colors.white,
                   child: user?.avatarUrl != null
-                      ? Image.network(
-                          user!.avatarUrl!,
-                          fit: BoxFit.cover,
-                        )
-                      : const Icon(Icons.person,
-                          size: 30, color: Color.fromRGBO(46, 0, 76, 0.75)),
+                      ? Image.network(user!.avatarUrl!, fit: BoxFit.cover)
+                      : const Icon(
+                          Icons.person,
+                          size: 30,
+                          color: Color.fromRGBO(46, 0, 76, 0.75),
+                        ),
                 ),
                 const SizedBox(height: 12),
                 // Nombre del usuario
@@ -94,10 +95,7 @@ class _ListMenuState extends ConsumerState<ListMenu> {
                 const SizedBox(height: 4),
                 Text(
                   'Nuestras finanzas ❤️',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white70,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
                 ),
               ],
             ),
@@ -181,7 +179,8 @@ class _ListMenuState extends ConsumerState<ListMenu> {
                     builder: (context) => AlertDialog(
                       title: const Text('Cerrar sesión'),
                       content: const Text(
-                          '¿Estás seguro de que deseas cerrar sesión?'),
+                        '¿Estás seguro de que deseas cerrar sesión?',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),

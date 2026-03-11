@@ -20,25 +20,22 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: const Color.fromARGB(190, 0, 0, 0),
         elevation: 0,
       ),
-      drawer: const Drawer(
-        child: ListMenu(),
-      ),
+      drawer: const Drawer(child: ListMenu()),
       body: SafeArea(
-          child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          switch (indexScreen) {
-            0 => Expanded(child: NewEntryScreen()),
-            1 => Expanded(
-                  child: StartHeroWidget(
-                name1: "1",
-                name2: "2",
-              )),
-            2 => Expanded(child: NewOutScreen()),
-            int() => throw UnimplementedError(),
-          }
-        ],
-      )),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            switch (indexScreen) {
+              0 => Expanded(child: NewEntryScreen()),
+              1 => Expanded(
+                child: StartHeroWidget(name1: "1", name2: "2"),
+              ),
+              2 => Expanded(child: NewOutScreen()),
+              int() => throw UnimplementedError(),
+            },
+          ],
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         landscapeLayout: BottomNavigationBarLandscapeLayout.centered,
         selectedItemColor: Color.fromRGBO(128, 128, 204, 1.0),
@@ -46,24 +43,26 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: indexScreen,
         type: BottomNavigationBarType.shifting,
         onTap: (index) {
-          debugPrint(index.toString());
           setState(() {
             indexScreen = index;
           });
         },
         items: const [
           BottomNavigationBarItem(
-              icon: Icon(Icons.add_circle_outline),
-              activeIcon: Icon(Icons.add_circle),
-              label: 'Agregar una entrada'),
+            icon: Icon(Icons.add_circle_outline),
+            activeIcon: Icon(Icons.add_circle),
+            label: 'Agregar una entrada',
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: 'Home',
-              activeIcon: Icon(Icons.home)),
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+            activeIcon: Icon(Icons.home),
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.remove_circle_outline),
-              activeIcon: Icon(Icons.remove_circle),
-              label: 'Agregar una salida'),
+            icon: Icon(Icons.remove_circle_outline),
+            activeIcon: Icon(Icons.remove_circle),
+            label: 'Agregar una salida',
+          ),
         ],
       ),
     );

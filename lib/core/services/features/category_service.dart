@@ -1,18 +1,19 @@
-import 'package:flutter/foundation.dart' hide Category;
-import 'package:pocket_union/Dao/sqlite/category_dao_sqlite.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/domain/port/feat/category_port.dart';
+import 'package:pocket_union/domain/port/cloud/feat/i_category_port.dart';
+import 'package:pocket_union/domain/port/local/category_port_local.dart';
+import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/new_category_dto.dart';
 import 'package:pocket_union/dto/update_category_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class CategoryService implements CategoryPort {
-  final CategoryDaoSqlite _categoryDao;
+class CategoryService implements ICategoryPort {
+  final CategoryLocalPort _categoryDao;
   final SupabaseClient _supabaseClient;
+  final LoggerPort _logger;
 
-  CategoryService(this._categoryDao, this._supabaseClient);
+  CategoryService(this._categoryDao, this._supabaseClient, this._logger);
 
   @override
   Future<String> createCategory(NewCategoryDto categoryDto) async {
@@ -30,7 +31,9 @@ class CategoryService implements CategoryPort {
         'created_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      // debugPrint('CategoryService: no se pudo sincronizar con Supabase: $e');
+      _logger.error(
+        'CategoryService: no se pudo sincronizar con Supabase: ${e.toString()}',
+      );
     }
 
     return id;
@@ -39,20 +42,6 @@ class CategoryService implements CategoryPort {
   @override
   Future<bool> deleteCategory(String idCategory) async {
     return await _categoryDao.deleteCategory(idCategory);
-  }
-
-  @override
-  Future<List<Category>> createDefaultCategories(String idCouple) async {
-    final categories = await _categoryDao.createDefaultCategories(idCouple);
-
-    try {
-      final rows = categories.toList();
-      await _supabaseClient.from('category').insert(rows);
-    } catch (_) {
-      // Sincronización con Supabase falló — no afecta la ejecución local
-    }
-
-    return categories;
   }
 
   @override
@@ -100,24 +89,9 @@ class CategoryService implements CategoryPort {
         categoriesInLocal.addAll(categoriesNewsInCloudNotLocal);
       }
     } catch (e) {
-      debugPrint("Ocurrio un error con supabase, {e.toString()}");
+      _logger.error("Ocurrio un error con supabase, ${e.toString()}");
     }
     return categoriesInLocal;
-  }
-
-  @override
-  Future<List<Category>> getAllCategoriesByCouple({String? coupleId}) async {
-    throw UnimplementedError(
-      'getAllCategoriesByCouple solo se implementa en CategoryService',
-    );
-  }
-
-  @override
-  Future<List<Category>> getCategoriesByHost(
-    CategoryHost host, {
-    String? coupleId,
-  }) async {
-    return await _categoryDao.getCategoriesByHost(host);
   }
 
   /// Actualiza una categoría primero en SQLite (offline-first),
@@ -144,7 +118,9 @@ class CategoryService implements CategoryPort {
         );
       }
     } catch (e) {
-      debugPrint('CategoryService: Supabase update falló (no crítico): $e');
+      _logger.error(
+        'CategoryService: Supabase update falló (no crítico): ${e.toString()}',
+      );
     }
 
     return true;
@@ -174,7 +150,9 @@ class CategoryService implements CategoryPort {
           );
         }
       } catch (e) {
-        debugPrint('CategoryService: Supabase update falló para ${dto.id}: $e');
+        _logger.error(
+          'CategoryService: Supabase update falló para ${dto.id}: $e',
+        );
       }
     }
 
@@ -215,7 +193,7 @@ class CategoryService implements CategoryPort {
       );
       return true;
     } catch (e) {
-      debugPrint('CategoryService: syncCategory falló para $categoryId: $e');
+      _logger.error('CategoryService: syncCategory falló para $categoryId: $e');
       // Fallo — marcar como conflict
       await _categoryDao.updateSyncStatus(categoryId, SyncStatus.conflict);
       return false;
@@ -237,5 +215,19 @@ class CategoryService implements CategoryPort {
     }
 
     return results;
+  }
+
+  @override
+  Future<List<Category>> getCategoriesByHost(CategoryHost host) async {
+    final categoriesInLocal = await _categoryDao.getCategoriesByHost(host);
+    try {
+      final categoriesInCloud = await _supabaseClient
+          .from('category')
+          .select()
+          .eq('host', host);
+    } catch (e) {
+      _logger.logObject(e, label: "Error en category Service");
+    }
+    return categoriesInLocal;
   }
 }

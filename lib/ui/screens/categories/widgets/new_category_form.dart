@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers.dart';
+import 'package:pocket_union/core/providers/auth_service_provider.dart';
+import 'package:pocket_union/core/providers/data_cloud_providers.dart';
+import 'package:pocket_union/core/providers/data_local_providers.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/dto/new_category_dto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -130,9 +132,9 @@ class _NewCategoryFormState extends ConsumerState<NewCategoryForm> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -171,8 +173,10 @@ class _NewCategoryFormState extends ConsumerState<NewCategoryForm> {
             const SizedBox(height: 16),
 
             // --- Tipo ---
-            Text('Tipo de categoría',
-                style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              'Tipo de categoría',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: 8),
             SegmentedButton<CategoryHost>(
               segments: const [
@@ -209,20 +213,24 @@ class _NewCategoryFormState extends ConsumerState<NewCategoryForm> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? (_selectedColor ?? Theme.of(context).primaryColor)
-                              .withAlpha(50)
+                                .withAlpha(50)
                           : Colors.grey.withAlpha(30),
                       borderRadius: BorderRadius.circular(12),
                       border: isSelected
                           ? Border.all(
-                              color: _selectedColor ??
+                              color:
+                                  _selectedColor ??
                                   Theme.of(context).primaryColor,
-                              width: 2)
+                              width: 2,
+                            )
                           : null,
                     ),
-                    child: Icon(icon,
-                        color: isSelected
-                            ? (_selectedColor ?? Theme.of(context).primaryColor)
-                            : Colors.grey),
+                    child: Icon(
+                      icon,
+                      color: isSelected
+                          ? (_selectedColor ?? Theme.of(context).primaryColor)
+                          : Colors.grey,
+                    ),
                   ),
                 );
               }).toList(),
@@ -251,9 +259,10 @@ class _NewCategoryFormState extends ConsumerState<NewCategoryForm> {
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                  color: color.withAlpha(150),
-                                  blurRadius: 8,
-                                  spreadRadius: 2)
+                                color: color.withAlpha(150),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
                             ]
                           : null,
                     ),
@@ -286,11 +295,13 @@ class _NewCategoryFormState extends ConsumerState<NewCategoryForm> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.save),
               label: Text(_isSubmitting ? 'Guardando...' : 'Crear categoría'),
               style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
             ),
           ],
         ),

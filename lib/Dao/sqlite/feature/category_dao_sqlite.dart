@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
-import 'package:pocket_union/domain/port/feat/category_port.dart';
+import 'package:pocket_union/domain/port/local/category_port_local.dart';
+import 'package:pocket_union/domain/port/utils/logger_port.dart';
+import 'package:pocket_union/dto/filter/category_filter_dto.dart';
 import 'package:pocket_union/dto/new_category_dto.dart';
 import 'package:pocket_union/dto/update_category_dto.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
-import '../../domain/models/category.dart';
+import '../../../domain/models/category.dart';
 
-class CategoryDaoSqlite extends CategoryPort {
+class CategoryDaoSqlite extends CategoryLocalPort {
   final DbSqlite _dbHelper;
+  final LoggerPort _logger;
   final Uuid _uuid = Uuid();
 
-  CategoryDaoSqlite({required DbSqlite dbHelper}) : _dbHelper = dbHelper;
+  CategoryDaoSqlite({required DbSqlite dbHelper, required LoggerPort logger})
+    : _dbHelper = dbHelper,
+      _logger = logger;
 
   @override
   Future<String> createCategory(NewCategoryDto category) async {
@@ -188,7 +193,10 @@ class CategoryDaoSqlite extends CategoryPort {
       );
       return count > 0;
     } catch (e) {
-      debugPrint('CategoryDaoSqlite: Error actualizando categoría: $e');
+      _logger.error(
+        'CategoryDaoSqlite: Error actualizando categoría',
+        error: e,
+      );
       return false;
     }
   }
@@ -214,12 +222,46 @@ class CategoryDaoSqlite extends CategoryPort {
       });
       return true;
     } catch (e) {
-      debugPrint('CategoryDaoSqlite: Error actualizando categorías: $e');
+      _logger.error(
+        'CategoryDaoSqlite: Error actualizando categorías',
+        error: e,
+      );
       return false;
     }
   }
 
-  /// Obtiene una categoría por ID.
+  @override
+  Future<List<Category>> getByFilter(CategoryFilterDto filter) async {
+    final db = await _dbHelper.database;
+    final where = <String>[];
+    final whereArgs = <dynamic>[];
+
+    if (filter.id != null) {
+      where.add('id = ?');
+      whereArgs.add(filter.id);
+    }
+    if (filter.coupleId != null) {
+      where.add('couple_id = ?');
+      whereArgs.add(filter.coupleId);
+    }
+    if (filter.host != null) {
+      where.add('category_host = ?');
+      whereArgs.add(filter.host!.value);
+    }
+    if (filter.syncStatus != null) {
+      where.add('sync_status = ?');
+      whereArgs.add(filter.syncStatus!.value.toLowerCase());
+    }
+
+    final maps = await db.query(
+      'category',
+      where: where.isNotEmpty ? where.join(' AND ') : null,
+      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+    );
+    return maps.map((m) => Category.fromMap(m)).toList();
+  }
+
+  @override
   Future<Category?> getCategoryById(String id) async {
     final db = await _dbHelper.database;
     final maps = await db.query('category', where: 'id = ?', whereArgs: [id]);
@@ -227,9 +269,7 @@ class CategoryDaoSqlite extends CategoryPort {
     return Category.fromMap(maps.first);
   }
 
-  /// Obtiene categorías que necesitan sincronización:
-  /// - sync_status = 'pending' (nunca sincronizadas — necesitan INSERT)
-  /// - last_sync_at IS NOT NULL AND local_updated_at > last_sync_at (ya sincronizadas con cambios locales — necesitan UPDATE)
+  @override
   Future<List<Category>> getCategoriesNeedingSync() async {
     final db = await _dbHelper.database;
     final maps = await db.query(
@@ -240,7 +280,7 @@ class CategoryDaoSqlite extends CategoryPort {
     return maps.map((m) => Category.fromMap(m)).toList();
   }
 
-  /// Actualiza el estado de sincronización de una categoría.
+  @override
   Future<void> updateSyncStatus(
     String categoryId,
     SyncStatus status, {
@@ -252,21 +292,5 @@ class CategoryDaoSqlite extends CategoryPort {
       data['last_sync_at'] = lastSyncAt.toIso8601String();
     }
     await db.update('category', data, where: 'id = ?', whereArgs: [categoryId]);
-  }
-
-  @override
-  Future<bool> syncCategory(String categoryId) {
-    // Sync solo se implementa en el Service
-    throw UnimplementedError(
-      'syncCategory solo se implementa en CategoryService',
-    );
-  }
-
-  @override
-  Future<Map<String, bool>> syncAllCategories() {
-    // Sync solo se implementa en el Service
-    throw UnimplementedError(
-      'syncAllCategories solo se implementa en CategoryService',
-    );
   }
 }

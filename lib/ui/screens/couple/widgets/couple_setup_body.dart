@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers.dart';
+import 'package:pocket_union/core/providers/auth_service_provider.dart';
+import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/core/services/auth/couple_service.dart';
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/ui/router.dart';
@@ -62,7 +63,8 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
     } catch (e) {
       if (!mounted) return;
       _showError(
-          'Error al crear la pareja. Verifica tu conexión a internet.\n$e');
+        'Error al crear la pareja. Verifica tu conexión a internet.\n$e',
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -126,8 +128,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content:
-                Text('Tu pareja aún no se ha unido. Comparte el código!'),
+            content: Text('Tu pareja aún no se ha unido. Comparte el código!'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -166,10 +167,9 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
           Text(
             'Para usar Pocket Union necesitas estar conectado con tu pareja. '
             'Este paso requiere conexión a internet.',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: Colors.white70),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -257,10 +257,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                color.withAlpha(30),
-                color.withAlpha(10),
-              ],
+              colors: [color.withAlpha(30), color.withAlpha(10)],
             ),
           ),
           child: Row(
@@ -289,14 +286,19 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style:
-                          const TextStyle(fontSize: 13, color: Colors.white60),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white60,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios,
-                  color: color.withAlpha(150), size: 16),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: color.withAlpha(150),
+                size: 16,
+              ),
             ],
           ),
         ),
@@ -312,9 +314,9 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
         Text(
           '¡Pareja creada!',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(
@@ -349,8 +351,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
               const SizedBox(width: 12),
               IconButton(
                 onPressed: () {
-                  Clipboard.setData(
-                      ClipboardData(text: _generatedCode ?? ''));
+                  Clipboard.setData(ClipboardData(text: _generatedCode ?? ''));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Código copiado al portapapeles'),
@@ -390,8 +391,10 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
             _showInviteSection = false;
             _generatedCode = null;
           }),
-          child: const Text('← Volver a las opciones',
-              style: TextStyle(color: Colors.white54)),
+          child: const Text(
+            '← Volver a las opciones',
+            style: TextStyle(color: Colors.white54),
+          ),
         ),
       ],
     );
@@ -405,9 +408,9 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
         Text(
           'Únete a tu pareja',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(
@@ -440,18 +443,14 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
               letterSpacing: 8,
             ),
             counterText: '',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide:
-                  BorderSide(color: _colorFocusBorder, width: 1.5),
+              borderSide: BorderSide(color: _colorFocusBorder, width: 1.5),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide:
-                  BorderSide(color: _colorEnabledBorder, width: 1.5),
+              borderSide: BorderSide(color: _colorEnabledBorder, width: 1.5),
             ),
           ),
           inputFormatters: [
@@ -469,10 +468,12 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : const Icon(Icons.group_add),
-            label:
-                Text(_isLoading ? 'Uniéndose...' : 'Unirme a la pareja'),
+            label: Text(_isLoading ? 'Uniéndose...' : 'Unirme a la pareja'),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
               backgroundColor: const Color.fromRGBO(251, 0, 204, 1),
@@ -486,8 +487,10 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
         const SizedBox(height: 12),
         TextButton(
           onPressed: () => setState(() => _showJoinSection = false),
-          child: const Text('← Volver a las opciones',
-              style: TextStyle(color: Colors.white54)),
+          child: const Text(
+            '← Volver a las opciones',
+            style: TextStyle(color: Colors.white54),
+          ),
         ),
       ],
     );

@@ -1,6 +1,7 @@
+import 'dart:developer' as dev;
+
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:flutter/foundation.dart';
 
 /// Database manager siguiendo patrón Singleton
 /// Responsabilidad única: gestionar conexión y ciclo de vida de SQLite
@@ -26,7 +27,7 @@ class DbSqlite {
       final dbPath = await getDatabasesPath();
       final path = join(dbPath, _dbName);
 
-      debugPrint('📁 Inicializando DB en: $path');
+      dev.log('Inicializando DB en: $path', name: 'DbSqlite');
 
       final db = await openDatabase(
         path,
@@ -38,7 +39,7 @@ class DbSqlite {
 
       return db;
     } catch (e) {
-      debugPrint('❌ Error inicializando DB: $e');
+      dev.log('Error inicializando DB: $e', name: 'DbSqlite', level: 1000);
       rethrow;
     }
   }
@@ -47,12 +48,12 @@ class DbSqlite {
   Future _onConfigure(Database db) async {
     // Habilitar foreign keys
     await db.execute('PRAGMA foreign_keys = ON');
-    debugPrint('✅ Foreign keys habilitadas');
+    dev.log('Foreign keys habilitadas', name: 'DbSqlite');
   }
 
   /// Crear schema inicial (v1)
   Future _onCreate(Database db, int version) async {
-    debugPrint('🏗️  Creando schema v$version');
+    dev.log('Creando schema v$version', name: 'DbSqlite');
 
     await db.transaction((txn) async {
       // ========== TABLA: profile ==========
@@ -217,13 +218,13 @@ class DbSqlite {
         )
       ''');
 
-      debugPrint('✅ Schema creado exitosamente');
+      dev.log('Schema creado exitosamente', name: 'DbSqlite');
     });
   }
 
   /// Manejar migraciones de versiones
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    debugPrint('📦 Migrando DB de v$oldVersion a v$newVersion');
+    dev.log('Migrando DB de v$oldVersion a v$newVersion', name: 'DbSqlite');
 
     // Aquí irán las migraciones futuras
     // if (oldVersion < 2) { await _migrateToV2(db); }
@@ -235,7 +236,7 @@ class DbSqlite {
     if (_db != null) {
       await _db!.close();
       _db = null;
-      debugPrint('🔒 Base de datos cerrada');
+      dev.log('Base de datos cerrada', name: 'DbSqlite');
     }
   }
 
@@ -250,6 +251,6 @@ class DbSqlite {
     final path = join(dbPath, _dbName);
     await deleteDatabase(path);
 
-    debugPrint('🗑️  Base de datos eliminada');
+    dev.log('Base de datos eliminada', name: 'DbSqlite');
   }
 }
