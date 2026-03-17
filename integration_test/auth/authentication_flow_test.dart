@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:mock_supabase_http_client/mock_supabase_http_client.dart';
 import 'package:pocket_union/core/providers/providers.dart';
 import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:pocket_union/main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+final mockSupabase = SupabaseClient(
+  'https://mock.supabase.co', // Does not matter what URL you pass here as long as it's a valid URL
+  'fakeAnonKey', // Does not matter what string you pass here
+  httpClient: MockSupabaseHttpClient(),
+);
 
 /// Fake de IAuthPort que no depende de Supabase ni SQLite.
 class _FakeAuthPort implements IAuthPort {
@@ -31,7 +38,7 @@ class _FakeAuthPort implements IAuthPort {
   Future<void> logout(String email) async {}
 }
 
-void main() {
+void testAuthenticationFlow() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('App Flow - Happy Path', () {
@@ -89,7 +96,10 @@ void main() {
         await tester.pump();
 
         // Validation error shown, app does not crash
-        expect(find.text('Por favor, ingresa tu email.'), findsOneWidget);
+        expect(
+          find.text("Por favor, corrige los errores en el formulario."),
+          findsOneWidget,
+        );
       },
     );
 

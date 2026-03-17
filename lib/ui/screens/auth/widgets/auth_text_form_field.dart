@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
 class AuthTextFormField extends StatelessWidget {
-  const AuthTextFormField(
-      {super.key,
-      required this.colorFocusBorderInput,
-      required this.colorEnabledBorderInput,
-      required this.icon,
-      required this.fieldLabel,
-      this.keyboardType = TextInputType.text,
-      this.onSaved,
-      this.validator});
+  const AuthTextFormField({
+    super.key,
+    required this.colorFocusBorderInput,
+    required this.colorEnabledBorderInput,
+    required this.icon,
+    required this.fieldLabel,
+    this.keyboardType = TextInputType.text,
+    this.onSaved,
+    this.validator,
+  });
 
   final Color colorFocusBorderInput;
   final IconData icon;
@@ -22,22 +23,29 @@ class AuthTextFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         fillColor: const Color.fromRGBO(22, 17, 30, 1),
         filled: true,
         label: Text(fieldLabel),
         prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(22)),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(22),
-            borderSide: BorderSide(
-                color: colorFocusBorderInput, width: 1.5, strokeAlign: 20)),
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(
+            color: colorFocusBorderInput,
+            width: 1.5,
+            strokeAlign: 20,
+          ),
+        ),
         enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(22),
-            borderSide: BorderSide(
-                color: colorEnabledBorderInput, width: 1.5, strokeAlign: 20)),
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(
+            color: colorEnabledBorderInput,
+            width: 1.5,
+            strokeAlign: 20,
+          ),
+        ),
       ),
       onSaved: onSaved,
       validator: validator,

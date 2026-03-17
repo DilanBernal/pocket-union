@@ -479,6 +479,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  mock_supabase_http_client:
+    dependency: "direct dev"
+    description:
+      name: mock_supabase_http_client
+      sha256: "43b9681e43aa5bec7c801722f1b5e58b1a4b1448d346f29a47af0eb05abf4599"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3+2"
   mockito:
     dependency: "direct dev"
     description:
@@ -487,6 +495,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.6.3"
+  mocktail:
+    dependency: "direct dev"
+    description:
+      name: mocktail
+      sha256: "890df3f9688106f25755f26b1c60589a92b3ab91a22b8b224947ad041bf172d8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.4"
   package_config:
     dependency: transitive
     description:

@@ -45,6 +45,13 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
   Future<void> _handleSignin() async {
     if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Por favor, corrige los errores en el formulario."),
+          backgroundColor: Colors.green.shade600,
+          duration: const Duration(seconds: 3),
+        ),
+      );
       return;
     }
     _formKey.currentState!.save();
@@ -191,7 +198,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 AuthTextFormField(
                   colorFocusBorderInput: colorFocusBorderInput,
                   colorEnabledBorderInput: colorEnabledBorderInput,
-                  keyboardType: TextInputType.visiblePassword,
+                  keyboardType: TextInputType.text,
                   icon: Icons.key,
                   fieldLabel: "Contraseña",
                   onSaved: (newPassword) {
@@ -199,7 +206,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                   },
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Por favor, ingresa tu email.";
+                      return "Por favor, ingresa tu contraseña.";
+                    }
+                    if (value.length != value.trim().length) {
+                      return "La contraseña no puede tener espacios al inicio o al final.";
                     }
                     return null;
                   },
