@@ -15,8 +15,19 @@ test/
 └── widget/
     └── app_widget_test.dart      # Widget tests de StartScreen, LoginScreen, routing
 
+e2e/
+├── auth/
+│   └── authentication_e2e_test.dart      # Flujo E2E de autenticación
+└── transactions/
+│   └── transaction_flow_e2e_test.dart    # Flujo E2E de transacciones (entrada/salida)
+
 integration_test/
-└── app_flow_test.dart            # Integration tests del flujo de navegación
+├── app_flow_test.dart            # Suite legacy agregada
+├── auth/
+│   └── authentication_flow_test.dart
+└── features/
+│   └── category/
+│       └── category_flow_test.dart
 ```
 
 ## Dependencias de Testing
@@ -33,8 +44,17 @@ integration_test/
 ### Naming
 
 - Archivos de test: `{feature}_test.dart`
+- Archivos E2E raíz: `{feature}_e2e_test.dart`
 - Mocks generados: `{feature}_test.mocks.dart`
 - Fakes manuales: `_FakeXxxPort` (privadas, dentro del test)
+
+### Organización E2E por funcionalidad
+
+- La carpeta raíz `e2e/` se divide por dominio funcional.
+- `e2e/auth/` contiene flujos de autenticación.
+- `e2e/transactions/` contiene flujos de entrada y salida.
+- `e2e/` está definido como **suite real**: usa Supabase real y valida persistencia/consultas reales.
+- `integration_test/` queda como suite de integración con mocks/fakes cuando se necesite aislar dependencias.
 
 ### Tipos de Mock
 
@@ -115,6 +135,36 @@ dart run build_runner build --delete-conflicting-outputs
 flutter test integration_test/
 ```
 
+### Ejecutar E2E en carpeta raíz
+
+```bash
+flutter test e2e/
+```
+
+### Ejecutar E2E real con credenciales de prueba
+
+```bash
+flutter test e2e/ \
+  --dart-define=E2E_TEST_EMAIL=usuario_test@correo.com \
+  --dart-define=E2E_TEST_PASSWORD=tu_password_seguro \
+  --dart-define=E2E_TEST_COUPLE_ID=uuid_couple
+```
+
+> Si no se envían `E2E_TEST_EMAIL` y `E2E_TEST_PASSWORD`, los tests reales de `e2e/` se omiten (`skip`).
+
+### Ejecutar E2E por funcionalidad
+
+```bash
+flutter test e2e/auth/
+flutter test e2e/transactions/
+```
+
+### Ejecutar integration tests con mocks/fakes
+
+```bash
+flutter test integration_test/
+```
+
 ## Cobertura Actual
 
 | Service | Tests | Métodos cubiertos |
@@ -134,7 +184,10 @@ flutter test integration_test/
 
 ## Notas
 
-- Los tests de service verifican el patrón **offline-first**: DAO local siempre se ejecuta primero, Supabase falla en silencio.
+- Los tests de service verifican el patrón **offline-first** en la capa local; para algunas operaciones cloud críticas (ingresos/gastos) ahora se propaga error cuando falla Supabase.
 - `SharedPreferences.setMockInitialValues({})` se llama en setUp para tests que usan SharedPreferences.
 - Los widget tests usan `ProviderScope(overrides: [...])` para inyectar fakes.
+- Los tests en `e2e/` son **reales** (sin fakes) y verifican comportamiento cloud en Supabase.
+- Los tests de `integration_test/` son el espacio recomendado para usar mocks/fakes y validar UI/flujo de forma determinista.
+- La suite `e2e/transactions/` incluye limpieza de datos creados (delete en `income` y `expense`) al final de la ejecución.
 - Los `.mocks.dart` son **auto-generados** — nunca editarlos manualmente.

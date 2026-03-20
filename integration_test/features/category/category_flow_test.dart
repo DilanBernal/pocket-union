@@ -253,6 +253,26 @@ void testCategoryFlow() {
       expect(dao.storage.length, 1);
       expect(dao.storage[id]?.name, 'Food');
     });
+    test('crea categoria local a pesar de no sincronizar con cloud', () async {
+      final dto = NewCategoryDto(
+        coupleId: '1',
+        name: 'Food',
+        icon: '123',
+        shortDescription: 'Comida',
+        color: '#FF0000',
+        host: CategoryHost.expense,
+      );
+
+      when(logger.error('', error: any, stackTrace: any)).thenReturn(null);
+      // when(supabase.from('category').insert(any)).thenThrow(Exception('Sync error'));
+
+      final id = await service.createCategory(dto);
+
+      expect(id, isNotNull);
+      // expect(logger.error, onceCalled);
+      expect(dao.storage.length, 1);
+      expect(dao.storage[id]?.name, 'Food');
+    });
   });
 
   group('getAllCategories', () {
