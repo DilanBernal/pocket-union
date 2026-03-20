@@ -1,29 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/core/providers/service_provider.dart';
 import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/dto/new_income_dto.dart';
+import 'package:pocket_union/dto/new_expense_dto.dart';
 import 'package:pocket_union/ui/screens/transactions/transaction_form_utils.dart';
 import 'package:pocket_union/ui/widgets/category_horizontal_list.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class NewEntryForm extends ConsumerStatefulWidget {
+class NewExpenseForm extends ConsumerStatefulWidget {
   final List<Category> categories;
-  const NewEntryForm({super.key, required this.categories});
+  const NewExpenseForm({super.key, required this.categories});
 
   @override
-  ConsumerState<NewEntryForm> createState() => _NewEntryFormState();
+  ConsumerState<NewExpenseForm> createState() => _NewExpenseFormState();
 }
 
-class _NewEntryFormState extends ConsumerState<NewEntryForm> {
+class _NewExpenseFormState extends ConsumerState<NewExpenseForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
 
   List<String> _selectedCategoryIds = [];
-  bool _isReceived = true; // YO por defecto
   DateTime _transactionDate = DateTime.now();
   bool _isSubmitting = false;
 
@@ -45,49 +43,42 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
       final coupleId = prefs.getString('coupleId');
       final userId = prefs.getString('idUser');
 
-      final dto = NewIncomeDto(
+      final dto = NewExpenseDto(
         name: _nameController.text.trim(),
         amount: TransactionFormUtils.parseAmount(_amountController.text),
         categoryIds: _selectedCategoryIds,
-        isRecurring: false,
-        isReceived: _isReceived,
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
         coupleId: coupleId,
-        // YO = userId, NOSOTROS = null
-        userId: _isReceived ? userId : null,
+        createdBy: userId,
         transactionDate: _transactionDate,
       );
 
-      final service = await ref.read(incomeServiceProvider.future);
-      await service.createIncome(dto);
-
-      ref.invalidate(allIncomesProvider);
+      final service = await ref.read(expenseServiceProvider.future);
+      await service.createExpense(dto);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ingreso creado exitosamente'),
+          content: Text('Gasto registrado exitosamente'),
           backgroundColor: Colors.green,
         ),
       );
 
-      // Limpiar formulario
       _nameController.clear();
       _amountController.clear();
       _descriptionController.clear();
       setState(() {
         _selectedCategoryIds = [];
-        _isReceived = true;
         _transactionDate = DateTime.now();
       });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error al crear ingreso: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error al crear gasto: $e')));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -107,8 +98,8 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
-                labelText: 'Nombre del ingreso',
-                hintText: 'Ej: Salario, Freelance, Regalo',
+                labelText: 'Nombre del gasto',
+                hintText: 'Ej: Arriendo, Mercado, Netflix',
                 prefixIcon: Icon(Icons.label),
               ),
               validator: TransactionFormUtils.validateName,
@@ -131,7 +122,7 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
             const SizedBox(height: 16),
 
             Text(
-              'Fecha del ingreso',
+              'Fecha del gasto',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
@@ -150,7 +141,7 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
             ),
             const SizedBox(height: 16),
 
-            // --- Categoría ---
+            // --- Categorías ---
             Text('Categorías', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             CategoryHorizontalList(
@@ -158,32 +149,6 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
               selectedIds: _selectedCategoryIds,
               onChanged: (ids) {
                 setState(() => _selectedCategoryIds = ids);
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // --- ¿Quién recibe? ---
-            Text(
-              '¿Ya se recibió el dinero? / ¿Quién lo recibe?',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment(
-                  value: true,
-                  label: Text('YO'),
-                  icon: Icon(Icons.person),
-                ),
-                ButtonSegment(
-                  value: false,
-                  label: Text('NOSOTROS'),
-                  icon: Icon(Icons.people),
-                ),
-              ],
-              selected: {_isReceived},
-              onSelectionChanged: (selection) {
-                setState(() => _isReceived = selection.first);
               },
             ),
             const SizedBox(height: 16),
@@ -209,7 +174,7 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save),
-              label: Text(_isSubmitting ? 'Guardando...' : 'Registrar ingreso'),
+              label: Text(_isSubmitting ? 'Guardando...' : 'Registrar gasto'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),

@@ -4,21 +4,13 @@ import 'package:pocket_union/core/providers/utils_providers.dart';
 import 'package:pocket_union/core/services/auth/auth_service.dart';
 import 'package:pocket_union/core/services/auth/couple_service.dart';
 import 'package:pocket_union/core/services/features/category_service.dart';
-import 'package:pocket_union/core/services/features/expense_service.dart';
-import 'package:pocket_union/core/services/features/expense_share_service.dart';
 import 'package:pocket_union/core/services/features/goal_contribution_service.dart';
 import 'package:pocket_union/core/services/features/goal_service.dart';
-import 'package:pocket_union/core/services/features/income_service.dart';
-import 'package:pocket_union/core/services/features/recurrent_income_service.dart';
 import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/domain/port/cloud/auth/i_couple_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_category_port.dart';
-import 'package:pocket_union/domain/port/cloud/feat/i_expense_port.dart';
-import 'package:pocket_union/domain/port/cloud/feat/i_expense_share_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_goal_contribution_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_goal_port.dart';
-import 'package:pocket_union/domain/port/cloud/feat/i_income_port.dart';
-import 'package:pocket_union/domain/port/cloud/feat/i_recurrent_income_port.dart';
 
 // Auth services
 final authServiceProvider = FutureProvider<IAuthPort>((ref) async {
@@ -45,29 +37,6 @@ final categoryServiceProvider = FutureProvider<ICategoryPort>((ref) async {
   return CategoryService(categoryDao, supabaseClient, logger);
 });
 
-final incomeServiceProvider = FutureProvider<IIncomePort>((ref) async {
-  final supabaseClient = await ref.watch(supabaseClientProvider.future);
-  final incomeDao = ref.watch(incomeDaoProvider);
-  final logger = ref.watch(loggerProvider);
-  return IncomeService(incomeDao, supabaseClient, logger);
-});
-
-final expenseServiceProvider = FutureProvider<IExpensePort>((ref) async {
-  final supabaseClient = await ref.watch(supabaseClientProvider.future);
-  final expenseDao = ref.watch(expenseDaoProvider);
-  final logger = ref.watch(loggerProvider);
-  return ExpenseService(expenseDao, supabaseClient, logger);
-});
-
-final expenseShareServiceProvider = FutureProvider<IExpenseSharePort>((
-  ref,
-) async {
-  final supabaseClient = await ref.watch(supabaseClientProvider.future);
-  final expenseShareDao = ref.watch(expenseShareDaoProvider);
-  final logger = ref.watch(loggerProvider);
-  return ExpenseShareService(expenseShareDao, supabaseClient, logger);
-});
-
 final goalServiceProvider = FutureProvider<IGoalPort>((ref) async {
   final supabaseClient = await ref.watch(supabaseClientProvider.future);
   final goalDao = ref.watch(goalDaoProvider);
@@ -82,13 +51,4 @@ final goalContributionServiceProvider = FutureProvider<IGoalContributionPort>((
   final contributionDao = ref.watch(goalContributionDaoProvider);
   final logger = ref.watch(loggerProvider);
   return GoalContributionService(contributionDao, supabaseClient, logger);
-});
-
-final recurrentIncomeServiceProvider = FutureProvider<IRecurrentIncomePort>((
-  ref,
-) async {
-  final supabaseClient = await ref.watch(supabaseClientProvider.future);
-  final recurrentIncomeDao = ref.watch(recurrentIncomeDaoProvider);
-  final logger = ref.watch(loggerProvider);
-  return RecurrentIncomeService(recurrentIncomeDao, supabaseClient, logger);
 });

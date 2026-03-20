@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers/auth_service_provider.dart';
-import 'package:pocket_union/ui/screens/transactions/in/widgets/new_entry_form.dart';
+import 'package:pocket_union/ui/screens/transactions/exp/widgets/new_expense_form.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 
-class NewEntryScreen extends ConsumerWidget {
-  const NewEntryScreen({super.key});
+class NewOutScreen extends ConsumerWidget {
+  const NewOutScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categoriesAsync = ref.watch(incomeCategoriesForTransactionProvider);
+    final categoriesAsync = ref.watch(expenseCategoriesForTransactionProvider);
 
     return categoriesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -23,9 +23,9 @@ class NewEntryScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () {
-                ref.read(incomeCategoriesCacheProvider.notifier).state = null;
-                ref.invalidate(incomeCategoriesProvider);
-                ref.invalidate(incomeCategoriesForTransactionProvider);
+                ref.read(expenseCategoriesCacheProvider.notifier).state = null;
+                ref.invalidate(expenseCategoriesProvider);
+                ref.invalidate(expenseCategoriesForTransactionProvider);
               },
               child: const Text('Reintentar'),
             ),
@@ -35,8 +35,8 @@ class NewEntryScreen extends ConsumerWidget {
       data: (categories) => SingleChildScrollView(
         child: Column(
           children: [
-            const FormTitle(title: "Agregar entrada de dinero"),
-            NewEntryForm(categories: categories),
+            const FormTitle(title: "Agregar salida de dinero"),
+            NewExpenseForm(categories: categories),
           ],
         ),
       ),

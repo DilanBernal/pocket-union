@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pocket_union/core/services/util/color_parser.dart';
 import 'package:pocket_union/domain/models/category.dart';
+import 'package:pocket_union/ui/widgets/category_item_widget.dart';
 
 class CategoryHorizontalList extends StatelessWidget {
   final List<Category> categories;
@@ -31,27 +33,23 @@ class CategoryHorizontalList extends StatelessWidget {
         itemBuilder: (context, index) {
           final category = categories[index];
           final isSelected = selectedIds.contains(category.id);
-          final chipColor = category.color != null
-              ? Color(int.parse(category.color!, radix: 16) + 0xFF000000)
-              : Theme.of(context).colorScheme.primary;
+          final chipColor = parseColorFromHex(
+            category.color,
+            fallback: Theme.of(context).colorScheme.primary,
+          );
 
-          return FilterChip(
-            label: Text(category.name),
-            selected: isSelected,
-            selectedColor: chipColor.withValues(alpha: 0.25),
-            checkmarkColor: chipColor,
-            avatar: category.icon != null
-                ? Text(category.icon!, style: const TextStyle(fontSize: 16))
-                : null,
-            onSelected: (selected) {
-              final updated = List<String>.from(selectedIds);
-              if (selected) {
-                updated.add(category.id);
-              } else {
-                updated.remove(category.id);
-              }
-              onChanged(updated);
-            },
+          final iconCodePoint = int.tryParse(category.icon ?? '');
+          final categoryIcon = iconCodePoint != null
+              ? IconData(iconCodePoint, fontFamily: 'MaterialIcons')
+              : null;
+
+          return CategoryItemWidget(
+            isSelected: isSelected,
+            chipColor: chipColor,
+            category: category,
+            categoryIcon: categoryIcon,
+            selectedIds: selectedIds,
+            onChanged: onChanged,
           );
         },
       ),

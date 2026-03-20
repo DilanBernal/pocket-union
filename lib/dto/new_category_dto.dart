@@ -24,7 +24,7 @@ class NewCategoryDto {
     String id, {
     bool isSync = false,
   }) {
-    var status = isSync ? SyncStatus.pending : SyncStatus.synced;
+    var status = !isSync ? SyncStatus.pending : SyncStatus.synced;
     return Category(
       id: id,
       coupleId: dto.coupleId ?? '',

@@ -71,16 +71,30 @@ class CategoryService implements ICategoryPort {
         getId: (c) => c.id,
       );
 
-      for (final category in missingLocally) {
-        final saved = await _categoryDao.upsertFromCloud(category);
-        category.isLocallyStored = saved;
-      }
+      saveAllNewCategories(categoriesInCloud)
+          .then((_) {
+            _logger.info(
+              'CategoryService.getAllCategories: ${categoriesInCloud.length} categorías sincronizadas desde Supabase',
+            );
+          })
+          .catchError((e) {
+            _logger.error(
+              'CategoryService.getAllCategories: error al guardar categorías de Supabase: $e',
+            );
+          });
 
       categoriesInLocal.addAll(missingLocally);
     } catch (e) {
       _logger.error('CategoryService.getAllCategories: Supabase falló: $e');
     }
     return categoriesInLocal;
+  }
+
+  Future saveAllNewCategories(List<Category> categories) async {
+    for (final category in categories) {
+      final saved = await _categoryDao.upsertFromCloud(category);
+      category.isLocallyStored = saved;
+    }
   }
 
   /// Actualiza una categoría primero en SQLite (offline-first),

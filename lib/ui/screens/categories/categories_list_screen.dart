@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocket_union/core/services/util/color_parser.dart';
 import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/core/providers/data_local_providers.dart';
@@ -417,9 +418,7 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen>
         ? IconData(int.parse(category.icon!), fontFamily: 'MaterialIcons')
         : Icons.category;
 
-    final color = category.color != null
-        ? Color(int.parse(category.color!.replaceFirst('#', ''), radix: 16))
-        : Colors.grey;
+    final color = parseColorFromHex(category.color);
 
     return ListTile(
       leading: CircleAvatar(

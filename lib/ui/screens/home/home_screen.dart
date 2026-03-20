@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocket_union/ui/screens/home/widgets/start_hero_widget.dart';
 import 'package:pocket_union/ui/screens/transactions/in/new_entry_screen.dart';
 import 'package:pocket_union/ui/widgets/list_menu.dart';
-import '../transactions/out/new_out_screen.dart';
+import '../transactions/exp/new_out_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

@@ -1,4 +1,5 @@
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
+import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/expense.dart';
 import 'package:pocket_union/domain/port/local/expense_local_port.dart';
 import 'package:pocket_union/domain/port/utils/logger_port.dart';
@@ -21,6 +22,7 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
     final db = await _dbHelper.database;
     final id = _uuid.v4();
     final now = DateTime.now();
+    final transactionDate = (dto.transactionDate ?? now).toIso8601String();
 
     await db.transaction((txn) async {
       // 1. Insertar en expense
@@ -29,7 +31,7 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
         'couple_id': dto.coupleId ?? '',
         'created_by': dto.createdBy ?? '',
         'name': dto.name,
-        'transaction_date': now.toIso8601String(),
+        'transaction_date': transactionDate,
         'description': dto.description,
         'amount': (dto.amount * 100).round(),
         'created_at': now.toIso8601String(),
@@ -119,6 +121,45 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
   }
 
   @override
+  Future<bool> upsertFromCloud(Expense expense) async {
+    final db = await _dbHelper.database;
+    try {
+      await db.transaction((txn) async {
+        final expenseMap = expense.toMap();
+        expenseMap['sync_status'] = SyncStatus.synced.value;
+        expenseMap['last_sync_at'] = DateTime.now().toIso8601String();
+        expenseMap['is_deleted'] = 0;
+
+        await txn.insert(
+          'expense',
+          expenseMap,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        await txn.insert(
+          'expense_info',
+          expense.toExpenseInfoMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        await txn.delete(
+          'expense_category',
+          where: 'expense_id = ?',
+          whereArgs: [expense.id],
+        );
+      });
+
+      return true;
+    } catch (e) {
+      _logger.error(
+        'ExpenseDaoSqlite: Error al guardar gasto desde Supabase',
+        error: e,
+      );
+      return false;
+    }
+  }
+
+  @override
   Future<List<Expense>> getByFilter(ExpenseFilterDto filter) async {
     final db = await _dbHelper.database;
     final where = <String>['e.is_deleted = 0'];
@@ -174,14 +215,20 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
   Future<bool> updateExpense(Expense expense) async {
     final db = await _dbHelper.database;
     try {
+      var updated = false;
+
       await db.transaction((txn) async {
-        // Actualizar tabla expense
-        await txn.update(
+        final updatedRows = await txn.update(
           'expense',
           expense.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
           where: 'id = ?',
           whereArgs: [expense.id],
         );
+
+        if (updatedRows == 0) {
+          return;
+        }
 
         // Upsert expense_info
         await txn.insert(
@@ -202,8 +249,11 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
             'category_id': categoryId,
           });
         }
+
+        updated = true;
       });
-      return true;
+
+      return updated;
     } catch (e) {
       _logger.error('ExpenseDaoSqlite: Error al actualizar gasto', error: e);
       return false;

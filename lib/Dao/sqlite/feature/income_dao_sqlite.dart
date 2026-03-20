@@ -20,6 +20,7 @@ class IncomeDaoSqlite implements IncomeLocalPort {
     final db = await dbHelper.database;
     final id = _uuid.v4();
     final now = DateTime.now();
+    final transactionDate = (dto.transactionDate ?? now).toIso8601String();
 
     await db.transaction((txn) async {
       // 1. Insertar en income
@@ -27,7 +28,7 @@ class IncomeDaoSqlite implements IncomeLocalPort {
         'id': id,
         'couple_id': dto.coupleId,
         'name': dto.name,
-        'transaction_date': now.toIso8601String(),
+        'transaction_date': transactionDate,
         'description': dto.description,
         'amount': (dto.amount * 100).round(),
         'is_received': dto.isReceived ? 1 : 0,

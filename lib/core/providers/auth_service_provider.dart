@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/core/providers/data_local_providers.dart';
+import 'package:pocket_union/core/providers/service_provider.dart';
 import 'package:pocket_union/core/providers/utils_providers.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/models/category.dart';
@@ -53,6 +54,38 @@ final expenseCategoriesProvider = FutureProvider<List<Category>>((ref) async {
     final categoryDao = ref.watch(categoryDaoProvider);
     return categoryDao.getCategoriesByHost(CategoryHost.expense);
   }
+});
+
+// In-memory caches used by transaction forms to avoid re-fetching categories
+// on every navigation to in/out screens.
+final incomeCategoriesCacheProvider = StateProvider<List<Category>?>(
+  (ref) => null,
+);
+
+final expenseCategoriesCacheProvider = StateProvider<List<Category>?>(
+  (ref) => null,
+);
+
+final incomeCategoriesForTransactionProvider = FutureProvider<List<Category>>((
+  ref,
+) async {
+  final cached = ref.read(incomeCategoriesCacheProvider);
+  if (cached != null) return cached;
+
+  final categories = await ref.watch(incomeCategoriesProvider.future);
+  ref.read(incomeCategoriesCacheProvider.notifier).state = categories;
+  return categories;
+});
+
+final expenseCategoriesForTransactionProvider = FutureProvider<List<Category>>((
+  ref,
+) async {
+  final cached = ref.read(expenseCategoriesCacheProvider);
+  if (cached != null) return cached;
+
+  final categories = await ref.watch(expenseCategoriesProvider.future);
+  ref.read(expenseCategoriesCacheProvider.notifier).state = categories;
+  return categories;
 });
 
 // All categories

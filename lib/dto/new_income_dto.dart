@@ -7,6 +7,7 @@ class NewIncomeDto {
   final bool isReceived;
   Object? receivedIn;
   String? coupleId;
+  DateTime? transactionDate;
 
   /// null = NOSOTROS (ambos), valor = YO (solo ese usuario)
   String? userId;
@@ -21,5 +22,6 @@ class NewIncomeDto {
     this.receivedIn,
     this.coupleId,
     this.userId,
+    this.transactionDate,
   });
 }
