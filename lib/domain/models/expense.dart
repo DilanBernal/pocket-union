@@ -13,6 +13,7 @@ class Expense {
   final int importanceLevel;
   final bool isPlaned;
   final DateTime createdAt;
+  bool isPaid;
   SyncStatus syncStatus;
   DateTime? lastSyncAt;
   DateTime localUpdatedAt;
@@ -35,6 +36,7 @@ class Expense {
     this.lastSyncAt,
     DateTime? localUpdatedAt,
     this.isDeleted = false,
+    this.isPaid = true,
   }) : localUpdatedAt = localUpdatedAt ?? DateTime.now();
 
   /// Mapa para la tabla `expense` en SQLite (sin campos de expense_info ni expense_category).
@@ -52,6 +54,7 @@ class Expense {
       'last_sync_at': lastSyncAt?.toIso8601String(),
       'local_updated_at': localUpdatedAt.toIso8601String(),
       'is_deleted': isDeleted ? 1 : 0,
+      'is_paid': isPaid ? 1 : 0,
     };
   }
 
@@ -96,6 +99,7 @@ class Expense {
           ? DateTime.parse(map['local_updated_at'])
           : null,
       isDeleted: map['is_deleted'] == 1,
+      isPaid: map['is_paid'] == 1,
     );
   }
 
@@ -113,6 +117,7 @@ class Expense {
       'importance_level': importanceLevel,
       'is_planed': isPlaned,
       'created_at': createdAt.toIso8601String(),
+      'is_paid': isPaid,
     };
   }
 
@@ -140,6 +145,7 @@ class Expense {
         (json['sync_status'] as String? ?? 'pending').toUpperCase(),
       ),
       isDeleted: json['is_deleted'] == 1 || json['is_deleted'] == true,
+      isPaid: json['is_paid'] == 1 || json['is_paid'] == true,
     );
   }
 }

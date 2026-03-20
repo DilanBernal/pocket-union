@@ -47,12 +47,12 @@ class ExpenseService implements IExpensePort {
       final expensesInCloud = (response as List).map((item) {
         final rawInfo = item['expense_info'];
         final Map<String, dynamic> info = rawInfo is List
-        ? (rawInfo.isNotEmpty
-          ? Map<String, dynamic>.from(rawInfo.first)
-          : <String, dynamic>{})
-        : (rawInfo is Map
-          ? Map<String, dynamic>.from(rawInfo)
-          : <String, dynamic>{});
+            ? (rawInfo.isNotEmpty
+                  ? Map<String, dynamic>.from(rawInfo.first)
+                  : <String, dynamic>{})
+            : (rawInfo is Map
+                  ? Map<String, dynamic>.from(rawInfo)
+                  : <String, dynamic>{});
 
         return Expense(
           id: item['id'],

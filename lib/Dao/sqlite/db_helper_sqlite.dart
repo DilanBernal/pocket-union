@@ -166,6 +166,7 @@ class DbSqlite {
           last_sync_at TEXT,
           local_updated_at TEXT NOT NULL,
           is_deleted INTEGER NOT NULL DEFAULT 0,
+          is_paid INTEGER NOT NULL DEFAULT 0,
           FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
           FOREIGN KEY(created_by) REFERENCES profile(id) ON DELETE CASCADE
         )

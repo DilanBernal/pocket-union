@@ -35,7 +35,7 @@ class _HistoryExpensesScreenState extends ConsumerState<HistoryExpensesScreen> {
           future: _loadExpenses(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
+              return Center(child: const CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Text('Error al cargar gastos: ${snapshot.error}');
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
