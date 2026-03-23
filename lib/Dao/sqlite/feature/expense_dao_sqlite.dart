@@ -96,28 +96,23 @@ class ExpenseDaoSqlite implements ExpenseLocalPort {
   @override
   Future<List<Expense>> getAllExpenses() async {
     final db = await _dbHelper.database;
-    try {
-      final maps = await db.rawQuery('''
-        SELECT e.*, ei.is_fixed, ei.is_planed, ei.importance_level
-        FROM expense e
-        LEFT JOIN expense_info ei ON e.id = ei.id
-        WHERE e.is_deleted = 0
-        ORDER BY e.transaction_date DESC
-      ''');
+    final maps = await db.rawQuery('''
+      SELECT e.*, ei.is_fixed, ei.is_planed, ei.importance_level
+      FROM expense e
+      LEFT JOIN expense_info ei ON e.id = ei.id
+      WHERE e.is_deleted = 0
+      ORDER BY e.transaction_date DESC
+    ''');
 
-      if (maps.isEmpty) return [];
+    if (maps.isEmpty) return [];
 
-      final expenseIds = maps.map((m) => m['id'] as String).toList();
-      final categoryMap = await _loadCategoryIds(db, expenseIds);
+    final expenseIds = maps.map((m) => m['id'] as String).toList();
+    final categoryMap = await _loadCategoryIds(db, expenseIds);
 
-      return maps.map((m) {
-        final id = m['id'] as String;
-        return Expense.fromMap(m, categoryIds: categoryMap[id] ?? []);
-      }).toList();
-    } catch (e) {
-      _logger.error('ExpenseDaoSqlite: Error al obtener gastos', error: e);
-      throw Exception("Error al obtener gastos: $e");
-    }
+    return maps.map((m) {
+      final id = m['id'] as String;
+      return Expense.fromMap(m, categoryIds: categoryMap[id] ?? []);
+    }).toList();
   }
 
   @override

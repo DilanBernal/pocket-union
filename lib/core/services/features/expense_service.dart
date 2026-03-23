@@ -21,9 +21,7 @@ class ExpenseService implements IExpensePort {
     var expensesInLocal = await _expenseDao.getAllExpenses();
 
     try {
-      var response = await _supabaseClient
-          .from('expense')
-          .select('''
+      var response = await _supabaseClient.from('expense').select('''
             id,
             couple_id,
             created_by,
@@ -41,8 +39,7 @@ class ExpenseService implements IExpensePort {
               category_id,
               expense_id
             )
-          ''')
-          .eq('couple_id', expensesInLocal.first.coupleId);
+          ''');
 
       final expensesInCloud = (response as List).map((item) {
         final rawInfo = item['expense_info'];

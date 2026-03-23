@@ -1,4 +1,5 @@
 import 'package:pocket_union/domain/enum/sync_status.dart';
+import 'package:pocket_union/domain/models/category.dart';
 
 class Expense {
   final String id;
@@ -8,7 +9,8 @@ class Expense {
   DateTime? transactionDate;
   String? description;
   final double amount;
-  final List<String> categoryIds;
+  List<String> categoryIds;
+  List<Category> categories = [];
   final bool isFixed;
   final int importanceLevel;
   final bool isPlaned;
