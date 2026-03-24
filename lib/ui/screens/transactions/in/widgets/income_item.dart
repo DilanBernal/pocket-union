@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:pocket_union/domain/models/category.dart';
-import 'package:pocket_union/domain/models/expense.dart';
+import 'package:pocket_union/domain/models/income.dart';
 import 'package:pocket_union/ui/screens/transactions/widgets/transaction_icon_utils.dart';
 
-class ExpenseItem extends StatelessWidget {
-  const ExpenseItem({
+class IncomeItem extends StatelessWidget {
+  const IncomeItem({
     super.key,
-    required this.expense,
+    required this.income,
     required this.categoryById,
     required this.onTap,
   });
 
-  final Expense expense;
+  final Income income;
   final Map<String, Category> categoryById;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final categoryIcon = resolveTransactionIcon(
-      categoryIds: expense.categoryIds,
+      categoryIds: income.categoryIds,
       categoryById: categoryById,
     );
     final accentColor = resolveTransactionColor(
-      categoryIds: expense.categoryIds,
+      categoryIds: income.categoryIds,
       categoryById: categoryById,
-      fallback: Colors.red,
+      fallback: Colors.green,
     );
 
     return Padding(
@@ -53,15 +53,15 @@ class ExpenseItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        expense.name,
+                        income.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        expense.description?.isNotEmpty == true
-                            ? expense.description!
+                        income.description?.isNotEmpty == true
+                            ? income.description!
                             : 'Sin descripción',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -75,15 +75,15 @@ class ExpenseItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '\$${expense.amount.toStringAsFixed(2)}',
+                      '\$${income.amount.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.red,
+                        color: Colors.green,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${expense.transactionDate?.toLocal()}'.split(' ')[0],
+                      '${income.transactionDate.toLocal()}'.split(' ')[0],
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,

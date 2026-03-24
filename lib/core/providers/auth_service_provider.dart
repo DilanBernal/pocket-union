@@ -6,6 +6,7 @@ import 'package:pocket_union/core/providers/utils_providers.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/domain/models/couple.dart';
+import 'package:pocket_union/domain/models/expense.dart';
 import 'package:pocket_union/domain/models/income.dart';
 import 'package:pocket_union/domain/models/user.dart';
 
@@ -112,4 +113,20 @@ final allIncomesProvider = FutureProvider<List<Income>>((ref) async {
     final incomeDao = ref.watch(incomeDaoProvider);
     return incomeDao.getAllIncomes();
   }
+});
+
+final expenseByIdProvider = FutureProvider.family<Expense?, String>((
+  ref,
+  expenseId,
+) async {
+  final expenseService = await ref.watch(expenseServiceProvider.future);
+  return expenseService.getExpenseById(expenseId);
+});
+
+final incomeByIdProvider = FutureProvider.family<Income?, String>((
+  ref,
+  incomeId,
+) async {
+  final incomeService = await ref.watch(incomeServiceProvider.future);
+  return incomeService.getIncomeById(incomeId);
 });

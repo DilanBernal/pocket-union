@@ -1,4 +1,5 @@
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
+import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/income.dart';
 import 'package:pocket_union/domain/port/local/income_port_local.dart';
 import 'package:pocket_union/domain/port/utils/logger_port.dart';
@@ -120,6 +121,51 @@ class IncomeDaoSqlite implements IncomeLocalPort {
     } catch (e) {
       _logger.error('IncomeDaoSqlite: Error al obtener ingresos', error: e);
       throw Exception("Error al obtener ingresos: $e");
+    }
+  }
+
+  @override
+  Future<bool> upsertFromCloud(Income income) async {
+    final db = await dbHelper.database;
+    try {
+      await db.transaction((txn) async {
+        final incomeMap = income.toMap();
+        incomeMap['sync_status'] = SyncStatus.synced.value;
+        incomeMap['is_deleted'] = 0;
+
+        await txn.insert(
+          'income',
+          incomeMap,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        await txn.insert(
+          'income_info',
+          income.toIncomeInfoMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        await txn.delete(
+          'income_category',
+          where: 'income_id = ?',
+          whereArgs: [income.id],
+        );
+
+        for (final categoryId in income.categoryIds) {
+          await txn.insert('income_category', {
+            'income_id': income.id,
+            'category_id': categoryId,
+          });
+        }
+      });
+
+      return true;
+    } catch (e) {
+      _logger.error(
+        'IncomeDaoSqlite: Error al guardar ingreso desde Supabase',
+        error: e,
+      );
+      return false;
     }
   }
 

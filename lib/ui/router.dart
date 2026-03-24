@@ -4,8 +4,10 @@ import 'package:pocket_union/ui/screens/auth/register_screen.dart';
 import 'package:pocket_union/ui/screens/categories/categories_list_screen.dart';
 import 'package:pocket_union/ui/screens/categories/new_category_screen.dart';
 import 'package:pocket_union/ui/screens/couple/couple_setup_screen.dart';
+import 'package:pocket_union/ui/screens/transactions/exp/expense_detail_screen.dart';
 import 'package:pocket_union/ui/screens/transactions/exp/history_expenses_screen.dart';
 import 'package:pocket_union/ui/screens/transactions/in/history_income_screen.dart';
+import 'package:pocket_union/ui/screens/transactions/in/income_detail_screen.dart';
 import 'package:pocket_union/ui/screens/home/home_screen.dart';
 import 'package:pocket_union/ui/screens/missions_screen.dart';
 import 'package:pocket_union/ui/screens/settings_screen.dart';
@@ -24,6 +26,8 @@ class AppRoutes {
   static const String categories = '/categories';
   static const String newCategory = '/new-category';
   static const String coupleSetup = '/couple-setup';
+  static const String expenseDetail = '/expense-detail';
+  static const String incomeDetail = '/income-detail';
 
   static Map<String, WidgetBuilder> routes = {
     start: (context) => const StartScreen(),
@@ -37,5 +41,13 @@ class AppRoutes {
     categories: (context) => const CategoriesListScreen(),
     newCategory: (context) => const NewCategoryScreen(),
     coupleSetup: (context) => const CoupleSetupScreen(),
+    expenseDetail: (context) {
+      final expenseId = ModalRoute.of(context)!.settings.arguments as String;
+      return ExpenseDetailScreen(expenseId: expenseId);
+    },
+    incomeDetail: (context) {
+      final incomeId = ModalRoute.of(context)!.settings.arguments as String;
+      return IncomeDetailScreen(incomeId: incomeId);
+    },
   };
 }

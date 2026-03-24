@@ -13,7 +13,9 @@ test/
 │   ├── income_service_test.dart      # Tests de IncomeService (create, getAllIncomes)
 │   └── income_service_test.mocks.dart
 └── widget/
-    └── app_widget_test.dart      # Widget tests de StartScreen, LoginScreen, routing
+  ├── app_widget_test.dart      # Widget tests de StartScreen, LoginScreen, routing
+  └── transactions/
+    └── history_transactions_test.dart  # Historiales: estado vacio refrescable + dismissible
 
 e2e/
 ├── auth/
@@ -171,8 +173,9 @@ flutter test integration_test/
 |---------|-------|-------------------|
 | `AuthService` | 6 | `login` (2), `register` (3), `logout` (2) |
 | `CategoryService` | 10 | `getAllCategories` (3), `getCategoriesByHost` (4), `createCategory` (3) |
-| `IncomeService` | 11 | `getAllIncomes` (3), `createIncome` (8: offline-first, dto fields) |
-| **Total** | **27** | |
+| `IncomeService` | 12 | `getAllIncomes` (3), `createIncome` (6), `deleteIncome` (3) |
+| `History transactions widgets` | 4 | Empty state refresh (2), dismissible rendering (2) |
+| **Total** | **32** | |
 
 ### Servicios sin tests (próximos a implementar)
 
@@ -185,6 +188,8 @@ flutter test integration_test/
 ## Notas
 
 - Los tests de service verifican el patrón **offline-first** en la capa local; para algunas operaciones cloud críticas (ingresos/gastos) ahora se propaga error cuando falla Supabase.
+- `IncomeService` ahora incluye cobertura de `deleteIncome` para validar eliminación local obligatoria y tolerancia a fallo cloud.
+- `test/widget/transactions/history_transactions_test.dart` cubre estado vacío refrescable y presencia de `Dismissible` en ambos historiales.
 - `SharedPreferences.setMockInitialValues({})` se llama en setUp para tests que usan SharedPreferences.
 - Los widget tests usan `ProviderScope(overrides: [...])` para inyectar fakes.
 - Los tests en `e2e/` son **reales** (sin fakes) y verifican comportamiento cloud en Supabase.

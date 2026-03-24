@@ -6,5 +6,9 @@ abstract class IExpensePort {
 
   Future<List<Expense>> getAllExpenses();
 
+  Future<Expense?> getExpenseById(String id);
+
+  Future<bool> updateExpense(String id, NewExpenseDto dto);
+
   Future<bool> deleteExpense(String id);
 }

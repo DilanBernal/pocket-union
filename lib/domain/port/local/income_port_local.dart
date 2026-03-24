@@ -9,6 +9,8 @@ abstract class IncomeLocalPort {
 
   Future<List<Income>> getAllIncomes();
 
+  Future<bool> upsertFromCloud(Income income);
+
   Future<List<Income>> getByFilter(IncomeFilterDto filter);
 
   Future<bool> updateIncome(Income income);

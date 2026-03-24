@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers/service_provider.dart';
 import 'package:pocket_union/domain/models/category.dart';
+import 'package:pocket_union/domain/models/expense.dart';
 import 'package:pocket_union/dto/new_expense_dto.dart';
 import 'package:pocket_union/ui/screens/transactions/transaction_form_utils.dart';
 import 'package:pocket_union/ui/widgets/category_horizontal_list.dart';
@@ -9,7 +10,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class NewExpenseForm extends ConsumerStatefulWidget {
   final List<Category> categories;
-  const NewExpenseForm({super.key, required this.categories});
+  final Expense? initialExpense;
+  final Future<bool> Function(NewExpenseDto dto)? onSubmit;
+  const NewExpenseForm({
+    super.key,
+    required this.categories,
+    this.initialExpense,
+    this.onSubmit,
+  });
 
   @override
   ConsumerState<NewExpenseForm> createState() => _NewExpenseFormState();
@@ -24,6 +32,21 @@ class _NewExpenseFormState extends ConsumerState<NewExpenseForm> {
   List<String> _selectedCategoryIds = [];
   DateTime _transactionDate = DateTime.now();
   bool _isSubmitting = false;
+
+  bool get _isEditMode => widget.initialExpense != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialExpense;
+    if (initial != null) {
+      _nameController.text = initial.name;
+      _amountController.text = initial.amount.toStringAsFixed(2);
+      _descriptionController.text = initial.description ?? '';
+      _selectedCategoryIds = List<String>.from(initial.categoryIds);
+      _transactionDate = initial.transactionDate ?? DateTime.now();
+    }
+  }
 
   @override
   void dispose() {
@@ -55,25 +78,38 @@ class _NewExpenseFormState extends ConsumerState<NewExpenseForm> {
         transactionDate: _transactionDate,
       );
 
-      final service = await ref.read(expenseServiceProvider.future);
-      await service.createExpense(dto);
+      if (widget.onSubmit != null) {
+        final success = await widget.onSubmit!(dto);
+        if (!success) {
+          throw Exception('No se pudo actualizar el gasto');
+        }
+      } else {
+        final service = await ref.read(expenseServiceProvider.future);
+        await service.createExpense(dto);
+      }
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gasto registrado exitosamente'),
+        SnackBar(
+          content: Text(
+            _isEditMode
+                ? 'Gasto actualizado exitosamente'
+                : 'Gasto registrado exitosamente',
+          ),
           backgroundColor: Colors.green,
         ),
       );
 
-      _nameController.clear();
-      _amountController.clear();
-      _descriptionController.clear();
-      setState(() {
-        _selectedCategoryIds = [];
-        _transactionDate = DateTime.now();
-      });
+      if (!_isEditMode) {
+        _nameController.clear();
+        _amountController.clear();
+        _descriptionController.clear();
+        setState(() {
+          _selectedCategoryIds = [];
+          _transactionDate = DateTime.now();
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -174,7 +210,13 @@ class _NewExpenseFormState extends ConsumerState<NewExpenseForm> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save),
-              label: Text(_isSubmitting ? 'Guardando...' : 'Registrar gasto'),
+              label: Text(
+                _isSubmitting
+                    ? 'Guardando...'
+                    : _isEditMode
+                    ? 'Guardar cambios'
+                    : 'Registrar gasto',
+              ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),

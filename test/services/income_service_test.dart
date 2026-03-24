@@ -185,4 +185,42 @@ void main() {
       expect(captured.userId, isNull);
     });
   });
+
+  group('IncomeService - deleteIncome', () {
+    test('retorna true cuando elimina localmente', () async {
+      when(
+        mockIncomeDao.deleteIncome('income-uuid-1'),
+      ).thenAnswer((_) async => true);
+      when(mockSupabaseClient.from(any)).thenThrow(Exception('offline'));
+
+      final result = await incomeService.deleteIncome('income-uuid-1');
+
+      expect(result, isTrue);
+      verify(mockIncomeDao.deleteIncome('income-uuid-1')).called(1);
+    });
+
+    test('retorna false cuando no se pudo eliminar en local', () async {
+      when(
+        mockIncomeDao.deleteIncome('income-uuid-2'),
+      ).thenAnswer((_) async => false);
+
+      final result = await incomeService.deleteIncome('income-uuid-2');
+
+      expect(result, isFalse);
+      verify(mockIncomeDao.deleteIncome('income-uuid-2')).called(1);
+      verifyNever(mockSupabaseClient.from(any));
+    });
+
+    test('mantiene true aunque falle Supabase en delete cloud', () async {
+      when(
+        mockIncomeDao.deleteIncome('income-uuid-3'),
+      ).thenAnswer((_) async => true);
+      when(mockSupabaseClient.from(any)).thenThrow(Exception('network'));
+
+      final result = await incomeService.deleteIncome('income-uuid-3');
+
+      expect(result, isTrue);
+      verify(mockIncomeDao.deleteIncome('income-uuid-3')).called(1);
+    });
+  });
 }

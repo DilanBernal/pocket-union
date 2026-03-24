@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/core/providers/service_provider.dart';
 import 'package:pocket_union/domain/models/category.dart';
+import 'package:pocket_union/domain/models/income.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:pocket_union/ui/screens/transactions/transaction_form_utils.dart';
 import 'package:pocket_union/ui/widgets/category_horizontal_list.dart';
@@ -10,7 +11,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class NewEntryForm extends ConsumerStatefulWidget {
   final List<Category> categories;
-  const NewEntryForm({super.key, required this.categories});
+  final Income? initialIncome;
+  final Future<bool> Function(NewIncomeDto dto)? onSubmit;
+  const NewEntryForm({
+    super.key,
+    required this.categories,
+    this.initialIncome,
+    this.onSubmit,
+  });
 
   @override
   ConsumerState<NewEntryForm> createState() => _NewEntryFormState();
@@ -26,6 +34,22 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
   bool _isReceived = true; // YO por defecto
   DateTime _transactionDate = DateTime.now();
   bool _isSubmitting = false;
+
+  bool get _isEditMode => widget.initialIncome != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialIncome;
+    if (initial != null) {
+      _nameController.text = initial.name;
+      _amountController.text = initial.amount.toStringAsFixed(2);
+      _descriptionController.text = initial.description ?? '';
+      _selectedCategoryIds = List<String>.from(initial.categoryIds);
+      _isReceived = initial.userRecipientId != null;
+      _transactionDate = initial.transactionDate;
+    }
+  }
 
   @override
   void dispose() {
@@ -60,29 +84,41 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
         transactionDate: _transactionDate,
       );
 
-      final service = await ref.read(incomeServiceProvider.future);
-      await service.createIncome(dto);
+      if (widget.onSubmit != null) {
+        final success = await widget.onSubmit!(dto);
+        if (!success) {
+          throw Exception('No se pudo actualizar el ingreso');
+        }
+      } else {
+        final service = await ref.read(incomeServiceProvider.future);
+        await service.createIncome(dto);
+      }
 
       ref.invalidate(allIncomesProvider);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingreso creado exitosamente'),
+        SnackBar(
+          content: Text(
+            _isEditMode
+                ? 'Ingreso actualizado exitosamente'
+                : 'Ingreso creado exitosamente',
+          ),
           backgroundColor: Colors.green,
         ),
       );
 
-      // Limpiar formulario
-      _nameController.clear();
-      _amountController.clear();
-      _descriptionController.clear();
-      setState(() {
-        _selectedCategoryIds = [];
-        _isReceived = true;
-        _transactionDate = DateTime.now();
-      });
+      if (!_isEditMode) {
+        _nameController.clear();
+        _amountController.clear();
+        _descriptionController.clear();
+        setState(() {
+          _selectedCategoryIds = [];
+          _isReceived = true;
+          _transactionDate = DateTime.now();
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -209,7 +245,13 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save),
-              label: Text(_isSubmitting ? 'Guardando...' : 'Registrar ingreso'),
+              label: Text(
+                _isSubmitting
+                    ? 'Guardando...'
+                    : _isEditMode
+                    ? 'Guardar cambios'
+                    : 'Registrar ingreso',
+              ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),

@@ -151,6 +151,82 @@ class ExpenseService implements IExpensePort {
   }
 
   @override
+  Future<Expense?> getExpenseById(String id) async {
+    return _expenseDao.getExpenseById(id);
+  }
+
+  @override
+  Future<bool> updateExpense(String id, NewExpenseDto dto) async {
+    final current = await _expenseDao.getExpenseById(id);
+    if (current == null) return false;
+
+    final updatedExpense = Expense(
+      id: current.id,
+      coupleId: current.coupleId,
+      createdBy: current.createdBy,
+      name: dto.name,
+      transactionDate: dto.transactionDate ?? current.transactionDate,
+      description: dto.description,
+      amount: dto.amount,
+      categoryIds: dto.categoryIds,
+      isFixed: dto.isFixed,
+      importanceLevel: dto.importanceLevel,
+      isPlaned: dto.isPlaned,
+      createdAt: current.createdAt,
+      syncStatus: current.syncStatus,
+      lastSyncAt: current.lastSyncAt,
+      localUpdatedAt: DateTime.now(),
+      isDeleted: current.isDeleted,
+      isPaid: current.isPaid,
+    );
+
+    final updated = await _expenseDao.updateExpense(updatedExpense);
+    if (!updated) return false;
+
+    try {
+      await _supabaseClient
+          .from('expense')
+          .update({
+            'name': dto.name,
+            'transaction_date': (dto.transactionDate ?? current.transactionDate)
+                ?.toIso8601String(),
+            'description': dto.description,
+            'amount': (dto.amount * 100).round(),
+          })
+          .eq('id', id);
+
+      await _supabaseClient.from('expense_info').upsert({
+        'id': id,
+        'is_fixed': dto.isFixed,
+        'is_planed': dto.isPlaned,
+        'importance_level': dto.importanceLevel,
+      }, onConflict: 'id');
+
+      await _supabaseClient
+          .from('expense_category')
+          .delete()
+          .eq('expense_id', id);
+
+      if (dto.categoryIds.isNotEmpty) {
+        await _supabaseClient
+            .from('expense_category')
+            .insert(
+              dto.categoryIds
+                  .map((catId) => {'expense_id': id, 'category_id': catId})
+                  .toList(),
+            );
+      }
+    } catch (e) {
+      _logger.error(
+        'ExpenseService: no se pudo sincronizar actualización con Supabase',
+        error: e,
+      );
+    }
+
+    return true;
+  }
+
+  @override
   Future<bool> deleteExpense(String id) async {
     final deleted = await _expenseDao.deleteExpense(id);
 
