@@ -179,6 +179,8 @@ Los `integration_test/` no se ejecutan en el pipeline principal para evitar depe
 
 **Razón del cambio:** reducir flakiness y fallos de infraestructura en CI; mantener el flujo principal enfocado en pruebas unitarias/widget deterministas.
 
+**Recomendación operativa:** ejecutar `integration_test/` de forma local o en un workflow dedicado/on-demand antes de merges importantes que toquen flujos de UI completos.
+
 ## Cobertura Actual
 
 | Service | Tests | Métodos cubiertos |
