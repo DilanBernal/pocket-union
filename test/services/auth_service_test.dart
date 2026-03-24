@@ -54,10 +54,10 @@ void main() {
         expect(result.user, isNull);
         expect(result.session, isNull);
         expect(sharedPreferences.getBool('isFirstLaunch'), isFalse);
-        expect(sharedPreferences.getBool('isInSession'), isEmpty);
-        expect(sharedPreferences.getString('coupleId'), isEmpty);
-        expect(sharedPreferences.getString('userProfile'), isEmpty);
-        expect(sharedPreferences.getString('idUser'), isEmpty);
+        expect(sharedPreferences.getBool('isInSession'), isNull);
+        expect(sharedPreferences.getString('coupleId'), isNull);
+        expect(sharedPreferences.getString('userProfile'), isNull);
+        expect(sharedPreferences.getString('idUser'), isNull);
         verifyNever(mockUserPort.upsertUser(any));
       },
     );
