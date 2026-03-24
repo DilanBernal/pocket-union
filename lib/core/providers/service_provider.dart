@@ -4,10 +4,12 @@ import 'package:pocket_union/core/providers/utils_providers.dart';
 import 'package:pocket_union/core/services/features/expense_service.dart';
 import 'package:pocket_union/core/services/features/expense_share_service.dart';
 import 'package:pocket_union/core/services/features/income_service.dart';
+import 'package:pocket_union/core/services/features/recurrent_expense_service.dart';
 import 'package:pocket_union/core/services/features/recurrent_income_service.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_expense_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_expense_share_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_income_port.dart';
+import 'package:pocket_union/domain/port/cloud/feat/i_recurrent_expense_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_recurrent_income_port.dart';
 
 final expenseServiceProvider = FutureProvider<IExpensePort>((ref) async {
@@ -40,4 +42,13 @@ final recurrentIncomeServiceProvider = FutureProvider<IRecurrentIncomePort>((
   final recurrentIncomeDao = ref.watch(recurrentIncomeDaoProvider);
   final logger = ref.watch(loggerProvider);
   return RecurrentIncomeService(recurrentIncomeDao, supabaseClient, logger);
+});
+
+final recurrentExpenseServiceProvider = FutureProvider<IRecurrentExpensePort>((
+  ref,
+) async {
+  final supabaseClient = await ref.watch(supabaseClientProvider.future);
+  final recurrentExpenseDao = ref.watch(recurrentExpenseDaoProvider);
+  final logger = ref.watch(loggerProvider);
+  return RecurrentExpenseService(recurrentExpenseDao, supabaseClient, logger);
 });

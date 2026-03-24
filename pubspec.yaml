@@ -1,5 +1,5 @@
 name: pocket_union
-version: 0.0.6
+version: 0.0.75
 
 environment:
   sdk: ^3.8.0

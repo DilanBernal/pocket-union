@@ -1,32 +1,32 @@
 import 'package:pocket_union/Dao/sqlite/db_helper_sqlite.dart';
-import 'package:pocket_union/domain/models/recurrent_income.dart';
-import 'package:pocket_union/domain/port/local/recurrent_income_port_local.dart';
+import 'package:pocket_union/domain/models/recurrent_expense.dart';
+import 'package:pocket_union/domain/port/local/recurrent_expense_port_local.dart';
 import 'package:pocket_union/domain/port/utils/logger_port.dart';
-import 'package:pocket_union/dto/new_recurrent_income_dto.dart';
+import 'package:pocket_union/dto/new_recurrent_expense_dto.dart';
 import 'package:uuid/uuid.dart';
 
-class RecurrentIncomeDaoSqlite implements RecurrentIncomeLocalPort {
+class RecurrentExpenseDaoSqlite implements RecurrentExpenseLocalPort {
   final DbSqlite _dbHelper;
   final LoggerPort _logger;
   final Uuid _uuid = const Uuid();
 
-  RecurrentIncomeDaoSqlite({
+  RecurrentExpenseDaoSqlite({
     required DbSqlite dbHelper,
     required LoggerPort logger,
   }) : _dbHelper = dbHelper,
        _logger = logger;
 
   @override
-  Future<String> createRecurrentIncome(NewRecurrentIncomeDto dto) async {
+  Future<String> createRecurrentExpense(NewRecurrentExpenseDto dto) async {
     final db = await _dbHelper.database;
     final id = _uuid.v4();
     final now = DateTime.now();
 
-    await db.insert('recurrent_income', {
+    await db.insert('recurrent_expense', {
       'id': id,
       'created_at': now.toIso8601String(),
       'name': dto.name,
-      'user_recipient_id': dto.userRecipientId,
+      'created_by': dto.createdBy,
       'couple_id': dto.coupleId,
       'amount': (dto.amount * 100).round(),
       'recurrent_info': dto.recurrentInfo,
@@ -37,20 +37,20 @@ class RecurrentIncomeDaoSqlite implements RecurrentIncomeLocalPort {
   }
 
   @override
-  Future<RecurrentIncome?> getRecurrentIncomeById(String id) async {
+  Future<RecurrentExpense?> getRecurrentExpenseById(String id) async {
     final db = await _dbHelper.database;
     try {
       final maps = await db.query(
-        'recurrent_income',
+        'recurrent_expense',
         where: 'id = ?',
         whereArgs: [id],
         limit: 1,
       );
       if (maps.isEmpty) return null;
-      return RecurrentIncome.fromMap(maps.first);
+      return RecurrentExpense.fromMap(maps.first);
     } catch (e) {
       _logger.error(
-        'RecurrentIncomeDaoSqlite: Error al buscar ingreso recurrente',
+        'RecurrentExpenseDaoSqlite: Error al buscar gasto recurrente',
         error: e,
       );
       return null;
@@ -58,37 +58,37 @@ class RecurrentIncomeDaoSqlite implements RecurrentIncomeLocalPort {
   }
 
   @override
-  Future<List<RecurrentIncome>> getAllRecurrentIncomes() async {
+  Future<List<RecurrentExpense>> getAllRecurrentExpenses() async {
     final db = await _dbHelper.database;
     try {
       final maps = await db.query(
-        'recurrent_income',
+        'recurrent_expense',
         orderBy: 'created_at DESC',
       );
-      return maps.map((m) => RecurrentIncome.fromMap(m)).toList();
+      return maps.map((m) => RecurrentExpense.fromMap(m)).toList();
     } catch (e) {
       _logger.error(
-        'RecurrentIncomeDaoSqlite: Error al obtener ingresos recurrentes',
+        'RecurrentExpenseDaoSqlite: Error al obtener gastos recurrentes',
         error: e,
       );
-      throw Exception("Error al obtener ingresos recurrentes: $e");
+      throw Exception('Error al obtener gastos recurrentes: $e');
     }
   }
 
   @override
-  Future<bool> updateRecurrentIncome(RecurrentIncome recurrentIncome) async {
+  Future<bool> updateRecurrentExpense(RecurrentExpense recurrentExpense) async {
     final db = await _dbHelper.database;
     try {
       final count = await db.update(
-        'recurrent_income',
-        recurrentIncome.toMap(),
+        'recurrent_expense',
+        recurrentExpense.toMap(),
         where: 'id = ?',
-        whereArgs: [recurrentIncome.id],
+        whereArgs: [recurrentExpense.id],
       );
       return count > 0;
     } catch (e) {
       _logger.error(
-        'RecurrentIncomeDaoSqlite: Error al actualizar ingreso recurrente',
+        'RecurrentExpenseDaoSqlite: Error al actualizar gasto recurrente',
         error: e,
       );
       return false;
@@ -96,18 +96,18 @@ class RecurrentIncomeDaoSqlite implements RecurrentIncomeLocalPort {
   }
 
   @override
-  Future<bool> deleteRecurrentIncome(String id) async {
+  Future<bool> deleteRecurrentExpense(String id) async {
     final db = await _dbHelper.database;
     try {
       final count = await db.delete(
-        'recurrent_income',
+        'recurrent_expense',
         where: 'id = ?',
         whereArgs: [id],
       );
       return count > 0;
     } catch (e) {
       _logger.error(
-        'RecurrentIncomeDaoSqlite: Error al eliminar ingreso recurrente',
+        'RecurrentExpenseDaoSqlite: Error al eliminar gasto recurrente',
         error: e,
       );
       return false;

@@ -36,21 +36,50 @@ La app implementa un `AppTheme` personalizado que utiliza `GoogleFonts` para iny
 
 ## 🧾 Cambios Importantes (Marzo 2026) - Historial de Transacciones
 
-### Cambio aplicado
+### Cambio aplicado (recurrentes)
 
 Se agregaron dos mejoras funcionales en los historiales de ingresos y gastos:
 
 1. Borrado por gesto `swipe` de izquierda a derecha (`DismissDirection.startToEnd`) con feedback visual de papelera.
 2. Estado vacio refrescable por dos vias: `pull-to-refresh` y boton explicito `Actualizar`.
 
-### Razon del cambio
+### Razon del cambio (recurrentes)
 
 1. Reducir friccion en acciones frecuentes de limpieza del historial (UX mas rapida que entrar a detalle para eliminar).
 2. Evitar estados vacios estaticos cuando la sincronizacion termina despues de abrir pantalla.
 3. Mantener consistencia de comportamiento entre ingresos y gastos bajo el mismo patron de interaccion.
 
-### Impacto tecnico
+### Impacto tecnico (recurrentes)
 
 1. Se extendio el puerto cloud de ingresos con `deleteIncome` y su implementacion en `IncomeService` con estrategia offline-first (eliminacion local obligatoria, sincronizacion cloud best-effort).
 2. Las pantallas de historial usan `AlwaysScrollableScrollPhysics` en estado vacio para permitir refresco por gesto incluso sin items.
 3. El borrado por gesto en UI usa `Dismissible` y delega en servicios para conservar separacion UI/negocio.
+
+## 🧾 Cambios Importantes (Marzo 2026) - Programacion de Ingresos y Gastos Recurrentes
+
+### Cambio aplicado
+
+Se agrego soporte completo para programar ingresos y gastos recurrentes con entrada tipada y conversion a expresion `pg_cron`.
+
+1. Nueva capa de dominio/datos/servicio para `recurrent_expense` (modelo, DTO, puertos, DAO SQLite y servicio cloud).
+2. Actualizacion de `recurrent_income.recurrent_info` para almacenar cron textual (5 segmentos) en vez de estructura no tipada.
+3. Nuevas pantallas de UI para programar ingresos y gastos recurrentes, con modo semanal y mensual.
+4. Migracion SQLite v3 para crear tabla local `recurrent_expense` y mantener estrategia offline-first.
+
+### Razon del cambio
+
+1. `pg_cron` espera una expresion textual en orden `min hour day month dow`; el formato previo no representaba bien comodines/rangos.
+2. El modulo de gastos recurrentes no existia en la app, lo que impedia cubrir ambos flujos financieros.
+3. Se necesitaba una forma segura de que el usuario configure periodicidad sin escribir cron manualmente.
+
+### Impacto tecnico
+
+1. El formulario ahora traduce entradas tipadas (hora/minuto + dia semanal o dia mensual) a una cadena cron valida.
+2. Los servicios siguen enfoque offline-first: guardan local primero y sincronizan Supabase en `try/catch`.
+3. Se anadieron rutas y accesos en menu para `Programar ingresos` y `Programar gastos`.
+4. Se incluyeron pruebas unitarias de servicios recurrentes para validar comportamiento ante caida de red.
+
+### Tradeoffs
+
+1. La UI inicial soporta solo periodicidad semanal/mensual para minimizar errores de entrada.
+2. Aun no se ejecuta el cron dentro de la app; esta capa prepara y persiste la expresion para ejecucion en backend.

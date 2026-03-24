@@ -7,7 +7,7 @@ import 'package:sqflite/sqflite.dart';
 /// Responsabilidad única: gestionar conexión y ciclo de vida de SQLite
 class DbSqlite {
   static const _dbName = "pocket_union.db";
-  static const _dbVersion = 2;
+  static const _dbVersion = 3;
 
   static final DbSqlite instance = DbSqlite._internal();
   DbSqlite._internal();
@@ -231,6 +231,22 @@ class DbSqlite {
         )
       ''');
 
+      // ========== TABLA: recurrent_expense ==========
+      await txn.execute('''
+        CREATE TABLE recurrent_expense (
+          id TEXT PRIMARY KEY,
+          created_at TEXT NOT NULL,
+          name TEXT NOT NULL DEFAULT '',
+          created_by TEXT,
+          couple_id TEXT NOT NULL,
+          amount INTEGER NOT NULL,
+          recurrent_info TEXT,
+          sync_status TEXT NOT NULL DEFAULT 'pending',
+          FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
+          FOREIGN KEY(created_by) REFERENCES profile(id) ON DELETE SET NULL
+        )
+      ''');
+
       // ========== TABLA: goal ==========
       await txn.execute('''
         CREATE TABLE goal (
@@ -262,7 +278,7 @@ class DbSqlite {
         )
       ''');
 
-      dev.log('Schema v2 creado exitosamente', name: 'DbSqlite');
+      dev.log('Schema v3 creado exitosamente', name: 'DbSqlite');
     });
   }
 
@@ -272,6 +288,10 @@ class DbSqlite {
 
     if (oldVersion < 2) {
       await _migrateToV2(db);
+    }
+
+    if (oldVersion < 3) {
+      await _migrateToV3(db);
     }
   }
 
@@ -438,6 +458,28 @@ class DbSqlite {
       ''');
 
       dev.log('Migración a v2 completada', name: 'DbSqlite');
+    });
+  }
+
+  /// Migración v2 → v3: agregar tabla recurrent_expense.
+  Future _migrateToV3(Database db) async {
+    await db.transaction((txn) async {
+      await txn.execute('''
+        CREATE TABLE IF NOT EXISTS recurrent_expense (
+          id TEXT PRIMARY KEY,
+          created_at TEXT NOT NULL,
+          name TEXT NOT NULL DEFAULT '',
+          created_by TEXT,
+          couple_id TEXT NOT NULL,
+          amount INTEGER NOT NULL,
+          recurrent_info TEXT,
+          sync_status TEXT NOT NULL DEFAULT 'pending',
+          FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
+          FOREIGN KEY(created_by) REFERENCES profile(id) ON DELETE SET NULL
+        )
+      ''');
+
+      dev.log('Migración a v3 completada', name: 'DbSqlite');
     });
   }
 

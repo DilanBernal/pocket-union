@@ -8,6 +8,8 @@ import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/domain/models/couple.dart';
 import 'package:pocket_union/domain/models/expense.dart';
 import 'package:pocket_union/domain/models/income.dart';
+import 'package:pocket_union/domain/models/recurrent_expense.dart';
+import 'package:pocket_union/domain/models/recurrent_income.dart';
 import 'package:pocket_union/domain/models/user.dart';
 
 // Current user (local)
@@ -112,6 +114,34 @@ final allIncomesProvider = FutureProvider<List<Income>>((ref) async {
   } catch (_) {
     final incomeDao = ref.watch(incomeDaoProvider);
     return incomeDao.getAllIncomes();
+  }
+});
+
+final allRecurrentIncomesProvider = FutureProvider<List<RecurrentIncome>>((
+  ref,
+) async {
+  try {
+    final recurrentIncomeService = await ref.watch(
+      recurrentIncomeServiceProvider.future,
+    );
+    return recurrentIncomeService.getAllRecurrentIncomes();
+  } catch (_) {
+    final recurrentIncomeDao = ref.watch(recurrentIncomeDaoProvider);
+    return recurrentIncomeDao.getAllRecurrentIncomes();
+  }
+});
+
+final allRecurrentExpensesProvider = FutureProvider<List<RecurrentExpense>>((
+  ref,
+) async {
+  try {
+    final recurrentExpenseService = await ref.watch(
+      recurrentExpenseServiceProvider.future,
+    );
+    return recurrentExpenseService.getAllRecurrentExpenses();
+  } catch (_) {
+    final recurrentExpenseDao = ref.watch(recurrentExpenseDaoProvider);
+    return recurrentExpenseDao.getAllRecurrentExpenses();
   }
 });
 

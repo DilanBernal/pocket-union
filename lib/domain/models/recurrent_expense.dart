@@ -2,22 +2,22 @@ import 'dart:convert';
 
 import 'package:pocket_union/domain/enum/sync_status.dart';
 
-class RecurrentIncome {
+class RecurrentExpense {
   final String id;
   final String coupleId;
+  final String createdBy;
   String name;
   final double amount;
-  final String? userRecipientId;
   final String? recurrentInfo;
   final DateTime createdAt;
   SyncStatus syncStatus;
 
-  RecurrentIncome({
+  RecurrentExpense({
     required this.id,
     required this.coupleId,
+    required this.createdBy,
     required this.name,
     required this.amount,
-    this.userRecipientId,
     this.recurrentInfo,
     required this.createdAt,
     this.syncStatus = SyncStatus.pending,
@@ -27,9 +27,9 @@ class RecurrentIncome {
     return {
       'id': id,
       'couple_id': coupleId,
+      'created_by': createdBy,
       'name': name,
       'amount': (amount * 100).round(),
-      'user_recipient_id': userRecipientId,
       'recurrent_info': recurrentInfo,
       'created_at': createdAt.toIso8601String(),
       'sync_status': syncStatus.value,
@@ -76,13 +76,13 @@ class RecurrentIncome {
     return 0;
   }
 
-  factory RecurrentIncome.fromMap(Map<String, dynamic> map) {
-    return RecurrentIncome(
+  factory RecurrentExpense.fromMap(Map<String, dynamic> map) {
+    return RecurrentExpense(
       id: map['id'],
       coupleId: map['couple_id'],
+      createdBy: map['created_by'] ?? '',
       name: map['name'],
       amount: (map['amount'] as num).toDouble() / 100,
-      userRecipientId: map['user_recipient_id'],
       recurrentInfo: _parseRecurrentInfo(map['recurrent_info']),
       createdAt: DateTime.parse(map['created_at']),
       syncStatus: SyncStatus.fromString(
@@ -95,21 +95,22 @@ class RecurrentIncome {
     return {
       'id': id,
       'couple_id': coupleId,
+      'created_by': createdBy,
       'name': name,
       'amount': amount,
-      'user_recipient_id': userRecipientId,
       'recurrent_info': recurrentInfo,
       'created_at': createdAt.toIso8601String(),
+      'sync_status': syncStatus.value,
     };
   }
 
-  factory RecurrentIncome.fromJson(Map<String, dynamic> json) {
-    return RecurrentIncome(
+  factory RecurrentExpense.fromJson(Map<String, dynamic> json) {
+    return RecurrentExpense(
       id: json['id'],
       coupleId: json['couple_id'],
+      createdBy: json['created_by'] ?? '',
       name: json['name'],
       amount: _parseAmountFromJson(json['amount']),
-      userRecipientId: json['user_recipient_id'],
       recurrentInfo: _parseRecurrentInfo(json['recurrent_info']),
       createdAt: DateTime.parse(json['created_at']),
       syncStatus: SyncStatus.fromString(

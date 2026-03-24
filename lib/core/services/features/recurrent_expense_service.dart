@@ -1,17 +1,17 @@
-import 'package:pocket_union/domain/models/recurrent_income.dart';
-import 'package:pocket_union/domain/port/cloud/feat/i_recurrent_income_port.dart';
-import 'package:pocket_union/domain/port/local/recurrent_income_port_local.dart';
+import 'package:pocket_union/domain/models/recurrent_expense.dart';
+import 'package:pocket_union/domain/port/cloud/feat/i_recurrent_expense_port.dart';
+import 'package:pocket_union/domain/port/local/recurrent_expense_port_local.dart';
 import 'package:pocket_union/domain/port/utils/logger_port.dart';
-import 'package:pocket_union/dto/new_recurrent_income_dto.dart';
+import 'package:pocket_union/dto/new_recurrent_expense_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class RecurrentIncomeService implements IRecurrentIncomePort {
-  final RecurrentIncomeLocalPort _recurrentIncomeDao;
+class RecurrentExpenseService implements IRecurrentExpensePort {
+  final RecurrentExpenseLocalPort _recurrentExpenseDao;
   final SupabaseClient _supabaseClient;
   final LoggerPort _logger;
 
-  RecurrentIncomeService(
-    this._recurrentIncomeDao,
+  RecurrentExpenseService(
+    this._recurrentExpenseDao,
     this._supabaseClient,
     this._logger,
   );
@@ -27,17 +27,19 @@ class RecurrentIncomeService implements IRecurrentIncomePort {
   }
 
   @override
-  Future<List<RecurrentIncome>> getAllRecurrentIncomes() async {
-    final local = await _recurrentIncomeDao.getAllRecurrentIncomes();
+  Future<List<RecurrentExpense>> getAllRecurrentExpenses() async {
+    final local = await _recurrentExpenseDao.getAllRecurrentExpenses();
 
     try {
       final response = await _supabaseClient
-          .from('recurrent_income')
+          .from('recurrent_expense')
           .select()
           .order('created_at', ascending: false);
 
       final cloud = (response as List)
-          .map((item) => RecurrentIncome.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) => RecurrentExpense.fromJson(item as Map<String, dynamic>),
+          )
           .toList();
 
       if (local.isEmpty && cloud.isNotEmpty) {
@@ -45,7 +47,7 @@ class RecurrentIncomeService implements IRecurrentIncomePort {
       }
     } catch (e) {
       _logger.error(
-        'RecurrentIncomeService: no se pudo consultar recurrent_income en Supabase',
+        'RecurrentExpenseService: no se pudo consultar recurrent_expense en Supabase',
         error: e,
       );
     }
@@ -54,22 +56,21 @@ class RecurrentIncomeService implements IRecurrentIncomePort {
   }
 
   @override
-  Future<String> createRecurrentIncome(NewRecurrentIncomeDto dto) async {
-    final id = await _recurrentIncomeDao.createRecurrentIncome(dto);
+  Future<String> createRecurrentExpense(NewRecurrentExpenseDto dto) async {
+    final id = await _recurrentExpenseDao.createRecurrentExpense(dto);
 
     try {
-      await _supabaseClient.from('recurrent_income').insert({
+      await _supabaseClient.from('recurrent_expense').insert({
         'id': id,
         'name': dto.name,
         'couple_id': dto.coupleId,
         'created_by': dto.createdBy,
         'amount': (dto.amount * 100).round(),
-        'user_recipient_id': dto.userRecipientId,
         'recurrent_info': _toDbRecurrentInfo(dto.recurrentInfo),
       });
     } catch (e) {
       _logger.error(
-        'RecurrentIncomeService: no se pudo sincronizar con Supabase',
+        'RecurrentExpenseService: no se pudo sincronizar con Supabase',
         error: e,
       );
     }
