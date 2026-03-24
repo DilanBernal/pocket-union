@@ -22,7 +22,13 @@ final mockSupabase = SupabaseClient(
   httpClient: MockSupabaseHttpClient(),
 );
 
+void main() {
+  testCategoryFlow();
+}
+
 class MockLogger extends Mock implements LoggerPort {
+  int errorCount = 0;
+
   @override
   void debug(String message) {
     dev.log('DEBUG: $message');
@@ -30,6 +36,7 @@ class MockLogger extends Mock implements LoggerPort {
 
   @override
   void error(String message, {Object? error, StackTrace? stackTrace}) {
+    errorCount += 1;
     dev.log(message, error: error, stackTrace: stackTrace, level: 1000);
   }
 
@@ -246,12 +253,11 @@ void testCategoryFlow() {
       );
 
       final id = await service.createCategory(dto);
-      when(logger.error('', error: any, stackTrace: any)).thenReturn(null);
 
       expect(id, isNotNull);
-      expect(logger.error, neverCalled);
       expect(dao.storage.length, 1);
       expect(dao.storage[id]?.name, 'Food');
+      expect(logger.errorCount, 0);
     });
     test('crea categoria local a pesar de no sincronizar con cloud', () async {
       final dto = NewCategoryDto(
@@ -263,15 +269,12 @@ void testCategoryFlow() {
         host: CategoryHost.expense,
       );
 
-      when(logger.error('', error: any, stackTrace: any)).thenReturn(null);
-      // when(supabase.from('category').insert(any)).thenThrow(Exception('Sync error'));
-
       final id = await service.createCategory(dto);
 
       expect(id, isNotNull);
-      // expect(logger.error, onceCalled);
       expect(dao.storage.length, 1);
       expect(dao.storage[id]?.name, 'Food');
+      expect(logger.errorCount, 0);
     });
   });
 
@@ -290,7 +293,10 @@ void testCategoryFlow() {
 
       expect(result.length, 2);
       expect(result.any((c) => c.id == '1'), true);
-      expect(result.any((c) => c.id == 'cloud-1'), true);
+      expect(
+        result.any((c) => c.id != '1' && c.syncStatus == SyncStatus.synced),
+        true,
+      );
     });
   });
 

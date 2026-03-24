@@ -167,6 +167,20 @@ flutter test e2e/transactions/
 flutter test integration_test/
 ```
 
+### CI: solo unit/widget tests
+
+En CI (`.github/workflows/flutter-tests.yml`), el pipeline ejecuta únicamente:
+
+```bash
+flutter test test/ --reporter expanded
+```
+
+Los `integration_test/` no se ejecutan en el pipeline principal para evitar dependencias de dispositivo/plataforma gráfica en runners.
+
+**Razón del cambio:** reducir flakiness y fallos de infraestructura en CI; mantener el flujo principal enfocado en pruebas unitarias/widget deterministas.
+
+**Recomendación operativa:** ejecutar `integration_test/` de forma local o en un workflow dedicado/on-demand antes de merges importantes que toquen flujos de UI completos.
+
 ## Cobertura Actual
 
 | Service | Tests | Métodos cubiertos |

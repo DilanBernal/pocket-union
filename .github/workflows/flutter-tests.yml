@@ -37,6 +37,3 @@ jobs:
 
       - name: Run unit and widget tests
         run: flutter test test/ --reporter expanded
-
-      - name: Run integration tests
-        run: flutter test integration_test/ --reporter expanded

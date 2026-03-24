@@ -16,6 +16,10 @@ final mockSupabase = SupabaseClient(
   httpClient: MockSupabaseHttpClient(),
 );
 
+void main() {
+  testAuthenticationFlow();
+}
+
 /// Fake de IAuthPort que no depende de Supabase ni SQLite.
 class _FakeAuthPort implements IAuthPort {
   final bool shouldLoginFail;
