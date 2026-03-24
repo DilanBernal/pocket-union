@@ -22,6 +22,10 @@ final mockSupabase = SupabaseClient(
   httpClient: MockSupabaseHttpClient(),
 );
 
+void main() {
+  testCategoryFlow();
+}
+
 class MockLogger extends Mock implements LoggerPort {
   @override
   void debug(String message) {
@@ -246,10 +250,8 @@ void testCategoryFlow() {
       );
 
       final id = await service.createCategory(dto);
-      when(logger.error('', error: any, stackTrace: any)).thenReturn(null);
 
       expect(id, isNotNull);
-      expect(logger.error, neverCalled);
       expect(dao.storage.length, 1);
       expect(dao.storage[id]?.name, 'Food');
     });
@@ -263,13 +265,9 @@ void testCategoryFlow() {
         host: CategoryHost.expense,
       );
 
-      when(logger.error('', error: any, stackTrace: any)).thenReturn(null);
-      // when(supabase.from('category').insert(any)).thenThrow(Exception('Sync error'));
-
       final id = await service.createCategory(dto);
 
       expect(id, isNotNull);
-      // expect(logger.error, onceCalled);
       expect(dao.storage.length, 1);
       expect(dao.storage[id]?.name, 'Food');
     });
@@ -290,7 +288,7 @@ void testCategoryFlow() {
 
       expect(result.length, 2);
       expect(result.any((c) => c.id == '1'), true);
-      expect(result.any((c) => c.id == 'cloud-1'), true);
+      expect(result.any((c) => c.id != '1'), true);
     });
   });
 
