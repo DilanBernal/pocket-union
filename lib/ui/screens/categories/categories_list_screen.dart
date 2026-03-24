@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocket_union/core/services/util/color_parser.dart';
 import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/core/providers/data_local_providers.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/category.dart' as domain;
+import 'package:pocket_union/dto/update_category_dto.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,15 +19,35 @@ class CategoriesListScreen extends ConsumerStatefulWidget {
       _CategoriesListScreenState();
 }
 
-class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
+class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen>
+    with SingleTickerProviderStateMixin {
   bool _isCreatingDefaults = false;
   bool _isSyncingAll = false;
   final Set<String> _syncingIds = {};
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   Future<void> _navigateToNewCategory() async {
     await Navigator.pushNamed(context, AppRoutes.newCategory);
     ref.invalidate(allCategoriesProvider);
     ref.invalidate(incomeCategoriesProvider);
+    ref.invalidate(expenseCategoriesProvider);
+  }
+
+  bool get _canShowDefaultsButton {
+    final alreadyCreated = ref.read(defaultCategoriesCreatedProvider);
+    return !alreadyCreated;
   }
 
   Future<void> _createDefaultCategories() async {
@@ -35,16 +57,13 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
       final prefs = await SharedPreferences.getInstance();
       final coupleId = prefs.getString('coupleId') ?? '';
 
-      try {
-        final service = await ref.read(categoryDaoProvider);
-        await service.createDefaultCategories(coupleId);
-      } catch (_) {
-        final dao = ref.read(categoryDaoProvider);
-        await dao.createDefaultCategories(coupleId);
-      }
+      final dao = ref.read(categoryDaoProvider);
+      await dao.createDefaultCategories(coupleId);
 
+      ref.read(defaultCategoriesCreatedProvider.notifier).state = true;
       ref.invalidate(allCategoriesProvider);
       ref.invalidate(incomeCategoriesProvider);
+      ref.invalidate(expenseCategoriesProvider);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -77,6 +96,7 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
 
       ref.invalidate(allCategoriesProvider);
       ref.invalidate(incomeCategoriesProvider);
+      ref.invalidate(expenseCategoriesProvider);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -112,6 +132,7 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
 
       ref.invalidate(allCategoriesProvider);
       ref.invalidate(incomeCategoriesProvider);
+      ref.invalidate(expenseCategoriesProvider);
 
       if (!mounted) return;
 
@@ -153,6 +174,102 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
     }
   }
 
+  void _showEditCategoryDialog(domain.Category category) {
+    final nameController = TextEditingController(text: category.name);
+    final descController = TextEditingController(
+      text: category.shortDescription ?? '',
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Editar categoría',
+                style: Theme.of(ctx).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                  prefixIcon: Icon(Icons.label),
+                ),
+                maxLength: 50,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: descController,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción (opcional)',
+                  prefixIcon: Icon(Icons.notes),
+                ),
+                maxLength: 120,
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final newName = nameController.text.trim();
+                  if (newName.isEmpty) return;
+
+                  final dto = UpdateCategoryDto(
+                    id: category.id,
+                    name: newName,
+                    shortDescription: descController.text.trim().isEmpty
+                        ? null
+                        : descController.text.trim(),
+                  );
+
+                  try {
+                    final service = await ref.read(
+                      categoryServiceProvider.future,
+                    );
+                    await service.updateCategory(dto);
+                  } catch (_) {
+                    final dao = ref.read(categoryDaoProvider);
+                    await dao.updateCategory(dto);
+                  }
+
+                  ref.invalidate(allCategoriesProvider);
+                  ref.invalidate(incomeCategoriesProvider);
+                  ref.invalidate(expenseCategoriesProvider);
+
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Categoría actualizada'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.save),
+                label: const Text('Guardar cambios'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(allCategoriesProvider);
@@ -176,21 +293,15 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
                 : const Icon(Icons.cloud_sync),
             tooltip: 'Sincronizar todas las categorías',
           ),
-          IconButton(
-            onPressed: _isCreatingDefaults ? null : _createDefaultCategories,
-            icon: _isCreatingDefaults
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.playlist_add),
-            tooltip: 'Crear categorías por defecto',
-          ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Todos'),
+            Tab(text: 'Ingresos'),
+            Tab(text: 'Gastos'),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToNewCategory,
@@ -215,50 +326,9 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
         ),
         data: (categories) {
           if (categories.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.category_outlined,
-                    size: 64,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'No hay categorías creadas',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: _navigateToNewCategory,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Crear primera categoría'),
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    onPressed: _isCreatingDefaults
-                        ? null
-                        : _createDefaultCategories,
-                    icon: _isCreatingDefaults
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.playlist_add),
-                    label: Text(
-                      _isCreatingDefaults
-                          ? 'Creando...'
-                          : 'Crear categorías por defecto',
-                    ),
-                  ),
-                ],
-              ),
-            );
+            return _buildEmptyState();
           }
 
-          // Separar por host
           final incomeCategories = categories
               .where((c) => c.categoryHost == CategoryHost.income)
               .toList();
@@ -266,59 +336,79 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
               .where((c) => c.categoryHost == CategoryHost.expense)
               .toList();
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(allCategoriesProvider);
-            },
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                if (incomeCategories.isNotEmpty) ...[
-                  _buildSectionHeader(
-                    context,
-                    'Ingresos',
-                    Icons.arrow_downward,
-                    Colors.green,
-                  ),
-                  ...incomeCategories.map((c) => _buildCategoryTile(c)),
-                ],
-                if (expenseCategories.isNotEmpty) ...[
-                  _buildSectionHeader(
-                    context,
-                    'Gastos',
-                    Icons.arrow_upward,
-                    Colors.red,
-                  ),
-                  ...expenseCategories.map((c) => _buildCategoryTile(c)),
-                ],
-              ],
-            ),
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildCategoryList(categories),
+              _buildCategoryList(incomeCategories),
+              _buildCategoryList(expenseCategories),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _buildSectionHeader(
-    BuildContext context,
-    String title,
-    IconData icon,
-    Color color,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Row(
+  Widget _buildEmptyState() {
+    final showDefaultsButton = _canShowDefaultsButton;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          const Icon(Icons.category_outlined, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text(
+            'No hay categorías creadas',
+            style: TextStyle(fontSize: 18, color: Colors.grey),
           ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _navigateToNewCategory,
+            icon: const Icon(Icons.add),
+            label: const Text('Crear primera categoría'),
+          ),
+          if (showDefaultsButton) ...[
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: _isCreatingDefaults ? null : _createDefaultCategories,
+              icon: _isCreatingDefaults
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.playlist_add),
+              label: Text(
+                _isCreatingDefaults
+                    ? 'Creando...'
+                    : 'Crear categorías por defecto',
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryList(List<domain.Category> categories) {
+    if (categories.isEmpty) {
+      return const Center(
+        child: Text(
+          'No hay categorías en esta sección',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(allCategoriesProvider);
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: categories.length,
+        itemBuilder: (context, index) => _buildCategoryTile(categories[index]),
       ),
     );
   }
@@ -328,9 +418,7 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
         ? IconData(int.parse(category.icon!), fontFamily: 'MaterialIcons')
         : Icons.category;
 
-    final color = category.color != null
-        ? Color(int.parse(category.color!.replaceFirst('#', ''), radix: 16))
-        : Colors.grey;
+    final color = parseColorFromHex(category.color);
 
     return ListTile(
       leading: CircleAvatar(
@@ -347,7 +435,25 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen> {
               overflow: TextOverflow.ellipsis,
             )
           : null,
-      trailing: _buildSyncBadge(category),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!category.isLocallyStored)
+            const Tooltip(
+              message: 'Solo en cloud, no guardada localmente',
+              child: Icon(
+                Icons.cloud_download_outlined,
+                color: Colors.blue,
+                size: 20,
+              ),
+            ),
+          const SizedBox(width: 4),
+          _buildSyncBadge(category),
+        ],
+      ),
+      onTap: category.isLocallyStored
+          ? () => _showEditCategoryDialog(category)
+          : null,
     );
   }
 

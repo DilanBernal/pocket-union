@@ -138,6 +138,38 @@ class _ListMenuState extends ConsumerState<ListMenu> {
           },
         ),
         ListTile(
+          leading: const Icon(Icons.schedule_send),
+          title: const Text('Programar ingresos'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, AppRoutes.newRecurrentIncome);
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.list_alt),
+          title: const Text('Ingresos programados'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, AppRoutes.historyRecurrentIncome);
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.event_repeat),
+          title: const Text('Programar gastos'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, AppRoutes.newRecurrentExpense);
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.receipt_long),
+          title: const Text('Gastos programados'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, AppRoutes.historyRecurrentExpense);
+          },
+        ),
+        ListTile(
           leading: const Icon(Icons.emoji_events),
           title: const Text('Misiones (metas)'),
           onTap: () {

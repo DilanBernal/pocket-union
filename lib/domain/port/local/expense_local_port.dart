@@ -9,6 +9,8 @@ abstract class ExpenseLocalPort {
 
   Future<List<Expense>> getAllExpenses();
 
+  Future<bool> upsertFromCloud(Expense expense);
+
   Future<List<Expense>> getByFilter(ExpenseFilterDto filter);
 
   Future<bool> updateExpense(Expense expense);

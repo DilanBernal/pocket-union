@@ -24,7 +24,7 @@ void main() {
     transactionDate: DateTime(2024, 1, 15),
     amount: 1500.0,
     createdAt: DateTime(2024, 1, 15),
-    categoryId: 'cat-1',
+    categoryIds: ['cat-1'],
     isReceived: true,
     userRecipientId: 'user-1',
     syncStatus: SyncStatus.pending,
@@ -72,7 +72,7 @@ void main() {
     final newIncomeDto = NewIncomeDto(
       name: 'Sueldo enero',
       amount: 1500.00,
-      categoryId: 'cat-uuid-1',
+      categoryIds: ['cat-uuid-1'],
       isRecurring: false,
       isReceived: true,
       userId: 'user-uuid-1',
@@ -122,7 +122,7 @@ void main() {
       final dto = NewIncomeDto(
         name: 'Bono',
         amount: 500.0,
-        categoryId: 'cat-2',
+        categoryIds: ['cat-2'],
         isRecurring: false,
         isReceived: true,
         userId: 'user-1',
@@ -145,7 +145,7 @@ void main() {
       final dto = NewIncomeDto(
         name: 'Dividendos',
         amount: 2000.0,
-        categoryId: 'cat-3',
+        categoryIds: ['cat-3'],
         isRecurring: false,
         isReceived: false,
         userId: null,
@@ -169,7 +169,7 @@ void main() {
       final dto = NewIncomeDto(
         name: 'Ingreso pareja',
         amount: 3000.0,
-        categoryId: 'cat-4',
+        categoryIds: ['cat-4'],
         isRecurring: false,
         isReceived: false,
         userId: null,
@@ -183,6 +183,44 @@ void main() {
               as NewIncomeDto;
       expect(captured.coupleId, 'couple-uuid-1');
       expect(captured.userId, isNull);
+    });
+  });
+
+  group('IncomeService - deleteIncome', () {
+    test('retorna true cuando elimina localmente', () async {
+      when(
+        mockIncomeDao.deleteIncome('income-uuid-1'),
+      ).thenAnswer((_) async => true);
+      when(mockSupabaseClient.from(any)).thenThrow(Exception('offline'));
+
+      final result = await incomeService.deleteIncome('income-uuid-1');
+
+      expect(result, isTrue);
+      verify(mockIncomeDao.deleteIncome('income-uuid-1')).called(1);
+    });
+
+    test('retorna false cuando no se pudo eliminar en local', () async {
+      when(
+        mockIncomeDao.deleteIncome('income-uuid-2'),
+      ).thenAnswer((_) async => false);
+
+      final result = await incomeService.deleteIncome('income-uuid-2');
+
+      expect(result, isFalse);
+      verify(mockIncomeDao.deleteIncome('income-uuid-2')).called(1);
+      verifyNever(mockSupabaseClient.from(any));
+    });
+
+    test('mantiene true aunque falle Supabase en delete cloud', () async {
+      when(
+        mockIncomeDao.deleteIncome('income-uuid-3'),
+      ).thenAnswer((_) async => true);
+      when(mockSupabaseClient.from(any)).thenThrow(Exception('network'));
+
+      final result = await incomeService.deleteIncome('income-uuid-3');
+
+      expect(result, isTrue);
+      verify(mockIncomeDao.deleteIncome('income-uuid-3')).called(1);
     });
   });
 }

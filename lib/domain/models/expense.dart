@@ -1,3 +1,6 @@
+import 'package:pocket_union/domain/enum/sync_status.dart';
+import 'package:pocket_union/domain/models/category.dart';
+
 class Expense {
   final String id;
   final String coupleId;
@@ -6,12 +9,17 @@ class Expense {
   DateTime? transactionDate;
   String? description;
   final double amount;
-  final String? categoryId;
+  List<String> categoryIds;
+  List<Category> categories = [];
   final bool isFixed;
   final int importanceLevel;
   final bool isPlaned;
   final DateTime createdAt;
-  bool inCloud;
+  bool isPaid;
+  SyncStatus syncStatus;
+  DateTime? lastSyncAt;
+  DateTime localUpdatedAt;
+  bool isDeleted;
 
   Expense({
     required this.id,
@@ -21,14 +29,19 @@ class Expense {
     this.transactionDate,
     this.description,
     required this.amount,
-    this.categoryId,
+    this.categoryIds = const [],
     this.isFixed = false,
     required this.importanceLevel,
     this.isPlaned = false,
     required this.createdAt,
-    required this.inCloud,
-  });
+    this.syncStatus = SyncStatus.pending,
+    this.lastSyncAt,
+    DateTime? localUpdatedAt,
+    this.isDeleted = false,
+    this.isPaid = true,
+  }) : localUpdatedAt = localUpdatedAt ?? DateTime.now();
 
+  /// Mapa para la tabla `expense` en SQLite (sin campos de expense_info ni expense_category).
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -37,17 +50,32 @@ class Expense {
       'name': name,
       'transaction_date': transactionDate?.toIso8601String(),
       'description': description,
-      'amount': amount,
-      'category_id': categoryId,
-      'is_fixed': isFixed ? 1 : 0,
-      'importance_level': importanceLevel,
-      'is_planed': isPlaned ? 1 : 0,
+      'amount': (amount * 100).round(),
       'created_at': createdAt.toIso8601String(),
-      'inCloud': inCloud ? 1 : 0,
+      'sync_status': syncStatus.value,
+      'last_sync_at': lastSyncAt?.toIso8601String(),
+      'local_updated_at': localUpdatedAt.toIso8601String(),
+      'is_deleted': isDeleted ? 1 : 0,
+      'is_paid': isPaid ? 1 : 0,
     };
   }
 
-  factory Expense.fromMap(Map<String, dynamic> map) {
+  /// Mapa para la tabla `expense_info` en SQLite.
+  Map<String, dynamic> toExpenseInfoMap() {
+    return {
+      'id': id,
+      'is_fixed': isFixed ? 1 : 0,
+      'importance_level': importanceLevel,
+      'is_planed': isPlaned ? 1 : 0,
+    };
+  }
+
+  /// Lee desde SQLite con datos del JOIN expense + expense_info.
+  /// [categoryIds] se provee aparte desde expense_category.
+  factory Expense.fromMap(
+    Map<String, dynamic> map, {
+    List<String> categoryIds = const [],
+  }) {
     return Expense(
       id: map['id'],
       coupleId: map['couple_id'],
@@ -57,13 +85,23 @@ class Expense {
           ? DateTime.parse(map['transaction_date'])
           : null,
       description: map['description'],
-      amount: (map['amount'] as num).toDouble(),
-      categoryId: map['category_id'],
+      amount: (map['amount'] as num).toDouble() / 100,
+      categoryIds: categoryIds,
       isFixed: map['is_fixed'] == 1,
-      importanceLevel: map['importance_level'],
+      importanceLevel: map['importance_level'] ?? 0,
       isPlaned: map['is_planed'] == 1,
       createdAt: DateTime.parse(map['created_at']),
-      inCloud: map['inCloud'] == 1,
+      syncStatus: SyncStatus.fromString(
+        (map['sync_status'] as String? ?? 'pending').toUpperCase(),
+      ),
+      lastSyncAt: map['last_sync_at'] != null
+          ? DateTime.parse(map['last_sync_at'])
+          : null,
+      localUpdatedAt: map['local_updated_at'] != null
+          ? DateTime.parse(map['local_updated_at'])
+          : null,
+      isDeleted: map['is_deleted'] == 1,
+      isPaid: map['is_paid'] == 1,
     );
   }
 
@@ -76,11 +114,12 @@ class Expense {
       'transaction_date': transactionDate?.toIso8601String(),
       'description': description,
       'amount': amount,
-      'category_id': categoryId,
+      'category_ids': categoryIds,
       'is_fixed': isFixed,
       'importance_level': importanceLevel,
       'is_planed': isPlaned,
       'created_at': createdAt.toIso8601String(),
+      'is_paid': isPaid,
     };
   }
 
@@ -95,12 +134,20 @@ class Expense {
           : null,
       description: json['description'],
       amount: (json['amount'] as num).toDouble(),
-      categoryId: json['category_id'],
+      categoryIds:
+          (json['category_ids'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       isFixed: json['is_fixed'] ?? false,
-      importanceLevel: json['importance_level'],
+      importanceLevel: json['importance_level'] ?? 0,
       isPlaned: json['is_planed'] ?? false,
       createdAt: DateTime.parse(json['created_at']),
-      inCloud: json['inCloud'] == 1,
+      syncStatus: SyncStatus.fromString(
+        (json['sync_status'] as String? ?? 'pending').toUpperCase(),
+      ),
+      isDeleted: json['is_deleted'] == 1 || json['is_deleted'] == true,
+      isPaid: json['is_paid'] == 1 || json['is_paid'] == true,
     );
   }
 }

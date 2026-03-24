@@ -9,7 +9,7 @@ class NewEntryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categoriesAsync = ref.watch(incomeCategoriesProvider);
+    final categoriesAsync = ref.watch(incomeCategoriesForTransactionProvider);
 
     return categoriesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -22,7 +22,11 @@ class NewEntryScreen extends ConsumerWidget {
             Text('Error al cargar categorías: $err'),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () => ref.invalidate(incomeCategoriesProvider),
+              onPressed: () {
+                ref.read(incomeCategoriesCacheProvider.notifier).state = null;
+                ref.invalidate(incomeCategoriesProvider);
+                ref.invalidate(incomeCategoriesForTransactionProvider);
+              },
               child: const Text('Reintentar'),
             ),
           ],

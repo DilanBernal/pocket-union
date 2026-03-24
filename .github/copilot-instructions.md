@@ -128,3 +128,64 @@ When implementing auth features:
 - Mock Supabase responses using test fixtures
 - Use `sqflite_common_ffi` for test database operations
 - UI tests secondary priority; focus on data layer correctness
+
+## Documentation Discipline
+- For every important change or refactor, update project documentation in `docs/` and explicitly include the reason for the change (problem addressed, expected impact, and tradeoffs).
+
+## **NOTES**
+- In every service's function need a offline first, with a trycatch using the supabase client
+- In every service's function is necesary a serie of unit testing
+
+## AI Behavior Guidelines
+
+- Always prioritize Clean Architecture over quick solutions
+- Never bypass Ports to access data sources directly
+- Prefer full implementations over partial snippets
+- Validate that code follows Riverpod best practices
+- Avoid UI logic in services or data layers
+
+## Offline-First Service Pattern
+
+Every service method must follow:
+
+1. Fetch local data first
+2. Attempt remote fetch (Supabase)
+3. Map remote data to domain models
+4. Detect:
+   - Missing items (not in local)
+   - Updated items (based on updated_at)
+5. Sync in background:
+   - Insert missing
+   - Update outdated
+6. Return local data immediately (optionally merged)
+
+### Example Flow:
+
+```dart
+final local = await dao.getAll();
+
+try {
+  final remote = await fetchRemote();
+
+  final missing = findMissing(local, remote);
+  final updated = findUpdated(local, remote);
+
+  unawaited(syncLocal(missing, updated));
+
+  return merge(local, missing, updated);
+} catch (_) {
+  return local;
+}
+```
+
+
+## Database Sync Strategy
+- Every local table must have: `sync_status`, `local_updated_at`, `is_deleted`
+- Use version numbers for conflict resolution (optimistic locking)
+- Implement batch sync endpoints for efficiency
+- Handle offline expenses: store with `sync_status = 'pending'`
+
+## Gamification System
+- XP awarded for: completing goals (50 XP), adding expenses (5 XP), maintaining streaks (bonus)
+- Levels calculated based on total XP
+- Show next level progress in UI

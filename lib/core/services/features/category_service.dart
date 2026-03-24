@@ -1,3 +1,4 @@
+import 'package:pocket_union/core/services/util/sync_utils.dart';
 import 'package:pocket_union/domain/enum/category_host.dart';
 import 'package:pocket_union/domain/enum/sync_status.dart';
 import 'package:pocket_union/domain/models/category.dart';
@@ -60,38 +61,40 @@ class CategoryService implements ICategoryPort {
 
     try {
       final response = await _supabaseClient.from('category').select();
-      final List<Category> categoriesInCloud = (response as List)
-          // .map(toElement)
+      final categoriesInCloud = (response as List)
           .map((e) => Category.fromJson(e)..syncStatus = SyncStatus.synced)
           .toList();
-      List<Category> categoriesNewsInCloudNotLocal = [];
-      for (var categoryInCloud in categoriesInCloud) {
-        if (!categoriesInLocal.any((c) => c.id == categoryInCloud.id)) {
-          categoriesNewsInCloudNotLocal.add(categoryInCloud);
-        }
-      }
-      if (categoriesNewsInCloudNotLocal.isNotEmpty) {
-        await _categoryDao.updateCategories(
-          categoriesNewsInCloudNotLocal
-              .map(
-                (c) => UpdateCategoryDto(
-                  id: c.id,
-                  color: c.color,
-                  name: c.name,
-                  host: c.categoryHost,
-                  icon: c.icon,
-                  shortDescription: c.shortDescription,
-                  status: SyncStatus.synced,
-                ),
-              )
-              .toList(),
-        );
-        categoriesInLocal.addAll(categoriesNewsInCloudNotLocal);
-      }
+
+      final missingLocally = SyncUtils.findMissingInLocal(
+        localItems: categoriesInLocal,
+        cloudItems: categoriesInCloud,
+        getId: (c) => c.id,
+      );
+
+      saveAllNewCategories(categoriesInCloud)
+          .then((_) {
+            _logger.info(
+              'CategoryService.getAllCategories: ${categoriesInCloud.length} categorías sincronizadas desde Supabase',
+            );
+          })
+          .catchError((e) {
+            _logger.error(
+              'CategoryService.getAllCategories: error al guardar categorías de Supabase: $e',
+            );
+          });
+
+      categoriesInLocal.addAll(missingLocally);
     } catch (e) {
-      _logger.error("Ocurrio un error con supabase, ${e.toString()}");
+      _logger.error('CategoryService.getAllCategories: Supabase falló: $e');
     }
     return categoriesInLocal;
+  }
+
+  Future saveAllNewCategories(List<Category> categories) async {
+    for (final category in categories) {
+      final saved = await _categoryDao.upsertFromCloud(category);
+      category.isLocallyStored = saved;
+    }
   }
 
   /// Actualiza una categoría primero en SQLite (offline-first),
@@ -219,14 +222,31 @@ class CategoryService implements ICategoryPort {
 
   @override
   Future<List<Category>> getCategoriesByHost(CategoryHost host) async {
-    final categoriesInLocal = await _categoryDao.getCategoriesByHost(host);
+    var categoriesInLocal = await _categoryDao.getCategoriesByHost(host);
     try {
-      final categoriesInCloud = await _supabaseClient
+      final response = await _supabaseClient
           .from('category')
           .select()
-          .eq('host', host);
+          .eq('category_host', host.value);
+
+      final categoriesInCloud = (response as List)
+          .map((e) => Category.fromJson(e)..syncStatus = SyncStatus.synced)
+          .toList();
+
+      final missingLocally = SyncUtils.findMissingInLocal(
+        localItems: categoriesInLocal,
+        cloudItems: categoriesInCloud,
+        getId: (c) => c.id,
+      );
+
+      for (final category in missingLocally) {
+        final saved = await _categoryDao.upsertFromCloud(category);
+        category.isLocallyStored = saved;
+      }
+
+      categoriesInLocal.addAll(missingLocally);
     } catch (e) {
-      _logger.logObject(e, label: "Error en category Service");
+      _logger.error('CategoryService.getCategoriesByHost: Supabase falló: $e');
     }
     return categoriesInLocal;
   }

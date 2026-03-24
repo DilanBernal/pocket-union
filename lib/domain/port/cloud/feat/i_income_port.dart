@@ -4,4 +4,7 @@ import 'package:pocket_union/dto/new_income_dto.dart';
 abstract class IIncomePort {
   Future<String> createIncome(NewIncomeDto dto);
   Future<List<Income>> getAllIncomes();
+  Future<Income?> getIncomeById(String id);
+  Future<bool> updateIncome(String id, NewIncomeDto dto);
+  Future<bool> deleteIncome(String id);
 }

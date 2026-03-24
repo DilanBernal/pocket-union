@@ -1,5 +1,5 @@
 name: pocket_union
-version: 0.0.3
+version: 0.0.75
 
 environment:
   sdk: ^3.8.0
@@ -13,11 +13,12 @@ dependencies:
   supabase_flutter: ^2.0.0
   sqflite: ^2.3.0
   path: ^1.9.0
-  google_fonts: ^7.0.0
+  google_fonts: ^8.0.2
   shared_preferences: ^2.2.2
   intl: ^0.20.2
   flutter_dotenv: ^6.0.0
   flutter_riverpod: ^2.6.1
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -27,6 +28,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   mockito: ^5.4.4
   build_runner: ^2.4.7
+  mocktail: ^1.0.4
+  mock_supabase_http_client: ^0.0.3+2
 
 flutter:
 
@@ -36,6 +39,10 @@ flutter:
     - assets/img/celeste.png
     - .env
 
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app/favicon.png"
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

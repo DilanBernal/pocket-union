@@ -403,3 +403,5 @@ hs_err_pid*
 !/gradle/wrapper/gradle-wrapper.jar
 
 # End of https://www.toptal.com/developers/gitignore/api/flutter,dart,openframeworks+visualstudio,visualstudiocode,androidstudio,intellij+all
+# En caso que se quiera hacer en windows cambiar esta linea
+/windows/*

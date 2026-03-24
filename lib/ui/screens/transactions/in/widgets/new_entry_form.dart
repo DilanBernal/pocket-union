@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers/auth_service_provider.dart';
-import 'package:pocket_union/core/providers/data_cloud_providers.dart';
-import 'package:pocket_union/core/providers/data_local_providers.dart';
+import 'package:pocket_union/core/providers/service_provider.dart';
 import 'package:pocket_union/domain/models/category.dart';
+import 'package:pocket_union/domain/models/income.dart';
 import 'package:pocket_union/dto/new_income_dto.dart';
+import 'package:pocket_union/ui/screens/transactions/transaction_form_utils.dart';
+import 'package:pocket_union/ui/widgets/category_horizontal_list.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NewEntryForm extends ConsumerStatefulWidget {
   final List<Category> categories;
-  const NewEntryForm({super.key, required this.categories});
+  final Income? initialIncome;
+  final Future<bool> Function(NewIncomeDto dto)? onSubmit;
+  const NewEntryForm({
+    super.key,
+    required this.categories,
+    this.initialIncome,
+    this.onSubmit,
+  });
 
   @override
   ConsumerState<NewEntryForm> createState() => _NewEntryFormState();
@@ -21,9 +30,26 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  String? _selectedCategoryId;
+  List<String> _selectedCategoryIds = [];
   bool _isReceived = true; // YO por defecto
+  DateTime _transactionDate = DateTime.now();
   bool _isSubmitting = false;
+
+  bool get _isEditMode => widget.initialIncome != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialIncome;
+    if (initial != null) {
+      _nameController.text = initial.name;
+      _amountController.text = initial.amount.toStringAsFixed(2);
+      _descriptionController.text = initial.description ?? '';
+      _selectedCategoryIds = List<String>.from(initial.categoryIds);
+      _isReceived = initial.userRecipientId != null;
+      _transactionDate = initial.transactionDate;
+    }
+  }
 
   @override
   void dispose() {
@@ -45,8 +71,8 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
 
       final dto = NewIncomeDto(
         name: _nameController.text.trim(),
-        amount: double.parse(_amountController.text.trim()),
-        categoryId: _selectedCategoryId ?? '',
+        amount: TransactionFormUtils.parseAmount(_amountController.text),
+        categoryIds: _selectedCategoryIds,
         isRecurring: false,
         isReceived: _isReceived,
         description: _descriptionController.text.trim().isEmpty
@@ -55,15 +81,17 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
         coupleId: coupleId,
         // YO = userId, NOSOTROS = null
         userId: _isReceived ? userId : null,
+        transactionDate: _transactionDate,
       );
 
-      // Offline-first: intenta el service, fallback al DAO
-      try {
+      if (widget.onSubmit != null) {
+        final success = await widget.onSubmit!(dto);
+        if (!success) {
+          throw Exception('No se pudo actualizar el ingreso');
+        }
+      } else {
         final service = await ref.read(incomeServiceProvider.future);
         await service.createIncome(dto);
-      } catch (_) {
-        final dao = ref.read(incomeDaoProvider);
-        await dao.createIncome(dto);
       }
 
       ref.invalidate(allIncomesProvider);
@@ -71,20 +99,26 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingreso creado exitosamente'),
+        SnackBar(
+          content: Text(
+            _isEditMode
+                ? 'Ingreso actualizado exitosamente'
+                : 'Ingreso creado exitosamente',
+          ),
           backgroundColor: Colors.green,
         ),
       );
 
-      // Limpiar formulario
-      _nameController.clear();
-      _amountController.clear();
-      _descriptionController.clear();
-      setState(() {
-        _selectedCategoryId = null;
-        _isReceived = true;
-      });
+      if (!_isEditMode) {
+        _nameController.clear();
+        _amountController.clear();
+        _descriptionController.clear();
+        setState(() {
+          _selectedCategoryIds = [];
+          _isReceived = true;
+          _transactionDate = DateTime.now();
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -113,12 +147,7 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
                 hintText: 'Ej: Salario, Freelance, Regalo',
                 prefixIcon: Icon(Icons.label),
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'El nombre es requerido';
-                }
-                return null;
-              },
+              validator: TransactionFormUtils.validateName,
             ),
             const SizedBox(height: 16),
 
@@ -133,47 +162,45 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'El monto es requerido';
+              validator: TransactionFormUtils.validateAmount,
+            ),
+            const SizedBox(height: 16),
+
+            Text(
+              'Fecha del ingreso',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final picked = await TransactionFormUtils.pickTransactionDate(
+                  context,
+                  _transactionDate,
+                );
+                if (picked != null && mounted) {
+                  setState(() => _transactionDate = picked);
                 }
-                final parsed = double.tryParse(value.trim());
-                if (parsed == null || parsed <= 0) {
-                  return 'Ingresa un monto válido mayor a 0';
-                }
-                return null;
               },
+              icon: const Icon(Icons.calendar_today),
+              label: Text(TransactionFormUtils.formatDate(_transactionDate)),
             ),
             const SizedBox(height: 16),
 
             // --- Categoría ---
-            DropdownButtonFormField<String>(
-              value: _selectedCategoryId,
-              decoration: const InputDecoration(
-                labelText: 'Categoría',
-                prefixIcon: Icon(Icons.category),
-              ),
-              items: widget.categories.map((cat) {
-                return DropdownMenuItem<String>(
-                  value: cat.id,
-                  child: Text(cat.name),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() => _selectedCategoryId = value);
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Selecciona una categoría';
-                }
-                return null;
+            Text('Categorías', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            CategoryHorizontalList(
+              categories: widget.categories,
+              selectedIds: _selectedCategoryIds,
+              onChanged: (ids) {
+                setState(() => _selectedCategoryIds = ids);
               },
             ),
             const SizedBox(height: 16),
 
             // --- ¿Quién recibe? ---
             Text(
-              '¿Quién recibe el ingreso?',
+              '¿Ya se recibió el dinero? / ¿Quién lo recibe?',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
@@ -218,7 +245,13 @@ class _NewEntryFormState extends ConsumerState<NewEntryForm> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save),
-              label: Text(_isSubmitting ? 'Guardando...' : 'Registrar ingreso'),
+              label: Text(
+                _isSubmitting
+                    ? 'Guardando...'
+                    : _isEditMode
+                    ? 'Guardar cambios'
+                    : 'Registrar ingreso',
+              ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),

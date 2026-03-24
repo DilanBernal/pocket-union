@@ -40,4 +40,8 @@ abstract class CategoryLocalPort {
     SyncStatus status, {
     DateTime? lastSyncAt,
   });
+
+  /// Inserta una categoría proveniente del cloud en SQLite.
+  /// Usa REPLACE para manejar conflictos si ya existe.
+  Future<bool> upsertFromCloud(Category category);
 }

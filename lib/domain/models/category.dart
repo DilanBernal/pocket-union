@@ -14,6 +14,10 @@ class Category {
   DateTime? lastSyncAt;
   DateTime localUpdatedAt;
 
+  /// Transient — no se persiste en SQLite.
+  /// false cuando la categoría fue cargada del cloud y no está guardada localmente.
+  bool isLocallyStored;
+
   Category({
     required this.id,
     required this.coupleId,
@@ -25,6 +29,7 @@ class Category {
     required this.categoryHost,
     required this.syncStatus,
     this.lastSyncAt,
+    this.isLocallyStored = true,
     DateTime? localUpdatedAt,
   }) : localUpdatedAt = localUpdatedAt ?? DateTime.now();
 
@@ -46,22 +51,24 @@ class Category {
 
   factory Category.fromMap(Map<String, dynamic> map) {
     return Category(
-        id: map['id'],
-        coupleId: map['couple_id'],
-        name: map['name'],
-        icon: map['icon'],
-        shortDescription: map['short_description'],
-        color: map['color'],
-        createdAt: DateTime.parse(map['created_at']),
-        categoryHost: CategoryHost.fromString(map['category_host']),
-        syncStatus: SyncStatus.fromString(
-            (map['sync_status'] as String? ?? 'pending').toUpperCase()),
-        lastSyncAt: map['last_sync_at'] != null
-            ? DateTime.parse(map['last_sync_at'])
-            : null,
-        localUpdatedAt: map['local_updated_at'] != null
-            ? DateTime.parse(map['local_updated_at'])
-            : DateTime.now());
+      id: map['id'],
+      coupleId: map['couple_id'],
+      name: map['name'],
+      icon: map['icon'],
+      shortDescription: map['short_description'],
+      color: map['color'],
+      createdAt: DateTime.parse(map['created_at']),
+      categoryHost: CategoryHost.fromString(map['category_host']),
+      syncStatus: SyncStatus.fromString(
+        (map['sync_status'] as String? ?? 'pending').toUpperCase(),
+      ),
+      lastSyncAt: map['last_sync_at'] != null
+          ? DateTime.parse(map['last_sync_at'])
+          : null,
+      localUpdatedAt: map['local_updated_at'] != null
+          ? DateTime.parse(map['local_updated_at'])
+          : DateTime.now(),
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -79,15 +86,17 @@ class Category {
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
-        id: json['id'],
-        coupleId: json['couple_id'],
-        name: json['name'],
-        icon: json['icon'],
-        shortDescription: json['short_description'] ?? '',
-        color: json['color'],
-        createdAt: DateTime.parse(json['created_at']),
-        categoryHost: CategoryHost.fromString(json['category_host']),
-        syncStatus: SyncStatus.fromString(
-            (json['sync_status'] as String? ?? 'pending').toUpperCase()));
+      id: json['id'],
+      coupleId: json['couple_id'],
+      name: json['name'],
+      icon: json['icon'],
+      shortDescription: json['short_description'] ?? '',
+      color: json['color'],
+      createdAt: DateTime.parse(json['created_at']),
+      categoryHost: CategoryHost.fromString(json['category_host']),
+      syncStatus: SyncStatus.fromString(
+        (json['sync_status'] as String? ?? 'pending').toUpperCase(),
+      ),
+    );
   }
 }

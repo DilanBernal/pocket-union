@@ -7,7 +7,7 @@ import 'package:sqflite/sqflite.dart';
 /// Responsabilidad única: gestionar conexión y ciclo de vida de SQLite
 class DbSqlite {
   static const _dbName = "pocket_union.db";
-  static const _dbVersion = 1;
+  static const _dbVersion = 3;
 
   static final DbSqlite instance = DbSqlite._internal();
   DbSqlite._internal();
@@ -51,7 +51,7 @@ class DbSqlite {
     dev.log('Foreign keys habilitadas', name: 'DbSqlite');
   }
 
-  /// Crear schema inicial (v1)
+  /// Crear schema v2
   Future _onCreate(Database db, int version) async {
     dev.log('Creando schema v$version', name: 'DbSqlite');
 
@@ -93,7 +93,6 @@ class DbSqlite {
           color TEXT,
           created_at TEXT NOT NULL,
           category_host TEXT NOT NULL CHECK(category_host IN ('INCOME', 'EXPENSE')),
-          -- Campos de sincronización
           sync_status TEXT NOT NULL DEFAULT 'pending' CHECK(sync_status IN ('pending', 'synced', 'conflict')),
           last_sync_at TEXT,
           local_updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -102,12 +101,54 @@ class DbSqlite {
         )
       ''');
 
-      // Índices para queries frecuentes
+      await txn.execute(
+        'CREATE INDEX idx_category_couple_id ON category(couple_id)',
+      );
+      await txn.execute(
+        'CREATE INDEX idx_category_sync_status ON category(sync_status)',
+      );
+
+      // ========== TABLA: income ==========
       await txn.execute('''
-        CREATE INDEX idx_category_couple_id ON category(couple_id)
+        CREATE TABLE income (
+          id TEXT PRIMARY KEY,
+          couple_id TEXT,
+          amount INTEGER NOT NULL,
+          description TEXT,
+          transaction_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          is_received INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          name TEXT NOT NULL CHECK(length(name) < 100),
+          user_recipient_id TEXT NULL,
+          sync_status TEXT NOT NULL DEFAULT 'pending',
+          last_sync_at TEXT,
+          local_updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          is_deleted INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
+          FOREIGN KEY(user_recipient_id) REFERENCES profile(id) ON DELETE CASCADE
+        )
       ''');
+
+      // ========== TABLA: income_info ==========
       await txn.execute('''
-        CREATE INDEX idx_category_sync_status ON category(sync_status)
+        CREATE TABLE income_info (
+          income_id TEXT PRIMARY KEY,
+          is_recurring INTEGER NOT NULL DEFAULT 0,
+          is_received INTEGER NOT NULL DEFAULT 1,
+          received_in TEXT,
+          FOREIGN KEY(income_id) REFERENCES income(id) ON DELETE CASCADE
+        )
+      ''');
+
+      // ========== TABLA: income_category (N:N) ==========
+      await txn.execute('''
+        CREATE TABLE income_category (
+          income_id TEXT NOT NULL,
+          category_id TEXT NOT NULL,
+          PRIMARY KEY(income_id, category_id),
+          FOREIGN KEY(income_id) REFERENCES income(id) ON DELETE CASCADE,
+          FOREIGN KEY(category_id) REFERENCES category(id) ON DELETE CASCADE
+        )
       ''');
 
       // ========== TABLA: expense ==========
@@ -115,35 +156,49 @@ class DbSqlite {
         CREATE TABLE expense (
           id TEXT PRIMARY KEY,
           couple_id TEXT NOT NULL,
-          amount INTEGER NOT NULL,  -- En centavos
+          amount INTEGER NOT NULL,
           description TEXT,
-          category_id TEXT,
           transaction_date TEXT,
-          is_fixed INTEGER NOT NULL DEFAULT 0,
-          importance_level INTEGER NOT NULL DEFAULT 0 CHECK(importance_level >= 0 AND importance_level <= 5),
-          is_planed INTEGER NOT NULL DEFAULT 0,
           created_at TEXT NOT NULL,
           created_by TEXT NOT NULL,
           name TEXT NOT NULL CHECK(length(name) <= 50),
-          -- Campos de sincronización
           sync_status TEXT NOT NULL DEFAULT 'pending',
           last_sync_at TEXT,
           local_updated_at TEXT NOT NULL,
           is_deleted INTEGER NOT NULL DEFAULT 0,
+          is_paid INTEGER NOT NULL DEFAULT 0,
           FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
-          FOREIGN KEY(category_id) REFERENCES category(id) ON DELETE SET NULL,
           FOREIGN KEY(created_by) REFERENCES profile(id) ON DELETE CASCADE
         )
       ''');
 
+      await txn.execute(
+        'CREATE INDEX idx_expense_couple_id ON expense(couple_id)',
+      );
+      await txn.execute(
+        'CREATE INDEX idx_expense_transaction_date ON expense(transaction_date)',
+      );
+
+      // ========== TABLA: expense_info ==========
       await txn.execute('''
-        CREATE INDEX idx_expense_couple_id ON expense(couple_id)
+        CREATE TABLE expense_info (
+          id TEXT PRIMARY KEY,
+          is_fixed INTEGER NOT NULL DEFAULT 0,
+          is_planed INTEGER NOT NULL DEFAULT 0,
+          importance_level INTEGER NOT NULL DEFAULT 0 CHECK(importance_level >= 0 AND importance_level <= 5),
+          FOREIGN KEY(id) REFERENCES expense(id) ON DELETE CASCADE
+        )
       ''');
+
+      // ========== TABLA: expense_category (N:N) ==========
       await txn.execute('''
-        CREATE INDEX idx_expense_transaction_date ON expense(transaction_date)
-      ''');
-      await txn.execute('''
-        CREATE INDEX idx_expense_category_id ON expense(category_id)
+        CREATE TABLE expense_category (
+          expense_id TEXT NOT NULL,
+          category_id TEXT NOT NULL,
+          PRIMARY KEY(expense_id, category_id),
+          FOREIGN KEY(expense_id) REFERENCES expense(id) ON DELETE CASCADE,
+          FOREIGN KEY(category_id) REFERENCES category(id) ON DELETE CASCADE
+        )
       ''');
 
       // ========== TABLA: expense_share ==========
@@ -160,30 +215,35 @@ class DbSqlite {
         )
       ''');
 
-      // ========== TABLA: income ==========
+      // ========== TABLA: recurrent_income ==========
       await txn.execute('''
-        CREATE TABLE income (
+        CREATE TABLE recurrent_income (
           id TEXT PRIMARY KEY,
-          couple_id TEXT,
-          amount INTEGER NOT NULL,  -- En centavos
-          description TEXT,
-          category_id TEXT NOT NULL,
-          transaction_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          is_recurring INTEGER NOT NULL DEFAULT 0,
-          recurrence_interval TEXT,  -- JSON serializado
-          is_received INTEGER NOT NULL DEFAULT 1,
-          received_in TEXT,  -- JSON serializado
           created_at TEXT NOT NULL,
-          name TEXT NOT NULL CHECK(length(name) < 100),
-          user_recipient_id TEXT NULL,
-          -- Campos de sincronización
+          name TEXT NOT NULL DEFAULT '',
+          user_recipient_id TEXT,
+          couple_id TEXT NOT NULL,
+          amount INTEGER NOT NULL,
+          recurrent_info TEXT,
           sync_status TEXT NOT NULL DEFAULT 'pending',
-          last_sync_at TEXT,
-          local_updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          is_deleted INTEGER NOT NULL DEFAULT 0,
           FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
-          FOREIGN KEY(category_id) REFERENCES category(id) ON DELETE RESTRICT,
-          FOREIGN KEY(user_recipient_id) REFERENCES profile(id) ON DELETE CASCADE
+          FOREIGN KEY(user_recipient_id) REFERENCES profile(id) ON DELETE SET NULL
+        )
+      ''');
+
+      // ========== TABLA: recurrent_expense ==========
+      await txn.execute('''
+        CREATE TABLE recurrent_expense (
+          id TEXT PRIMARY KEY,
+          created_at TEXT NOT NULL,
+          name TEXT NOT NULL DEFAULT '',
+          created_by TEXT,
+          couple_id TEXT NOT NULL,
+          amount INTEGER NOT NULL,
+          recurrent_info TEXT,
+          sync_status TEXT NOT NULL DEFAULT 'pending',
+          FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
+          FOREIGN KEY(created_by) REFERENCES profile(id) ON DELETE SET NULL
         )
       ''');
 
@@ -194,8 +254,8 @@ class DbSqlite {
           created_at TEXT NOT NULL,
           couple_id TEXT NOT NULL,
           name TEXT NOT NULL,
-          target_amount INTEGER NOT NULL,  -- En centavos
-          current_amount INTEGER DEFAULT 0,  -- En centavos
+          target_amount INTEGER NOT NULL,
+          current_amount INTEGER DEFAULT 0,
           deadline TEXT,
           description TEXT,
           sync_status TEXT NOT NULL DEFAULT 'pending',
@@ -218,7 +278,7 @@ class DbSqlite {
         )
       ''');
 
-      dev.log('Schema creado exitosamente', name: 'DbSqlite');
+      dev.log('Schema v3 creado exitosamente', name: 'DbSqlite');
     });
   }
 
@@ -226,9 +286,201 @@ class DbSqlite {
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     dev.log('Migrando DB de v$oldVersion a v$newVersion', name: 'DbSqlite');
 
-    // Aquí irán las migraciones futuras
-    // if (oldVersion < 2) { await _migrateToV2(db); }
-    // if (oldVersion < 3) { await _migrateToV3(db); }
+    if (oldVersion < 2) {
+      await _migrateToV2(db);
+    }
+
+    if (oldVersion < 3) {
+      await _migrateToV3(db);
+    }
+  }
+
+  /// Migración v1 → v2: Split income/expense en tablas info + category (N:N)
+  Future _migrateToV2(Database db) async {
+    await db.transaction((txn) async {
+      // --- INCOME: crear tablas nuevas y migrar datos ---
+
+      await txn.execute('''
+        CREATE TABLE income_info (
+          income_id TEXT PRIMARY KEY,
+          is_recurring INTEGER NOT NULL DEFAULT 0,
+          is_received INTEGER NOT NULL DEFAULT 1,
+          received_in TEXT,
+          FOREIGN KEY(income_id) REFERENCES income(id) ON DELETE CASCADE
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE income_category (
+          income_id TEXT NOT NULL,
+          category_id TEXT NOT NULL,
+          PRIMARY KEY(income_id, category_id),
+          FOREIGN KEY(income_id) REFERENCES income(id) ON DELETE CASCADE,
+          FOREIGN KEY(category_id) REFERENCES category(id) ON DELETE CASCADE
+        )
+      ''');
+
+      // Migrar datos existentes a income_info
+      await txn.execute('''
+        INSERT INTO income_info (income_id, is_recurring, is_received, received_in)
+        SELECT id, is_recurring, is_received, received_in FROM income
+      ''');
+
+      // Migrar category_id existentes a income_category
+      await txn.execute('''
+        INSERT INTO income_category (income_id, category_id)
+        SELECT id, category_id FROM income WHERE category_id IS NOT NULL
+      ''');
+
+      // Recrear tabla income sin columnas movidas
+      await txn.execute('''
+        CREATE TABLE income_new (
+          id TEXT PRIMARY KEY,
+          couple_id TEXT,
+          amount INTEGER NOT NULL,
+          description TEXT,
+          transaction_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          is_received INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          name TEXT NOT NULL CHECK(length(name) < 100),
+          user_recipient_id TEXT NULL,
+          sync_status TEXT NOT NULL DEFAULT 'pending',
+          last_sync_at TEXT,
+          local_updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          is_deleted INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
+          FOREIGN KEY(user_recipient_id) REFERENCES profile(id) ON DELETE CASCADE
+        )
+      ''');
+
+      await txn.execute('''
+        INSERT INTO income_new (id, couple_id, amount, description, transaction_date,
+          is_received, created_at, name, user_recipient_id, sync_status,
+          last_sync_at, local_updated_at, is_deleted)
+        SELECT id, couple_id, amount, description, transaction_date,
+          is_received, created_at, name, user_recipient_id, sync_status,
+          last_sync_at, local_updated_at, is_deleted
+        FROM income
+      ''');
+
+      await txn.execute('DROP TABLE income');
+      await txn.execute('ALTER TABLE income_new RENAME TO income');
+
+      // --- EXPENSE: crear tablas nuevas y migrar datos ---
+
+      await txn.execute('''
+        CREATE TABLE expense_info (
+          id TEXT PRIMARY KEY,
+          is_fixed INTEGER NOT NULL DEFAULT 0,
+          is_planed INTEGER NOT NULL DEFAULT 0,
+          importance_level INTEGER NOT NULL DEFAULT 0 CHECK(importance_level >= 0 AND importance_level <= 5),
+          FOREIGN KEY(id) REFERENCES expense(id) ON DELETE CASCADE
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE expense_category (
+          expense_id TEXT NOT NULL,
+          category_id TEXT NOT NULL,
+          PRIMARY KEY(expense_id, category_id),
+          FOREIGN KEY(expense_id) REFERENCES expense(id) ON DELETE CASCADE,
+          FOREIGN KEY(category_id) REFERENCES category(id) ON DELETE CASCADE
+        )
+      ''');
+
+      // Migrar datos a expense_info
+      await txn.execute('''
+        INSERT INTO expense_info (id, is_fixed, is_planed, importance_level)
+        SELECT id, is_fixed, is_planed, importance_level FROM expense
+      ''');
+
+      // Migrar category_id a expense_category
+      await txn.execute('''
+        INSERT INTO expense_category (expense_id, category_id)
+        SELECT id, category_id FROM expense WHERE category_id IS NOT NULL
+      ''');
+
+      // Recrear expense sin columnas movidas
+      await txn.execute('''
+        CREATE TABLE expense_new (
+          id TEXT PRIMARY KEY,
+          couple_id TEXT NOT NULL,
+          amount INTEGER NOT NULL,
+          description TEXT,
+          transaction_date TEXT,
+          created_at TEXT NOT NULL,
+          created_by TEXT NOT NULL,
+          name TEXT NOT NULL CHECK(length(name) <= 50),
+          sync_status TEXT NOT NULL DEFAULT 'pending',
+          last_sync_at TEXT,
+          local_updated_at TEXT NOT NULL,
+          is_deleted INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
+          FOREIGN KEY(created_by) REFERENCES profile(id) ON DELETE CASCADE
+        )
+      ''');
+
+      await txn.execute('''
+        INSERT INTO expense_new (id, couple_id, amount, description, transaction_date,
+          created_at, created_by, name, sync_status, last_sync_at,
+          local_updated_at, is_deleted)
+        SELECT id, couple_id, amount, description, transaction_date,
+          created_at, created_by, name, sync_status, last_sync_at,
+          local_updated_at, is_deleted
+        FROM expense
+      ''');
+
+      await txn.execute('DROP TABLE expense');
+      await txn.execute('ALTER TABLE expense_new RENAME TO expense');
+
+      // Recrear índices de expense
+      await txn.execute(
+        'CREATE INDEX idx_expense_couple_id ON expense(couple_id)',
+      );
+      await txn.execute(
+        'CREATE INDEX idx_expense_transaction_date ON expense(transaction_date)',
+      );
+
+      // --- RECURRENT_INCOME ---
+      await txn.execute('''
+        CREATE TABLE recurrent_income (
+          id TEXT PRIMARY KEY,
+          created_at TEXT NOT NULL,
+          name TEXT NOT NULL DEFAULT '',
+          user_recipient_id TEXT,
+          couple_id TEXT NOT NULL,
+          amount INTEGER NOT NULL,
+          recurrent_info TEXT,
+          sync_status TEXT NOT NULL DEFAULT 'pending',
+          FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
+          FOREIGN KEY(user_recipient_id) REFERENCES profile(id) ON DELETE SET NULL
+        )
+      ''');
+
+      dev.log('Migración a v2 completada', name: 'DbSqlite');
+    });
+  }
+
+  /// Migración v2 → v3: agregar tabla recurrent_expense.
+  Future _migrateToV3(Database db) async {
+    await db.transaction((txn) async {
+      await txn.execute('''
+        CREATE TABLE IF NOT EXISTS recurrent_expense (
+          id TEXT PRIMARY KEY,
+          created_at TEXT NOT NULL,
+          name TEXT NOT NULL DEFAULT '',
+          created_by TEXT,
+          couple_id TEXT NOT NULL,
+          amount INTEGER NOT NULL,
+          recurrent_info TEXT,
+          sync_status TEXT NOT NULL DEFAULT 'pending',
+          FOREIGN KEY(couple_id) REFERENCES couple(id) ON DELETE CASCADE,
+          FOREIGN KEY(created_by) REFERENCES profile(id) ON DELETE SET NULL
+        )
+      ''');
+
+      dev.log('Migración a v3 completada', name: 'DbSqlite');
+    });
   }
 
   /// Cerrar conexión a la base de datos

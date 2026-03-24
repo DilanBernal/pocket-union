@@ -227,6 +227,14 @@ class MockCategoryLocalPort extends _i1.Mock implements _i3.CategoryLocalPort {
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
           as _i4.Future<void>);
+
+  @override
+  _i4.Future<bool> upsertFromCloud(_i7.Category? category) =>
+      (super.noSuchMethod(
+            Invocation.method(#upsertFromCloud, [category]),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
 }
 
 /// A class which mocks [SupabaseClient].
