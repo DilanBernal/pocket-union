@@ -27,6 +27,8 @@ void main() {
 }
 
 class MockLogger extends Mock implements LoggerPort {
+  int errorCount = 0;
+
   @override
   void debug(String message) {
     dev.log('DEBUG: $message');
@@ -34,6 +36,7 @@ class MockLogger extends Mock implements LoggerPort {
 
   @override
   void error(String message, {Object? error, StackTrace? stackTrace}) {
+    errorCount += 1;
     dev.log(message, error: error, stackTrace: stackTrace, level: 1000);
   }
 
@@ -254,6 +257,7 @@ void testCategoryFlow() {
       expect(id, isNotNull);
       expect(dao.storage.length, 1);
       expect(dao.storage[id]?.name, 'Food');
+      expect(logger.errorCount, 0);
     });
     test('crea categoria local a pesar de no sincronizar con cloud', () async {
       final dto = NewCategoryDto(
@@ -270,6 +274,7 @@ void testCategoryFlow() {
       expect(id, isNotNull);
       expect(dao.storage.length, 1);
       expect(dao.storage[id]?.name, 'Food');
+      expect(logger.errorCount, 0);
     });
   });
 
@@ -288,7 +293,10 @@ void testCategoryFlow() {
 
       expect(result.length, 2);
       expect(result.any((c) => c.id == '1'), true);
-      expect(result.any((c) => c.id != '1'), true);
+      expect(
+        result.any((c) => c.id != '1' && c.syncStatus == SyncStatus.synced),
+        true,
+      );
     });
   });
 
