@@ -167,11 +167,17 @@ flutter test e2e/transactions/
 flutter test integration_test/
 ```
 
-### CI: integration tests en Linux (solo workflow de integración)
+### CI: solo unit/widget tests
 
-En CI, los `integration_test/` se ejecutan con target Linux desktop (`-d linux`) y usando `xvfb` para entorno gráfico virtual.
+En CI (`.github/workflows/flutter-tests.yml`), el pipeline ejecuta únicamente:
 
-**Razón del cambio:** el flujo de integración necesita un dispositivo/plataforma explícita para inicializar correctamente el binding de integración en runners Linux, sin afectar el flujo principal de unit/widget tests ni el código de la app.
+```bash
+flutter test test/ --reporter expanded
+```
+
+Los `integration_test/` no se ejecutan en el pipeline principal para evitar dependencias de dispositivo/plataforma gráfica en runners.
+
+**Razón del cambio:** reducir flakiness y fallos de infraestructura en CI; mantener el flujo principal enfocado en pruebas unitarias/widget deterministas.
 
 ## Cobertura Actual
 
