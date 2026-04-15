@@ -104,7 +104,7 @@ class CoupleService implements ICouplePort {
     final couple = Couple.fromJson(updated);
 
     try {
-      Future.wait([
+      await Future.wait([
         _coupleDao.upsertCouple(couple),
         _sharedPreferences.setString('coupleId', couple.id),
       ]);
@@ -131,7 +131,13 @@ class CoupleService implements ICouplePort {
         final couple = Couple.fromJson(rows.first);
         try {
           await _coupleDao.upsertCouple(couple);
-        } catch (_) {}
+        } catch (e, st) {
+          _logger.error(
+            'CoupleService: Error guardando couple local desde fetch cloud',
+            error: e,
+            stackTrace: st,
+          );
+        }
         return couple;
       }
     } catch (e) {

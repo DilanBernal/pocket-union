@@ -83,3 +83,27 @@ Se agrego soporte completo para programar ingresos y gastos recurrentes con entr
 
 1. La UI inicial soporta solo periodicidad semanal/mensual para minimizar errores de entrada.
 2. Aun no se ejecuta el cron dentro de la app; esta capa prepara y persiste la expresion para ejecucion en backend.
+
+## 🧾 Cambios Importantes (Abril 2026) - Robustez en `CoupleService`
+
+### Cambio aplicado
+
+Se reforzo el flujo de union de pareja para evitar persistencias no garantizadas y errores silenciosos:
+
+1. En `joinCoupleByCode`, la persistencia local (`upsertCouple`) y el guardado de `coupleId` en `SharedPreferences` ahora se ejecutan con `await Future.wait(...)`.
+2. En `getCoupleByUserId`, se elimino el `catch (_) {}` al guardar en local y se reemplazo por logging de error con `stackTrace`.
+
+### Razon del cambio
+
+1. Sin `await`, el flujo podia retornar exito al usuario antes de terminar (o incluso fallar) la persistencia local.
+2. Los `catch` silenciosos ocultaban fallos de sincronizacion local, complicando trazabilidad y debugging.
+
+### Impacto tecnico
+
+1. El estado local de pareja queda consistente al finalizar `joinCoupleByCode`.
+2. Los errores de escritura local quedan observables en logs y no se silencian.
+3. Se reduce el riesgo de navegacion con estado parcial (`coupleId` ausente o desincronizado).
+
+### Tradeoffs
+
+1. `joinCoupleByCode` puede demorar marginalmente mas, porque espera la persistencia local antes de retornar.
