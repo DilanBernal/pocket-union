@@ -1,4 +1,3 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -6,16 +5,13 @@ import 'package:uuid/uuid.dart';
 const _e2eEmail = String.fromEnvironment('E2E_TEST_EMAIL');
 const _e2ePassword = String.fromEnvironment('E2E_TEST_PASSWORD');
 const _e2eCoupleId = String.fromEnvironment('E2E_TEST_COUPLE_ID');
+const _supabaseUrl = String.fromEnvironment('SUPABASE_API_URL');
+const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 const _hasCredentials = _e2eEmail != '' && _e2ePassword != '';
 
 Future<String> _bootstrapRealSession() async {
-  await dotenv.load(fileName: '.env', isOptional: false);
-
   if (!Supabase.instance.isInitialized) {
-    await Supabase.initialize(
-      url: dotenv.env['SUPABASE_API_URL']!,
-      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-    );
+    await Supabase.initialize(url: _supabaseUrl, anonKey: _supabaseAnonKey);
   }
 
   final response = await Supabase.instance.client.auth.signInWithPassword(

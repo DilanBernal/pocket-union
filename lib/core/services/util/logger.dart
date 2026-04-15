@@ -31,15 +31,7 @@ class LoggerService extends LoggerPort {
     if (error != null) {
       buffer.write(' | Cause: $error');
     }
-
-    developer.log(
-      buffer.toString(),
-      name: _tag,
-      level: LogLevel.error.value,
-      time: DateTime.now(),
-      error: error,
-      stackTrace: stackTrace ?? StackTrace.current,
-    );
+    _log(LogLevel.error, buffer.toString());
   }
 
   @override
@@ -54,13 +46,13 @@ class LoggerService extends LoggerPort {
   }
 
   void _log(LogLevel level, String message) {
-    if (kDebugMode) {
-      developer.log(
-        message,
-        name: _tag,
-        level: level.value,
-        time: DateTime.now(),
-      );
-    }
+    // if (kDebugMode) {
+    developer.log(
+      message,
+      name: _tag,
+      level: level.value,
+      time: DateTime.now(),
+    );
+    // }
   }
 }

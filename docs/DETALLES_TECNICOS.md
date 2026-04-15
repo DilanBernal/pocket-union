@@ -27,7 +27,7 @@ Utilizamos una jerarquía de Providers para desacoplar la lógica:
 ## 🔐 Seguridad y Precisión Financiera
 
 * **Cálculos:** Todos los montos se manejan en **centavos (enteros)** en la base de datos para evitar errores de redondeo de punto flotante de IEEE 754. La clase `intl` se encarga de la visualización.
-* **Sensibles:** Uso de `flutter_dotenv` para claves de API.
+* **Sensibles:** Uso de `String.fromEnvironment` para claves de API via `--dart-define`.
 * **IDs:** Implementación de `uuid` v4 para evitar colisiones entre registros locales y remotos.
 
 ## 🎨 Tematización

@@ -22,7 +22,7 @@ Estado: flutter_riverpod^2.6.1 como solución principal de state management
 
 UI/UX: google_fonts^7.0.0, cupertino_icons^1.0.8, intl^0.20.2 para formatos
 
-Utilidades: uuid^4.4.2 (IDs únicos), shared_preferences^2.2.2 (config), flutter_dotenv^6.0.0 (variables)
+Utilidades: uuid^4.4.2 (IDs únicos), shared_preferences^2.2.2 (config)
 
 Patrones: Repository, Service Locator, StateNotifier, Dependency Injection
 

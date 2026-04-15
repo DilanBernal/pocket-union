@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers/data_cloud_providers.dart';
+import 'package:pocket_union/core/providers/providers.dart';
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/ui/router.dart';
@@ -60,6 +61,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       setState(() {
         _isLoading = true;
       });
+      final logger = ref.read(loggerProvider);
       final authService = await ref.read(authServiceProvider.future);
       if (mounted) {
         var response = await authService.login(
@@ -129,16 +131,41 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         );
       }
     } catch (error) {
+      final logger = ref.read(loggerProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              "Ocurrió un error inesperado. Por favor intenta nuevamente.",
-            ),
-            backgroundColor: Colors.red.shade600,
-            duration: const Duration(seconds: 3),
-          ),
+        logger.error(
+          "Ocurrio un errro al intentar iniciar sesion",
+          error: error,
         );
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Error al registrarse"),
+              content: Text(error.toString().replaceAll('Exception: ', '')),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cerrar"),
+                ),
+              ],
+            );
+          },
+        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Row(
+        //       children: [
+        //         const Text(
+        //           'Ocurrió un error inesperado. Por favor intenta nuevamente.',
+        //         ),
+        //       ],
+        //     ),
+        //     backgroundColor: Colors.red.shade600,
+        //     duration: const Duration(seconds: 3),
+        //   ),
+        // );
       }
     } finally {
       if (mounted) {

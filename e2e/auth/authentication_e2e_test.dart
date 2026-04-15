@@ -1,4 +1,3 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -7,14 +6,18 @@ const _e2ePassword = String.fromEnvironment('E2E_TEST_PASSWORD');
 const _hasCredentials = _e2eEmail != '' && _e2ePassword != '';
 
 Future<void> _ensureSupabaseInitialized() async {
-  await dotenv.load(fileName: '.env', isOptional: false);
+  final url = const String.fromEnvironment('SUPABASE_URL').isNotEmpty
+      ? const String.fromEnvironment('SUPABASE_URL')
+      : 'http://10.0.2.2:54321';
+  final anonKey = const String.fromEnvironment('SUPABASE_ANON_KEY').isNotEmpty
+      ? const String.fromEnvironment('SUPABASE_ANON_KEY')
+      : 'yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
 
-  if (!Supabase.instance.isInitialized) {
-    await Supabase.initialize(
-      url: dotenv.env['SUPABASE_API_URL']!,
-      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-    );
+  if (url == null || url.isEmpty || anonKey == null || anonKey.isEmpty) {
+    throw Exception('Variables de entorno faltantes. ');
   }
+
+  await Supabase.initialize(url: url, anonKey: anonKey);
 }
 
 void testAuthenticationE2E() {

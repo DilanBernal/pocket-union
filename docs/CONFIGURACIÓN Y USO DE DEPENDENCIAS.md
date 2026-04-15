@@ -7,7 +7,7 @@ SQLite con SQFlite:
 * Implementar migraciones versionadas
 * Sincronización diferencial con Supabase
 Seguridad Financiera:
-* Usar flutter_dotenv para keys sensibles (NUNCA en el código)
+* Usar `String.fromEnvironment` con `--dart-define` para keys sensibles (NUNCA hardcodear)
 * uuid para identificadores únicos de transacciones
 * Validar cálculos financieros en el backend cuando sea posible
 Estado Local:

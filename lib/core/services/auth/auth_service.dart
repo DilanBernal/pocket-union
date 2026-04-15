@@ -93,8 +93,10 @@ class AuthService extends IAuthPort {
         _logger.info('AuthService: Datos de sesión guardados correctamente');
       }
       return loginRes;
-    } catch (error) {
+    }
+    catch (error) {
       _logger.error('AuthService: Error en login', error: error);
+      rethrow;
     }
     return AuthResponse();
   }

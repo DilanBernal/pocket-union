@@ -114,10 +114,10 @@ When implementing auth features:
 - **supabase_flutter ^2.0.0**: Auth & backend
 - **sqflite ^2.3.0**: Local SQLite
 - **shared_preferences ^2.2.2**: Persist app settings (e.g., `isFirstLaunch`)
-- **flutter_dotenv ^6.0.0**: Load `.env` for Supabase credentials
+- **String.fromEnvironment**: Load Supabase credentials via `--dart-define`
 
 ## Common Gotchas
-1. **Startup order**: `.env` loaded in `supabaseClientProvider` before `Supabase.initialize()`
+1. **Startup order**: `String.fromEnvironment` vars used directly in `supabaseClientProvider` before `Supabase.initialize()`
 2. **Mounted checks**: Always check `if (mounted)` before setState/Navigator in async operations
 3. **Form validation**: Use `AutovalidateMode.onUnfocus` for better UX
 4. **Navigation**: Use `pushReplacementNamed()` for auth transitions to prevent back button issues
