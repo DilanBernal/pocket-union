@@ -107,3 +107,133 @@ Se reforzo el flujo de union de pareja para evitar persistencias no garantizadas
 ### Tradeoffs
 
 1. `joinCoupleByCode` puede demorar marginalmente mas, porque espera la persistencia local antes de retornar.
+
+## 🧾 Cambios Importantes (Abril 2026) - Fundacion para Clean Architecture + SQLCipher
+
+### Cambio aplicado
+
+Se agrego la base transversal para la nueva arquitectura limpia sin romper el flujo actual:
+
+1. Nuevo `core/` con componentes comunes:
+   - `core/error` (`failures.dart`, `exceptions.dart`)
+   - `core/network/connectivity_service.dart`
+   - `core/sync` (`sync_service.dart`, `sync_service_impl.dart`, `sync_status.dart`)
+   - `core/cache/cache_service.dart`
+   - `core/logger/app_logger.dart`
+   - `core/database/db_helper.dart` con SQLCipher y clave en `flutter_secure_storage`
+2. Nuevo espacio de providers en `lib/providers/`:
+   - `di_providers.dart`
+   - `utility_providers.dart`
+   - `cache_providers.dart`
+3. Dependencias nuevas en `pubspec.yaml`: `sqflite_sqlcipher`, `flutter_secure_storage`, `connectivity_plus`, `logger`.
+
+### Razon del cambio
+
+1. El proyecto mezclaba infraestructura, negocio y UI en varios puntos, dificultando migrar a `presentation -> application -> domain <- data`.
+2. La DB local estaba en texto plano (`sqflite`) y se necesitaba preparar cifrado local con SQLCipher.
+3. Se requeria una base reusable para sincronizacion asincrona y cache TTL antes de migrar features una por una.
+
+### Impacto tecnico
+
+1. Se habilita una ruta de migracion incremental sin apagar los servicios/DAOs actuales.
+2. La nueva DB cifrada se abre con una clave persistida en almacenamiento seguro del dispositivo.
+3. Queda disponible un `SyncService` generico para encolar push no bloqueante y drenar pendientes al reconectar.
+
+### Tradeoffs
+
+1. Durante la migracion conviviran providers legacy (`lib/core/providers`) y nuevos (`lib/providers`) por un tiempo.
+2. En esta fase la app aun no consume todas las piezas nuevas; la adopcion sera vertical por feature.
+
+## 🧾 Cambios Importantes (Abril 2026) - Primer vertical slice nuevo (Auth + Category)
+
+### Cambio aplicado
+
+1. Se incorporo `data/dtos/auth/app_user_dto.dart` y `data/dtos/reference/category_dto.dart`.
+2. Se crearon datasources nuevos:
+   - `data/datasources/local/auth/auth_local_datasource_impl.dart`
+   - `data/datasources/remote/auth/auth_remote_datasource_impl.dart`
+   - `data/datasources/local/reference/category_local_datasource_impl.dart`
+   - `data/datasources/remote/reference/category_remote_datasource_impl.dart`
+3. Se agregaron repositorios nuevos:
+   - `data/repositories/auth/auth_repository_impl.dart`
+   - `data/repositories/reference/category_repository_impl.dart`
+4. Se agrego capa `application` inicial:
+   - `application/auth/auth_notifier.dart` + `auth_state.dart`
+   - `application/reference/category_notifier.dart` + `category_state.dart`
+5. Se completo la primera separacion de providers por responsabilidad (`di`, `local`, `remote`, `auth`, `reference`, `cache`, `utility`).
+
+### Razon del cambio
+
+1. Probar la viabilidad de la migracion con un corte vertical antes de mover el resto de features.
+2. Establecer patron repetible: `domain contracts -> data impl -> providers -> application notifier`.
+3. Consolidar offline-first de categorias con cola de sincronizacion no bloqueante.
+
+### Impacto tecnico
+
+1. Ya existe una ruta nueva para autenticar y observar usuario desde repositorio abstracto.
+2. Categorias puede operar con fuente local y sincronizacion programada sin bloquear UI.
+3. Queda habilitada la extension progresiva a transacciones, goals y recurrentes usando el mismo patron.
+
+## 🧾 Cambios Importantes (Abril 2026) - Slice de transacciones (Revenue/Payment)
+
+### Cambio aplicado
+
+1. Se agregaron DTOs y datasources nuevos para transacciones:
+   - `data/dtos/transaction/{revenue_dto,payment_dto}.dart`
+   - `data/datasources/local/transaction/*`
+   - `data/datasources/remote/transaction/*`
+2. Se agregaron repositorios:
+   - `data/repositories/transaction/revenue_repository_impl.dart`
+   - `data/repositories/transaction/payment_repository_impl.dart`
+3. Se agrego `application/transaction` con `AsyncNotifier` y estados para revenue/payment.
+4. Se agrego `providers/transaction_providers.dart` para ensamblar repositorios y notifiers.
+
+### Razon del cambio
+
+1. Cubrir el flujo financiero principal con nomenclatura del dominio objetivo (`revenue/payment`) sin romper tablas existentes (`income/expense`).
+2. Mantener UI responsive bajo estrategia offline-first y sincronizacion asincrona.
+
+### Tradeoffs
+
+1. En esta fase, los nuevos slices conviven con servicios legacy que aun usa la UI actual.
+2. La unificacion completa de tablas y naming en backend se deja para el paso de limpieza final.
+
+## 🧾 Cambios Importantes (Abril 2026) - Primer desacople de UI hacia Application
+
+### Cambio aplicado
+
+1. `ui/screens/auth/widgets/login_form.dart` ahora dispara login via `authNotifierProvider` (capa `application`) en vez de invocar directamente `AuthService`.
+
+### Razon del cambio
+
+1. Empezar la migracion real de `presentation -> application`, reduciendo acoplamiento de widgets con servicios concretos.
+2. Preparar el arbol `presentation/` sin romper rutas existentes mediante wrappers/exports transitorios.
+
+## 🧾 Cambios Importantes (Abril 2026) - Limpieza total legacy (modo desarrollo)
+
+### Cambio aplicado
+
+Se removieron por completo las capas legacy:
+
+1. `lib/ui/`
+2. `lib/Dao/`
+3. `lib/core/providers/`
+4. `lib/core/services/`
+5. `lib/domain/models/`
+6. `lib/domain/port/`
+7. `lib/dto/`
+
+Adicionalmente:
+
+1. `presentation/` dejó de ser wrapper y pasó a tener implementaciones reales (router/theme/screens/widgets base).
+2. Los datasources locales migraron a `core/database/db_helper.dart` (SQLCipher) sin dependencia de `DbSqlite` legado.
+3. La suite de tests legacy fue reemplazada por pruebas unitarias alineadas a la arquitectura nueva.
+
+### Razon del cambio
+
+1. El proyecto aún no está publicado, por lo que era seguro ejecutar cleanup agresivo para reducir deuda técnica.
+2. Mantener coexistencia legacy/nueva estaba introduciendo errores de compilación y ambigüedad de dependencias.
+
+### Tradeoffs
+
+1. Algunas pantallas avanzadas quedaron temporalmente como placeholders en `presentation/router.dart` mientras se remigran por feature.
