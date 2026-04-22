@@ -20,7 +20,7 @@ class _FakeAuthPort implements IAuthPort {
       AuthResponse();
 
   @override
-  Future<void> logout(String email) async {}
+  Future<void> logout() async {}
 }
 
 void main() {

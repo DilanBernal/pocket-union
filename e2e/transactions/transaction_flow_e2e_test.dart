@@ -33,7 +33,7 @@ Future<String> _bootstrapRealSession() async {
         .limit(1);
 
     if (couples is List && couples.isNotEmpty) {
-      final first = couples.first as Map<String, dynamic>;
+      final first = couples.first;
       coupleId = (first['id'] as String?) ?? '';
     }
   }

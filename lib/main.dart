@@ -8,26 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-
   GoogleFonts.config.allowRuntimeFetching = false;
 
-  // Obtener SharedPreferences para determinar la ruta inicial
-  final prefs = await SharedPreferences.getInstance();
-  final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
-  final isInSession = prefs.getBool('isInSession') ?? false;
-  final coupleId = prefs.getString('coupleId');
-  final hasCoupleReady = coupleId != null && coupleId.isNotEmpty;
-
-  String initialRoute;
-  if (isFirstLaunch) {
-    initialRoute = AppRoutes.start;
-  } else if (!isInSession) {
-    initialRoute = AppRoutes.login;
-  } else if (!hasCoupleReady) {
-    initialRoute = AppRoutes.coupleSetup;
-  } else {
-    initialRoute = AppRoutes.home;
-  }
+  final initialRoute = await _initVariables();
 
   runApp(
     ProviderScope(
@@ -55,4 +38,25 @@ class PocketUnionApp extends StatelessWidget {
       routes: AppRoutes.routes,
     );
   }
+}
+
+Future<String> _initVariables() async {
+  // Obtener SharedPreferences para determinar la ruta inicial
+  final prefs = await SharedPreferences.getInstance();
+  final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
+  final isInSession = prefs.getBool('isInSession') ?? false;
+  final coupleId = prefs.getString('coupleId');
+  final hasCoupleReady = coupleId != null && coupleId.isNotEmpty;
+
+  String initialRoute;
+  if (isFirstLaunch) {
+    initialRoute = AppRoutes.start;
+  } else if (!isInSession) {
+    initialRoute = AppRoutes.login;
+  } else if (!hasCoupleReady) {
+    initialRoute = AppRoutes.coupleSetup;
+  } else {
+    initialRoute = AppRoutes.home;
+  }
+  return initialRoute;
 }

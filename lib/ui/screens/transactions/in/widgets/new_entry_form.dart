@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/core/providers/service_provider.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/domain/models/income.dart';
@@ -8,6 +7,8 @@ import 'package:pocket_union/dto/new_income_dto.dart';
 import 'package:pocket_union/ui/screens/transactions/transaction_form_utils.dart';
 import 'package:pocket_union/ui/widgets/category_horizontal_list.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../../core/providers/providers.dart';
 
 class NewEntryForm extends ConsumerStatefulWidget {
   final List<Category> categories;

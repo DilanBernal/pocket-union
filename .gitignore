@@ -682,3 +682,6 @@ hs_err_pid*
 # End of https://www.toptal.com/developers/gitignore/api/dart,flutter,intellij+all,androidstudio,visualstudiocode,openframeworks+visualstudio,intellij,intellij+iml,android,swift,swiftpackagemanager,swiftpm,xcode,xcodeinjection
 # En caso que se quiera hacer en windows cambiar esta linea
 /windows/*
+# Estas lineas son para manejar los envs desde un json
+env.**.json
+!env.local.json

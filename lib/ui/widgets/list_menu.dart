@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/auth_service_provider.dart';
-import 'package:pocket_union/core/providers/data_cloud_providers.dart';
+import 'package:pocket_union/core/providers/di/auth/auth_service_provider.dart';
 import 'package:pocket_union/ui/router.dart';
+
+import '../../core/providers/di/auth/current_user_local.dart';
 
 class ListMenu extends ConsumerStatefulWidget {
   const ListMenu({super.key});
@@ -23,7 +24,7 @@ class _ListMenuState extends ConsumerState<ListMenu> {
 
     try {
       final authService = await ref.read(authServiceProvider.future);
-      await authService.logout("");
+      await authService.logout();
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

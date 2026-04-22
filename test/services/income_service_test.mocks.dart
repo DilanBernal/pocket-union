@@ -120,6 +120,14 @@ class MockIncomeLocalPort extends _i1.Mock implements _i3.IncomeLocalPort {
           as _i4.Future<List<_i7.Income>>);
 
   @override
+  _i4.Future<bool> upsertFromCloud(_i7.Income? income) =>
+      (super.noSuchMethod(
+            Invocation.method(#upsertFromCloud, [income]),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
+
+  @override
   _i4.Future<List<_i7.Income>> getByFilter(_i8.IncomeFilterDto? filter) =>
       (super.noSuchMethod(
             Invocation.method(#getByFilter, [filter]),

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/core/providers/service_provider.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/ui/screens/transactions/in/income_detail_screen.dart';
 import 'package:pocket_union/ui/screens/transactions/in/widgets/income_item.dart';
+
+import '../../../../core/providers/providers.dart';
 
 class HistoryIncomeScreen extends ConsumerWidget {
   const HistoryIncomeScreen({super.key});

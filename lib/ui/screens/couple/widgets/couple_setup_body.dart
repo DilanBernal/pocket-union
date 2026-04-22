@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/core/providers/data_cloud_providers.dart';
+import 'package:pocket_union/core/providers/di/auth/current_couple_provider.dart';
 import 'package:pocket_union/core/services/auth/couple_service.dart';
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/ui/router.dart';
@@ -93,7 +93,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
       await prefs.setString('coupleId', couple.id);
       await prefs.setBool('isInSession', true);
 
-      ref.invalidate(currentCoupleProvider);
+      ref.invalidate(currentCoupleNotifier);
 
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.home);
@@ -120,7 +120,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
         await prefs.setString('coupleId', couple.id);
         await prefs.setBool('isInSession', true);
 
-        ref.invalidate(currentCoupleProvider);
+        ref.invalidate(currentCoupleNotifier);
 
         if (!mounted) return;
         Navigator.pushReplacementNamed(context, AppRoutes.home);

@@ -20,7 +20,7 @@ class Header extends StatelessWidget {
       ],
       textWidget: Text(
         'Pocket Union',
-        style: GoogleFonts.sixtyfour().copyWith(
+          style: GoogleFonts.sixtyfour().copyWith(
           fontSize: 30,
           shadows: _shadows,
           fontWeight: FontWeight.bold,

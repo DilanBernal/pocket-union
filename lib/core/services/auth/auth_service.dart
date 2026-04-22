@@ -8,15 +8,19 @@ import 'package:pocket_union/dto/register_dto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../domain/port/cloud/auth/i_couple_port.dart';
+
 class AuthService extends IAuthPort {
   final SupabaseClient _supabaseClient;
   final UserLocalPort _userDaoPort;
+  final ICouplePort _coupleServicePort;
   final SharedPreferences _sharedPreferences;
   final LoggerPort _logger;
 
   AuthService(
     this._supabaseClient,
     this._userDaoPort,
+    this._coupleServicePort,
     this._sharedPreferences,
     this._logger,
   );
@@ -24,27 +28,27 @@ class AuthService extends IAuthPort {
   @override
   Future<AuthResponse> login(LoginDto loginRequest) async {
     try {
-      await _sharedPreferences.setBool("isFirstLaunch", false);
+      await _sharedPreferences.setBool('isFirstLaunch', false);
       final loginRes = await _supabaseClient.auth.signInWithPassword(
         email: loginRequest.email,
         password: loginRequest.password,
       );
       if (loginRes.user?.id == null) {
-        throw Exception("No trae el id del usuario");
+        throw Exception('No trae el id del usuario');
       }
       DomainUser userProfile = DomainUser.fromMap(
         await _supabaseClient
-            .from("profile")
-            .select("id, full_name, user_balance, last_sync")
+            .from('profile')
+            .select('id, full_name, user_balance, last_sync')
             .filter('id', 'eq', loginRes.user!.id)
             .single(),
       );
       userProfile.inCloud = true;
       var response = await Future.wait([
-        _sharedPreferences.setBool("isInSession", true),
-        _sharedPreferences.setString("idUser", loginRes.user!.id),
+        _sharedPreferences.setBool('isInSession', true),
+        _sharedPreferences.setString('idUser', loginRes.user!.id),
         _userDaoPort.upsertUser(userProfile),
-        _sharedPreferences.setString("userProfile", userProfile.toString()),
+        _sharedPreferences.setString('userProfile', userProfile.toString()),
       ]);
       _logger.info('AuthService: Login exitoso para ${loginRes.user!.id}');
 
@@ -79,7 +83,7 @@ class AuthService extends IAuthPort {
             await Future.wait([
               _userDaoPort.upsertUser(coupleProfile),
               _sharedPreferences.setString(
-                "coupleProfile",
+                'coupleProfile',
                 coupleProfile.toString(),
               ),
             ]);
@@ -98,7 +102,6 @@ class AuthService extends IAuthPort {
       _logger.error('AuthService: Error en login', error: error);
       rethrow;
     }
-    return AuthResponse();
   }
 
   @override
@@ -123,7 +126,7 @@ class AuthService extends IAuthPort {
         );
 
         var resultados = await Future.wait([
-          _sharedPreferences.setBool("isFirstLaunch", false),
+          _sharedPreferences.setBool('isFirstLaunch', false),
           _userDaoPort.upsertUser(domainUser),
         ]);
         if (resultados.isNotEmpty) {
@@ -142,13 +145,15 @@ class AuthService extends IAuthPort {
   }
 
   @override
-  Future<void> logout(String email) async {
+  Future<void> logout() async {
     try {
       await _supabaseClient.auth.signOut();
-      _logger.info('AuthService: Usuario deslogueado de Supabase');
+      _logger.info('AuthService: Usuario des logueado de Supabase');
 
+      final coupleId = _sharedPreferences.getString('coupleId');
       var resultados = await Future.wait([
         _userDaoPort.deleteAllUsers(),
+        _coupleServicePort.deleteCouple(coupleId!),
         _sharedPreferences.setBool('isFirstLaunch', true),
         _sharedPreferences.setBool('isInSession', false),
         _sharedPreferences.remove('coupleId'),

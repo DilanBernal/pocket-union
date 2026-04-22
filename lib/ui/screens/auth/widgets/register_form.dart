@@ -1,11 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/data_cloud_providers.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
+
+import '../../../../core/providers/di/auth/auth_service_provider.dart';
 
 class RegisterForm extends ConsumerStatefulWidget {
   const RegisterForm({

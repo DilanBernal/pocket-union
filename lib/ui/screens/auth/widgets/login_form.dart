@@ -12,6 +12,8 @@ import 'package:pocket_union/ui/widgets/form_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/providers/di/auth/current_user_local.dart';
+
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({
     super.key,
@@ -48,7 +50,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Por favor, corrige los errores en el formulario."),
+          content: Text('Por favor, corrige los errores en el formulario.'),
           backgroundColor: Colors.green.shade600,
           duration: const Duration(seconds: 3),
         ),
@@ -61,16 +63,13 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       setState(() {
         _isLoading = true;
       });
-      final logger = ref.read(loggerProvider);
       final authService = await ref.read(authServiceProvider.future);
       if (mounted) {
         var response = await authService.login(
           LoginDto(email: _email, password: _password),
         );
-
-        // Mostrar notificación de bienvenida
         if (mounted && response.session != null) {
-          // Check couple status to decide where to navigate
+          await ref.read(currentUserProvider.notifier).refresh();
           final prefs = await SharedPreferences.getInstance();
           final coupleId = prefs.getString('coupleId');
 
@@ -124,7 +123,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Error: ${error.message}"),
+            content: Text('Error: ${error.message}'),
             backgroundColor: Colors.red.shade600,
             duration: const Duration(seconds: 3),
           ),
@@ -134,7 +133,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       final logger = ref.read(loggerProvider);
       if (mounted) {
         logger.error(
-          "Ocurrio un errro al intentar iniciar sesion",
+          'Ocurrió un error al intentar iniciar sesión',
           error: error,
         );
 
@@ -142,12 +141,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text("Error al registrarse"),
+              title: const Text('Error al registrarse'),
               content: Text(error.toString().replaceAll('Exception: ', '')),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Cerrar"),
+                  child: const Text('Cerrar'),
                 ),
               ],
             );
@@ -168,15 +167,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         // );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -195,7 +188,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 FormTitle(
-                  title: "Inicia sesión",
+                  title: 'Inicia sesión',
                   shadowColor: Colors.green,
                   textColor: Colors.white,
                   gradientColors: [
@@ -208,13 +201,13 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                   colorEnabledBorderInput: colorEnabledBorderInput,
                   icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
-                  fieldLabel: "Email",
+                  fieldLabel: 'Email',
                   onSaved: (newEmail) {
                     _email = newEmail ?? '';
                   },
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Por favor, ingresa tu email.";
+                      return 'Por favor, ingresa tu email.';
                     }
                     if (!value.contains('@')) {
                       return 'Por favor, ingresa un email válido.';
@@ -227,16 +220,16 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                   colorEnabledBorderInput: colorEnabledBorderInput,
                   keyboardType: TextInputType.text,
                   icon: Icons.key,
-                  fieldLabel: "Contraseña",
+                  fieldLabel: 'Contraseña',
                   onSaved: (newPassword) {
                     _password = newPassword ?? '';
                   },
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Por favor, ingresa tu contraseña.";
+                      return 'Por favor, ingresa tu contraseña.';
                     }
                     if (value.length != value.trim().length) {
-                      return "La contraseña no puede tener espacios al inicio o al final.";
+                      return 'La contraseña no puede tener espacios al inicio o al final.';
                     }
                     return null;
                   },
@@ -263,7 +256,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                         child: InkWell(
                           splashColor: Colors.blue,
                           onTap: _handleSignin,
-                          child: Center(child: Text("ACCEDER")),
+                          child: Center(child: Text('ACCEDER')),
                         ),
                       ),
                     ),
@@ -279,11 +272,11 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                           AppRoutes.login,
                         );
                       },
-                    text: "¿Aun no tienes una cuenta?\n",
+                    text: '¿Aun no tienes una cuenta?\n',
                     style: TextStyle(),
                     children: [
                       TextSpan(
-                        text: "¡Registrate!",
+                        text: '¡Registrate!',
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
                             Navigator.pushReplacementNamed(

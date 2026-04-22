@@ -1,25 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/providers/data_local_providers.dart';
 import 'package:pocket_union/core/providers/utils_providers.dart';
-import 'package:pocket_union/core/services/auth/auth_service.dart';
 import 'package:pocket_union/core/services/auth/couple_service.dart';
 import 'package:pocket_union/core/services/features/category_service.dart';
 import 'package:pocket_union/core/services/features/goal_contribution_service.dart';
 import 'package:pocket_union/core/services/features/goal_service.dart';
-import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/domain/port/cloud/auth/i_couple_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_category_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_goal_contribution_port.dart';
 import 'package:pocket_union/domain/port/cloud/feat/i_goal_port.dart';
-
-// Auth services
-final authServiceProvider = FutureProvider<IAuthPort>((ref) async {
-  final supabaseClient = await ref.watch(supabaseClientProvider.future);
-  final userSqlite = ref.watch(userDaoProvider);
-  final prefs = await ref.watch(sharedPreferencesProvider.future);
-  final logger = ref.watch(loggerProvider);
-  return AuthService(supabaseClient, userSqlite, prefs, logger);
-});
 
 final coupleServiceProvider = FutureProvider<ICouplePort>((ref) async {
   final supabaseClient = await ref.watch(supabaseClientProvider.future);

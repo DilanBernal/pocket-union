@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pocket_union/core/services/auth/auth_service.dart';
+import 'package:pocket_union/domain/port/cloud/auth/i_couple_port.dart';
 import 'package:pocket_union/domain/port/local/user_port_local.dart';
 import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
@@ -11,13 +12,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_service_test.mocks.dart';
 
-@GenerateMocks([SupabaseClient, GoTrueClient, UserLocalPort, LoggerPort])
+@GenerateMocks([SupabaseClient, GoTrueClient, UserLocalPort, LoggerPort, ICouplePort])
 void main() {
   late AuthService authService;
   late MockSupabaseClient mockSupabaseClient;
   late MockGoTrueClient mockGoTrueClient;
   late MockUserLocalPort mockUserPort;
   late MockLoggerPort mockLogger;
+  late MockICouplePort mockCouplePort;
   late SharedPreferences sharedPreferences;
 
   setUp(() async {
@@ -25,12 +27,14 @@ void main() {
     sharedPreferences = await SharedPreferences.getInstance();
     mockSupabaseClient = MockSupabaseClient();
     mockGoTrueClient = MockGoTrueClient();
+    mockCouplePort = MockICouplePort();
     mockUserPort = MockUserLocalPort();
     mockLogger = MockLoggerPort();
     when(mockSupabaseClient.auth).thenReturn(mockGoTrueClient);
     authService = AuthService(
       mockSupabaseClient,
       mockUserPort,
+      mockCouplePort,
       sharedPreferences,
       mockLogger,
     );
@@ -158,7 +162,7 @@ void main() {
         when(mockGoTrueClient.signOut()).thenAnswer((_) async {});
         when(mockUserPort.deleteAllUsers()).thenAnswer((_) async => true);
 
-        await authService.logout('test@test.com');
+        await authService.logout();
 
         verify(mockGoTrueClient.signOut()).called(1);
         verify(mockUserPort.deleteAllUsers()).called(1);
@@ -174,7 +178,7 @@ void main() {
           mockGoTrueClient.signOut(),
         ).thenThrow(Exception('Network error during sign out'));
 
-        expect(() => authService.logout('test@test.com'), throwsException);
+        expect(() => authService.logout(), throwsException);
         verifyNever(mockUserPort.deleteAllUsers());
       },
     );

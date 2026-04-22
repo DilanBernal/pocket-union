@@ -1,18 +1,25 @@
+import 'dart:convert';
 import 'dart:developer' as dev;
+import 'dart:math';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_sqlcipher/sqflite.dart';
 
 /// Database manager siguiendo patrón Singleton
 /// Responsabilidad única: gestionar conexión y ciclo de vida de SQLite
 class DbSqlite {
-  static const _dbName = "pocket_union.db";
+  static const _dbName = 'pocket_union.db';
   static const _dbVersion = 3;
+
+  static const _encryptionKeyAlias = 'db_encryption_key';
 
   static final DbSqlite instance = DbSqlite._internal();
   DbSqlite._internal();
 
   Database? _db;
+  static const _secureStorage = FlutterSecureStorage();
+
 
   /// Getter lazy para la base de datos
   Future<Database> get database async {
@@ -27,15 +34,21 @@ class DbSqlite {
       final dbPath = await getDatabasesPath();
       final path = join(dbPath, _dbName);
 
+      final encryptionKey = await _getEncryptionKey();
+
       dev.log('Inicializando DB en: $path', name: 'DbSqlite');
 
       final db = await openDatabase(
         path,
+        password: encryptionKey,
         version: _dbVersion,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onConfigure: _onConfigure,
+        singleInstance: true,
       );
+
+      await _verifyEncryption(db);
 
       return db;
     } catch (e) {
@@ -43,11 +56,53 @@ class DbSqlite {
       rethrow;
     }
   }
+  Future<void> _verifyEncryption(Database db) async {
+    try {
+      final result = await db.rawQuery('PRAGMA cipher_version;');
+      dev.log('✅ SQLCipher versión: ${result.first.values.first}', name: 'DbSqlite');
+
+      // Verificar configuración de encriptación
+      final cipherSettings = await db.rawQuery('PRAGMA cipher_default_kdf_iter;');
+      dev.log('🔒 KDF iterations: ${cipherSettings.first.values.first}', name: 'DbSqlite');
+    } catch (e) {
+      dev.log('⚠️ No se pudo verificar encriptación: $e', name: 'DbSqlite');
+    }
+  }
+
+  // 🔐 Obtiene o genera la clave de encriptación
+  static Future<String> _getEncryptionKey() async {
+    String? key = await _secureStorage.read(key: _encryptionKeyAlias);
+
+    if (key == null) {
+      // Genera una clave aleatoria segura de 32 bytes (AES-256)
+      key = _generateSecureKey();
+      await _secureStorage.write(key: _encryptionKeyAlias, value: key);
+      dev.log('🔐 Nueva clave de encriptación generada y almacenada', name: 'DbSqlite');
+    }
+
+    return key;
+  }
+  static String _generateSecureKey() {
+    final random = Random.secure();
+    final values = List<int>.generate(32, (i) => random.nextInt(256));
+    return base64Url.encode(values);
+  }
 
   /// Configuración antes de abrir la DB
   Future _onConfigure(Database db) async {
     // Habilitar foreign keys
     await db.execute('PRAGMA foreign_keys = ON');
+    // 🔐 Configuraciones específicas de SQLCipher para máxima seguridad
+    await db.execute('PRAGMA cipher_page_size = 4096;'); // Tamaño de página encriptada
+    await db.execute('PRAGMA kdf_iter = 256000;'); // PBKDF2 iterations
+    await db.execute('PRAGMA cipher_hmac_algorithm = HMAC_SHA512;'); // Algoritmo HMAC
+    await db.execute('PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512;'); // Algoritmo KDF
+
+    // Optimizaciones de rendimiento
+    await db.execute('PRAGMA journal_mode = WAL;'); // Write-Ahead Logging
+    await db.execute('PRAGMA synchronous = NORMAL;'); // Balance seguridad/rendimiento
+    await db.execute('PRAGMA cache_size = -64000;'); // 64MB cache
+
     dev.log('Foreign keys habilitadas', name: 'DbSqlite');
   }
 

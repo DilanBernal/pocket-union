@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/ui/screens/transactions/exp/widgets/new_expense_form.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
+
+import '../../../../core/providers/providers.dart';
 
 class NewOutScreen extends ConsumerWidget {
   const NewOutScreen({super.key});

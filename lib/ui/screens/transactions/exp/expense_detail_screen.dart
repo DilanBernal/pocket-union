@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/core/providers/service_provider.dart';
 import 'package:pocket_union/dto/new_expense_dto.dart';
 import 'package:pocket_union/ui/screens/transactions/exp/widgets/new_expense_form.dart';
+
+import '../../../../core/providers/providers.dart';
 
 class ExpenseDetailScreen extends ConsumerWidget {
   const ExpenseDetailScreen({super.key, required this.expenseId});

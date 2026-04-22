@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/providers/auth_service_provider.dart';
 import 'package:pocket_union/core/providers/service_provider.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/domain/models/expense.dart';
 import 'package:pocket_union/ui/screens/transactions/exp/expense_detail_screen.dart';
 import 'package:pocket_union/ui/screens/transactions/exp/widgets/expense_item.dart';
+
+import '../../../../core/providers/providers.dart';
 
 class HistoryExpensesScreen extends ConsumerStatefulWidget {
   const HistoryExpensesScreen({super.key});
