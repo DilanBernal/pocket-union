@@ -685,3 +685,10 @@ hs_err_pid*
 # Estas lineas son para manejar los envs desde un json
 env.**.json
 !env.local.json
+
+*.g.dart
+*.freezed.dart
+*.config.dart
+*.gr.dart
+*.reflectable.dart
+*.auto_mappr.dart

@@ -1,60 +1,85 @@
-  name: pocket_union
-  version: 0.0.75
+name: pocket_union
+version: 0.0.75
 
-  environment:
-    sdk: ^3.8.0
+environment:
+  sdk: ^3.8.0
 
-  dependencies:
-    flutter:
-      sdk: flutter
-
-    uuid: ^4.4.2
-    cupertino_icons: ^1.0.8
-    supabase_flutter: ^2.0.0
-    sqflite: ^2.3.0
-    sqflite_sqlcipher: ^3.1.0
-    path: ^1.9.0
-    google_fonts: ^8.0.2
-    shared_preferences: ^2.2.2
-    flutter_secure_storage: ^9.2.2
-    connectivity_plus: ^6.1.4
-    logger: ^2.4.0
-    intl: ^0.20.2
-    flutter_riverpod: ^3.3.1
-    flutter_tabler_icons: ^1.43.0
-    equatable: ^2.0.5
-
-  dev_dependencies:
-    flutter_test:
-      sdk: flutter
-    integration_test:
-      sdk: flutter
-    flutter_lints: ^6.0.0
-    mockito: ^5.4.4
-    build_runner: ^2.4.7
-    mocktail: ^1.0.4
-    mock_supabase_http_client: ^0.0.3+2
-
+dependencies:
   flutter:
+    sdk: flutter
 
-    uses-material-design: true
-    assets:
-      - assets/img/horizontal_synth_wave_background.png
-      - assets/img/celeste.png
-      - assets/icon/app/favicon.png
-      - assets/fonts/
+  # UI & Icons
+  cupertino_icons: ^1.0.8
+  flutter_tabler_icons: ^1.43.0
+  google_fonts: ^8.0.2
+  shimmer: ^3.0.0
+  cached_network_image: ^3.4.1
 
-    fonts:
-      - family: DidactGothic
-        fonts:
-          - asset: assets/fonts/Didact_Gothic/DidactGothic-Regular.ttf
-      - family: Bungee
-        fonts:
-          - asset: assets/fonts/Bungee/Bungee-Regular.ttf
-      - family: Honk
-        fonts:
-          - asset: assets/fonts/Honk/Honk-Regular.ttf
-      - family: Sixtyfour
-        fonts:
-          - asset: assets/fonts/Sixtyfour/Sixtyfour-Regular.ttf
+  # State Management
+  flutter_riverpod: ^3.3.1
+  riverpod_annotation: ^4.0.2
 
+  # Backend & Data
+  supabase_flutter: ^2.0.0
+  sqflite: ^2.3.0
+  sqflite_sqlcipher: ^3.1.0
+  path: ^1.9.0
+
+  # Storage
+  shared_preferences: ^2.2.2
+  flutter_secure_storage: ^10.1.0
+
+  # Utils
+  uuid: ^4.4.2
+  connectivity_plus: ^7.1.1
+  logger: ^2.4.0
+  intl: ^0.20.2
+  equatable: ^2.0.5
+
+  # Forms
+  flutter_form_builder: ^10.3.0+2
+  form_builder_validators: ^11.3.0
+
+  # Testing
+  golden_toolkit: ^0.15.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+  # Linting
+  flutter_lints: ^6.0.0
+
+  # Code Generation
+  build_runner: ^2.4.15
+#  riverpod_generator: ^3.0.0-dev.18    # ← Para Riverpod v3
+#  riverpod_lint: ^3.0.0-dev.0          # ← Lints para Riverpod v3
+  custom_lint: ^0.8.0                  # ← Motor de lints
+
+  # Testing (solo mocktail, sin mockito)
+  mocktail: ^1.0.4
+  mock_supabase_http_client: ^0.0.3+2
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/img/horizontal_synth_wave_background.png
+    - assets/img/celeste.png
+    - assets/icon/app/favicon.png
+    - assets/fonts/
+
+  fonts:
+    - family: DidactGothic
+      fonts:
+        - asset: assets/fonts/Didact_Gothic/DidactGothic-Regular.ttf
+    - family: Bungee
+      fonts:
+        - asset: assets/fonts/Bungee/Bungee-Regular.ttf
+    - family: Honk
+      fonts:
+        - asset: assets/fonts/Honk/Honk-Regular.ttf
+    - family: Sixtyfour
+      fonts:
+        - asset: assets/fonts/Sixtyfour/Sixtyfour-Regular.ttf
