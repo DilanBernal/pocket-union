@@ -6,7 +6,7 @@ import 'package:pocket_union/dto/login_dto.dart';
 import 'package:pocket_union/dto/register_dto.dart';
 import 'package:pocket_union/core/providers/providers.dart';
 import 'package:pocket_union/main.dart';
-import 'package:pocket_union/ui/screens/auth/login_screen.dart';
+import 'package:pocket_union/features/auth/login/presentation/screens/login_screen.dart';
 import 'package:pocket_union/ui/screens/start/start_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

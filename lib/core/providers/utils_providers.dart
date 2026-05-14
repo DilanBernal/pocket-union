@@ -25,13 +25,13 @@ final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
   try {
     return Supabase.instance.client;
   } on AssertionError catch (_) {
-    final url = const String.fromEnvironment('SUPABASE_URL').isNotEmpty
-        ? const String.fromEnvironment('SUPABASE_URL')
+    final url = const String.fromEnvironment('SUPABASE_API_URL').isNotEmpty
+        ? const String.fromEnvironment('SUPABASE_API_URL')
         : 'http://10.0.2.2:54321';
     final anonKey =
     const String.fromEnvironment('SUPABASE_ANON_KEY').isNotEmpty
         ? const String.fromEnvironment('SUPABASE_ANON_KEY')
-        : 'yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+        : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
 
     if (url == null || url.isEmpty || anonKey == null || anonKey.isEmpty) {
       throw Exception('Variables de entorno faltantes. ');

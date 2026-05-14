@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pocket_union/ui/screens/auth/login_screen.dart';
+import 'package:pocket_union/features/auth/login/presentation/screens/login_screen.dart';
 import 'package:pocket_union/ui/screens/auth/register_screen.dart';
 import 'package:pocket_union/ui/screens/categories/categories_list_screen.dart';
 import 'package:pocket_union/ui/screens/categories/new_category_screen.dart';

@@ -1,5 +1,5 @@
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
-import 'package:pocket_union/domain/models/user.dart';
+import 'package:pocket_union/features/auth/login/domain/entities/user.dart';
 import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/domain/port/local/user_port_local.dart';
 import 'package:pocket_union/domain/port/utils/logger_port.dart';

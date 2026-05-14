@@ -54,9 +54,9 @@ dev_dependencies:
 
   # Code Generation
   build_runner: ^2.4.15
-#  riverpod_generator: ^3.0.0-dev.18    # ← Para Riverpod v3
+  riverpod_generator: ^4.0.3    # ← Para Riverpod v3
 #  riverpod_lint: ^3.0.0-dev.0          # ← Lints para Riverpod v3
-  custom_lint: ^0.8.0                  # ← Motor de lints
+  # custom_lint: ^0.8.1                  # ← Motor de lints
 
   # Testing (solo mocktail, sin mockito)
   mocktail: ^1.0.4
