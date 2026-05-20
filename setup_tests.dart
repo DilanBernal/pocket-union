@@ -16,7 +16,7 @@ import 'package:pocket_union/core/services/auth/auth_service.dart';
 import 'package:pocket_union/domain/models/user.dart';
 import 'package:pocket_union/domain/port/feat/user_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
-import 'package:pocket_union/dto/register_dto.dart';
+import 'package:pocket_union/dto/register_credentials.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

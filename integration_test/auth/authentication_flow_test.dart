@@ -6,7 +6,7 @@ import 'package:mock_supabase_http_client/mock_supabase_http_client.dart';
 import 'package:pocket_union/core/providers/providers.dart';
 import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
-import 'package:pocket_union/dto/register_dto.dart';
+import 'package:pocket_union/features/auth/register/domain/entities/register_credentials.dart';
 import 'package:pocket_union/main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -35,7 +35,7 @@ class _FakeAuthPort implements IAuthPort {
   }
 
   @override
-  Future<AuthResponse> register(RegisterDto registerRequest) async =>
+  Future<AuthResponse> register(RegisterCredentials registerRequest) async =>
       AuthResponse();
 
   @override

@@ -15,8 +15,6 @@ class LoginScreen extends ConsumerWidget {
       next.whenOrNull(
         data: (authResult) async {
           if (authResult != null) {
-            // Aquí irá la lógica de post-login (navegación, guardar usuario, etc.)
-            // Por ahora navegamos a home como ejemplo
             Navigator.pushReplacementNamed(context, '/home');
           }
         },

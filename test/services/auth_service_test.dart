@@ -6,7 +6,7 @@ import 'package:pocket_union/domain/port/cloud/auth/i_couple_port.dart';
 import 'package:pocket_union/domain/port/local/user_port_local.dart';
 import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
-import 'package:pocket_union/dto/register_dto.dart';
+import 'package:pocket_union/features/auth/register/domain/entities/register_credentials.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -98,7 +98,7 @@ void main() {
 
       expect(
         () => authService.register(
-          RegisterDto(
+          RegisterCredentials(
             email: 'existing@test.com',
             fullName: 'Existing User',
             password: 'pass123',
@@ -121,7 +121,7 @@ void main() {
         ).thenAnswer((_) async => AuthResponse());
 
         final result = await authService.register(
-          RegisterDto(
+          RegisterCredentials(
             email: 'pending@test.com',
             fullName: 'Pending User',
             password: 'pass123',
@@ -144,7 +144,7 @@ void main() {
 
       expect(
         () => authService.register(
-          RegisterDto(
+          RegisterCredentials(
             email: 'new@test.com',
             fullName: 'New User',
             password: 'pass123',

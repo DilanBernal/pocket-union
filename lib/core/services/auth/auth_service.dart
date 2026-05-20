@@ -1,10 +1,10 @@
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
-import 'package:pocket_union/features/auth/login/domain/entities/user.dart';
+import 'package:pocket_union/domain/models/auth/user.dart';
 import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/domain/port/local/user_port_local.dart';
 import 'package:pocket_union/domain/port/utils/logger_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
-import 'package:pocket_union/dto/register_dto.dart';
+import 'package:pocket_union/features/auth/register/domain/entities/register_credentials.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -105,7 +105,7 @@ class AuthService extends IAuthPort {
   }
 
   @override
-  Future<AuthResponse> register(RegisterDto registerRequest) async {
+  Future<AuthResponse> register(RegisterCredentials registerRequest) async {
     try {
       var res = await _supabaseClient.auth.signUp(
         password: registerRequest.password,

@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:flutter_localizations/flutter_localizations.dart' show GlobalMaterialLocalizations, GlobalWidgetsLocalizations;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,11 +14,7 @@ void main() async {
 
   final initialRoute = await _initVariables();
 
-  runApp(
-    ProviderScope(
-      child: PocketUnionApp(initialRoute: initialRoute),
-    ),
-  );
+  runApp(ProviderScope(child: PocketUnionApp(initialRoute: initialRoute)));
 }
 
 class PocketUnionApp extends StatelessWidget {
@@ -31,6 +29,12 @@ class PocketUnionApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.blackDarkTheme,
       themeMode: ThemeMode.system,
+      supportedLocales: [Locale('es')],
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        FormBuilderLocalizations.delegate,
+      ],
       builder: (context, child) {
         return Scaffold(body: child);
       },

@@ -1,7 +1,7 @@
 // lib/core/providers/current_user_provider.dart
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../features/auth/login/domain/entities/user.dart';
+import '../../../../domain/models/auth/user.dart';
 import '../../data_local_providers.dart';
 
 class CurrentUserNotifier extends AsyncNotifier<DomainUser?> {

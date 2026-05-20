@@ -1,4 +1,4 @@
-import 'package:pocket_union/features/auth/login/domain/entities/user.dart';
+import 'package:pocket_union/domain/models/auth/user.dart';
 import 'package:pocket_union/dto/filter/user_filter_dto.dart';
 
 abstract class UserLocalPort {

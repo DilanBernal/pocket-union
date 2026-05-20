@@ -1,7 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/dto/register_dto.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:pocket_union/features/auth/register/domain/entities/register_credentials.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
@@ -9,14 +11,14 @@ import 'package:pocket_union/ui/widgets/form_title.dart';
 import '../../../../core/providers/di/auth/auth_service_provider.dart';
 
 class RegisterForm extends ConsumerStatefulWidget {
-  const RegisterForm({
+  RegisterForm({
     super.key,
-    required GlobalKey<FormState> formKey,
     required this.colorFocusBorderInput,
     required this.colorEnabledBorderInput,
-  }) : _formKey = formKey;
+  });
 
-  final GlobalKey<FormState> _formKey;
+  final formKey = GlobalKey<FormBuilderState>();
+
   final Color colorFocusBorderInput;
   final Color colorEnabledBorderInput;
 
@@ -30,14 +32,18 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
   late String _password;
 
   Future<void> _handleCreateUser() async {
-    if (!widget._formKey.currentState!.validate()) {
+    if (!widget.formKey.currentState!.validate()) {
       return;
     }
-    widget._formKey.currentState!.save();
+    widget.formKey.currentState!.save();
     try {
       final authService = await ref.read(authServiceProvider.future);
       var res = await authService.register(
-        RegisterDto(email: _email, fullName: _fullName, password: _password),
+        RegisterCredentials(
+          email: _email,
+          fullName: _fullName,
+          password: _password,
+        ),
       );
 
       if (!mounted) return;
@@ -47,12 +53,12 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
           barrierDismissible: true,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text("¡Ocurrio un error al registrarse!"),
+              title: const Text('¡Ocurrio un error al registrarse!'),
               content: SingleChildScrollView(
                 child: ListBody(
                   children: [
                     const Text(
-                      "Se ha enviado un correo de confirmación a tu dirección de email.",
+                      'Se ha enviado un correo de confirmación a tu dirección de email.',
                     ),
                   ],
                 ),
@@ -69,22 +75,22 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text("¡Cuenta creada exitosamente!"),
+            title: const Text('¡Cuenta creada exitosamente!'),
             content: SingleChildScrollView(
               child: ListBody(
                 children: [
                   const Text(
-                    "Se ha enviado un correo de confirmación a tu dirección de email.",
+                    'Se ha enviado un correo de confirmación a tu dirección de email.',
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "Por favor confirma tu correo ($_email) para poder iniciar sesión.",
+                    'Por favor confirma tu correo ($_email) para poder iniciar sesión.',
                     style: const TextStyle(fontSize: 14),
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    "Después de confirmar tu correo, inicia sesión para "
-                    "sincronizar con tu pareja. Este paso requiere internet.",
+                    'Después de confirmar tu correo, inicia sesión para '
+                    'sincronizar con tu pareja. Este paso requiere internet.',
                     style: TextStyle(
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
@@ -100,7 +106,7 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
                   Navigator.pop(context);
                   Navigator.pushReplacementNamed(context, AppRoutes.login);
                 },
-                child: const Text("Ir a inicio de sesión"),
+                child: const Text('Ir a inicio de sesión'),
               ),
             ],
           );
@@ -113,12 +119,12 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text("Error al registrarse"),
+              title: const Text('Error al registrarse'),
               content: Text(e.toString().replaceAll('Exception: ', '')),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Cerrar"),
+                  child: const Text('Cerrar'),
                 ),
               ],
             );
@@ -131,7 +137,7 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: widget._formKey,
+      key: widget.formKey,
       autovalidateMode: AutovalidateMode.onUnfocus,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -139,28 +145,27 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           FormTitle(
-            title: "Crea tu cuenta",
+            title: 'Crea tu cuenta',
             shadowColor: Colors.green,
             textColor: Colors.white,
             gradientColors: [Colors.purple.shade600, Colors.pink.shade700],
           ),
           Text(
-            "El futuro de vuestras finanzas comienza aqui.",
+            'El futuro de vuestras finanzas comienza aqui.',
             style: Theme.of(
               context,
             ).textTheme.labelLarge!.copyWith(fontSize: 19),
           ),
           AuthTextFormField(
+            inputName: 'fullName',
             colorFocusBorderInput: widget.colorFocusBorderInput,
             icon: Icons.person_outline,
-            fieldLabel: "Nombres completos",
+            fieldLabel: 'Nombres completos',
             colorEnabledBorderInput: widget.colorEnabledBorderInput,
-            onSaved: (text) {
-              _fullName = text ?? '';
-            },
+            formKey: widget.formKey,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return "Por favor, ingresa tu email.";
+                return 'Por favor, ingresa tu email.';
               }
               // if (!value.contains('@')) {
               //   return 'Por favor, ingresa un email válido.';
@@ -173,38 +178,33 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             colorEnabledBorderInput: widget.colorEnabledBorderInput,
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
-            fieldLabel: "Email",
-            onSaved: (text) {
-              _email = text ?? '';
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return "Por favor, ingresa tu email.";
-              }
-              if (!value.contains('@')) {
-                return 'Por favor, ingresa un email válido.';
-              }
-              return null;
-            },
+            fieldLabel: 'Email',
+            inputName: 'email',
+            formKey: widget.formKey,
+            validator: FormBuilderValidators.compose([
+              FormBuilderValidators.required(),
+              FormBuilderValidators.email(),
+            ]),
           ),
           AuthTextFormField(
             colorFocusBorderInput: widget.colorFocusBorderInput,
             colorEnabledBorderInput: widget.colorEnabledBorderInput,
             keyboardType: TextInputType.visiblePassword,
             icon: Icons.key,
-            fieldLabel: "Contraseña",
-            onSaved: (value) {
-              _password = value ?? '';
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return "Por favor, ingresa tu email.";
-              }
-              // if (!value.contains('@')) {
-              //   return 'Por favor, ingresa un email válido.';
-              // }
-              return null;
-            },
+            fieldLabel: 'Contraseña',
+            inputName: 'password',
+            formKey: widget.formKey,
+            validator: FormBuilderValidators.compose([
+              FormBuilderValidators.password(
+                errorText: 'La contraseña no esta en el formato correcto',
+                minLength: 6,
+                maxLength: 15,
+                minLowercaseCount: 1,
+                minUppercaseCount: 1,
+                minNumberCount: 1,
+              ),
+              FormBuilderValidators.required(),
+            ]),
           ),
           Material(
             borderOnForeground: false,
@@ -231,7 +231,7 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
                       onTap: _handleCreateUser,
                       child: Center(
                         child: Text(
-                          "Crear cuenta",
+                          'Crear cuenta',
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize:
@@ -256,11 +256,11 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
                 ..onTap = () {
                   Navigator.pushReplacementNamed(context, AppRoutes.login);
                 },
-              text: "¿Ya tienes una cuenta?\n",
+              text: '¿Ya tienes una cuenta?\n',
               style: TextStyle(),
               children: [
                 TextSpan(
-                  text: "¡Inicia sesión!",
+                  text: '¡Inicia sesión!',
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
                       Navigator.pushReplacementNamed(context, AppRoutes.login);

@@ -8,7 +8,7 @@ import 'dart:async' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i5;
 import 'package:pocket_union/domain/models/couple.dart' as _i3;
-import 'package:pocket_union/features/auth/login/domain/entities/user.dart' as _i7;
+import 'package:pocket_union/domain/models/auth/user.dart' as _i7;
 import 'package:pocket_union/domain/port/cloud/auth/i_couple_port.dart' as _i10;
 import 'package:pocket_union/domain/port/local/user_port_local.dart' as _i6;
 import 'package:pocket_union/domain/port/utils/logger_port.dart' as _i9;

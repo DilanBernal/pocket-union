@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocket_union/domain/port/cloud/auth/i_auth_port.dart';
 import 'package:pocket_union/dto/login_dto.dart';
-import 'package:pocket_union/dto/register_dto.dart';
+import 'package:pocket_union/features/auth/register/domain/entities/register_credentials.dart';
 import 'package:pocket_union/core/providers/providers.dart';
 import 'package:pocket_union/main.dart';
 import 'package:pocket_union/features/auth/login/presentation/screens/login_screen.dart';
@@ -16,7 +16,7 @@ class _FakeAuthPort implements IAuthPort {
   Future<AuthResponse> login(LoginDto loginRequest) async => AuthResponse();
 
   @override
-  Future<AuthResponse> register(RegisterDto registerRequest) async =>
+  Future<AuthResponse> register(RegisterCredentials registerRequest) async =>
       AuthResponse();
 
   @override

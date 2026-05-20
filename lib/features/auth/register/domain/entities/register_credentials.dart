@@ -1,8 +1,8 @@
-class RegisterDto {
+class RegisterCredentials {
   final String email;
   final String fullName;
   final String password;
 
-  RegisterDto(
+  RegisterCredentials(
       {required this.email, required this.fullName, required this.password});
 }
