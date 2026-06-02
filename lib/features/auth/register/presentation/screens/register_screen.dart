@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:pocket_union/ui/screens/auth/widgets/register_form.dart';
 import 'package:pocket_union/ui/widgets/grid_background.dart';
+
+import '../widgets/register_form.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

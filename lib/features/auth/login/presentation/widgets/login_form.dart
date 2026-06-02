@@ -2,9 +2,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:pocket_union/ui/router.dart';
-import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+
+import '../../../presentation/widgets/auth_text_form_field.dart';
 
 class LoginForm extends StatelessWidget {
   final Color colorFocusBorderInput;

@@ -5,10 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:pocket_union/features/auth/register/domain/entities/register_credentials.dart';
 import 'package:pocket_union/ui/router.dart';
-import 'package:pocket_union/ui/screens/auth/widgets/auth_text_form_field.dart';
 import 'package:pocket_union/ui/widgets/form_title.dart';
 
-import '../../../../core/providers/di/auth/auth_service_provider.dart';
+import '../../../../../core/providers/di/auth/auth_service_provider.dart';
+import '../../../presentation/widgets/auth_text_form_field.dart';
+
 
 class RegisterForm extends ConsumerStatefulWidget {
   RegisterForm({
@@ -167,9 +168,6 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
               if (value == null || value.isEmpty) {
                 return 'Por favor, ingresa tu email.';
               }
-              // if (!value.contains('@')) {
-              //   return 'Por favor, ingresa un email válido.';
-              // }
               return null;
             },
           ),

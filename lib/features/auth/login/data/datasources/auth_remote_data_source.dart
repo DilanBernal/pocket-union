@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pocket_union/core/providers/utils_providers.dart';
-import 'package:pocket_union/features/auth/login/domain/entities/user_credentials.dart';
-import 'package:pocket_union/features/auth/login/domain/entities/auth_result.dart';
+import 'package:pocket_union/features/auth/domain/entities/user_credentials.dart';
+import 'package:pocket_union/features/auth/domain/entities/auth_result.dart';
 
 import '../../../../../domain/port/utils/logger_port.dart';
 

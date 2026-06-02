@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../entities/user_credentials.dart';
-import '../entities/auth_result.dart';
+import '../../../domain/entities/auth_result.dart';
+import '../../../domain/entities/user_credentials.dart';
 import '../repositories/auth_repository.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 

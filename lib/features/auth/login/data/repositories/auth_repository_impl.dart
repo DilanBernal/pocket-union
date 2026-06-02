@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:pocket_union/features/auth/login/domain/entities/auth_result.dart';
-import 'package:pocket_union/features/auth/login/domain/entities/user_credentials.dart';
 import 'package:pocket_union/features/auth/login/domain/repositories/auth_repository.dart';
+import '../../../domain/entities/auth_result.dart';
+import '../../../domain/entities/user_credentials.dart';
 import '../datasources/auth_remote_data_source.dart';
 
 part 'auth_repository_impl.g.dart';

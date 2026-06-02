@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/features/auth/login/domain/entities/auth_result.dart';
+import 'package:pocket_union/features/auth/domain/entities/auth_result.dart';
 import 'package:pocket_union/features/auth/login/presentation/controllers/login_controller.dart';
 import 'package:pocket_union/features/auth/login/presentation/widgets/login_form.dart';
 import 'package:pocket_union/ui/widgets/grid_background.dart';

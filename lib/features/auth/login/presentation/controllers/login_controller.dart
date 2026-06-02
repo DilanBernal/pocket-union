@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:pocket_union/features/auth/login/domain/entities/auth_result.dart';
-import 'package:pocket_union/features/auth/login/domain/entities/user_credentials.dart';
+import 'package:pocket_union/features/auth/domain/entities/auth_result.dart';
+import 'package:pocket_union/features/auth/domain/entities/user_credentials.dart';
 import 'package:pocket_union/features/auth/login/domain/usecases/login_usecase.dart';
 
 part 'login_controller.g.dart';
