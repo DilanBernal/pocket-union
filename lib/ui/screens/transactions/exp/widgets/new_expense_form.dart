@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:pocket_union/core/providers/service_provider.dart';
 import 'package:pocket_union/domain/models/category.dart';
 import 'package:pocket_union/domain/models/expense.dart';
@@ -12,6 +14,7 @@ class NewExpenseForm extends ConsumerStatefulWidget {
   final List<Category> categories;
   final Expense? initialExpense;
   final Future<bool> Function(NewExpenseDto dto)? onSubmit;
+
   const NewExpenseForm({
     super.key,
     required this.categories,
@@ -24,7 +27,7 @@ class NewExpenseForm extends ConsumerStatefulWidget {
 }
 
 class _NewExpenseFormState extends ConsumerState<NewExpenseForm> {
-  final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormBuilderState>();
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -124,14 +127,15 @@ class _NewExpenseFormState extends ConsumerState<NewExpenseForm> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Form(
+      child: FormBuilder(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUnfocus,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // --- Nombre ---
-            TextFormField(
+            FormBuilderTextField(
+              name: 'expense_name',
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Nombre del gasto',
@@ -143,7 +147,8 @@ class _NewExpenseFormState extends ConsumerState<NewExpenseForm> {
             const SizedBox(height: 16),
 
             // --- Monto ---
-            TextFormField(
+            FormBuilderTextField(
+              name: 'expense_mount',
               controller: _amountController,
               decoration: const InputDecoration(
                 labelText: 'Monto',
@@ -161,20 +166,30 @@ class _NewExpenseFormState extends ConsumerState<NewExpenseForm> {
               'Fecha del gasto',
               style: Theme.of(context).textTheme.titleSmall,
             ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () async {
-                final picked = await TransactionFormUtils.pickTransactionDate(
-                  context,
-                  _transactionDate,
-                );
-                if (picked != null && mounted) {
-                  setState(() => _transactionDate = picked);
-                }
-              },
-              icon: const Icon(Icons.calendar_today),
-              label: Text(TransactionFormUtils.formatDate(_transactionDate)),
+            FormBuilderDateTimePicker(
+              inputType: InputType.date,
+              initialValue: DateTime.now().toUtc(),
+              // decoration: ,
+              format: DateFormat('dd/MM/yyyy'),
+              lastDate: DateTime.now().toUtc(),
+              name: 'expense_date',
+              fieldLabelText: 'Fecha del gasto',
+              // style: Theme.of(context).textTheme.titleSmall,
             ),
+            // const SizedBox(height: 8),
+            // OutlinedButton.icon(
+            //   onPressed: () async {
+            //     final picked = await TransactionFormUtils.pickTransactionDate(
+            //       context,
+            //       _transactionDate,
+            //     );
+            //     if (picked != null && mounted) {
+            //       setState(() => _transactionDate = picked);
+            //     }
+            //   },
+            //   icon: const Icon(Icons.calendar_today),
+            //   label: Text(TransactionFormUtils.formatDate(_transactionDate)),
+            // ),
             const SizedBox(height: 16),
 
             // --- Categorías ---
@@ -188,7 +203,6 @@ class _NewExpenseFormState extends ConsumerState<NewExpenseForm> {
               },
             ),
             const SizedBox(height: 16),
-
             // --- Descripción ---
             TextFormField(
               controller: _descriptionController,
@@ -199,7 +213,22 @@ class _NewExpenseFormState extends ConsumerState<NewExpenseForm> {
               maxLines: 2,
             ),
             const SizedBox(height: 24),
+            // --- Esta pago ---
+            FormBuilderSwitch(
+              name: 'expense_paid',
+              title: Text('¿Ya esta pago?'),
+              decoration: InputDecoration(alignLabelWithHint: true),
+            ),
 
+            // --- Nivel de importancia ---
+            // FormBuilderSlider(name: name, initialValue: initialValue, min: min, max: max)
+            FormBuilderSlider(
+              name: 'expense_importance_level',
+              initialValue: 3,
+              divisions: 5,
+              min: 0,
+              max: 5,
+            ),
             // --- Submit ---
             ElevatedButton.icon(
               onPressed: _isSubmitting ? null : _submit,

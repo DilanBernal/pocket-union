@@ -1,3 +1,5 @@
+import 'package:pocket_union/core/providers/data_local_providers.dart';
+import 'package:pocket_union/domain/port/local/user_port_local.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pocket_union/core/providers/utils_providers.dart';
@@ -16,14 +18,16 @@ abstract class AuthRemoteDataSource {
 AuthRemoteDataSource authRemoteDataSource(Ref ref) {
   final client = ref.watch(supabaseClientProvider).requireValue;
   final logger = ref.watch(loggerProvider);
-  return AuthRemoteDataSourceImpl(client, logger);
+  final userPort = ref.watch(userDaoProvider);
+  return AuthRemoteDataSourceImpl(client, logger, userPort);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final SupabaseClient _client;
   final LoggerPort _logger;
+  final UserLocalPort _localPort;
 
-  AuthRemoteDataSourceImpl(this._client, this._logger);
+  AuthRemoteDataSourceImpl(this._client, this._logger, this._localPort);
 
   @override
   Future<AuthResult> login(UserCredentials credentials) async {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocket_union/ui/screens/home/widgets/start_hero_widget.dart';
 import 'package:pocket_union/ui/screens/transactions/in/new_entry_screen.dart';
 import 'package:pocket_union/ui/widgets/list_menu.dart';
-import '../transactions/exp/new_out_screen.dart';
+import '../transactions/exp/new_expense_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
               1 => Expanded(
                 child: StartHeroWidget(name1: "1", name2: "2"),
               ),
-              2 => Expanded(child: NewOutScreen()),
+              2 => Expanded(child: NewExpenseScreen()),
               int() => throw UnimplementedError(),
             },
           ],

@@ -87,6 +87,7 @@ class LoginForm extends StatelessWidget {
                 minLowercaseCount: 1,
                 minUppercaseCount: 1,
                 minNumberCount: 1,
+                minSpecialCharCount: 0,
               ),
             ]),
           ),

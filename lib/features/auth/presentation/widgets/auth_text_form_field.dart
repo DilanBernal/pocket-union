@@ -9,6 +9,7 @@ class AuthTextFormField extends StatelessWidget {
     required this.icon,
     required this.fieldLabel,
     required this.formKey,
+    /// Este dato va a ser el nombre del input por el cual se va a acceder mas adelante, se hará una transformación con .toLower
     required this.inputName,
     this.keyboardType = TextInputType.text,
     this.validator,
@@ -30,7 +31,7 @@ class AuthTextFormField extends StatelessWidget {
     return FormBuilderTextField(
       keyboardType: keyboardType,
       key: _fieldKey,
-      name: inputName,
+      name: inputName.toLowerCase(),
       autofillHints: [inputName],
       decoration: InputDecoration(
         labelText: fieldLabel ?? '',

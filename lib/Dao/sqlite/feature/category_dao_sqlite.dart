@@ -42,7 +42,7 @@ class CategoryDaoSqlite extends CategoryLocalPort {
         return Category.fromMap(maps[i]);
       });
     } catch (e) {
-      throw Exception("Ocurrio un error $e");
+      throw Exception('Ocurrio un error $e');
     }
   }
 
@@ -58,7 +58,7 @@ class CategoryDaoSqlite extends CategoryLocalPort {
         );
         if (coupleResult.firstOrNull == null) {
           throw ArgumentError(
-            "No se pueden traer las categorias sin una couple",
+            'No se pueden traer las categorías sin una couple',
           );
         }
         coupleId = coupleResult.first as String;
@@ -72,7 +72,7 @@ class CategoryDaoSqlite extends CategoryLocalPort {
         return Category.fromMap(maps[i]);
       });
     } catch (e) {
-      throw Exception("Ocurrio un error $e");
+      throw Exception('Ocurrió un error $e');
     }
   }
 
@@ -173,7 +173,7 @@ class CategoryDaoSqlite extends CategoryLocalPort {
         return Category.fromMap(maps[i]);
       });
     } catch (e) {
-      throw Exception("Error al obtener categorías por host: $e");
+      throw Exception('Error al obtener categorías por host: $e');
     }
   }
 

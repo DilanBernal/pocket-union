@@ -5,8 +5,8 @@ import 'package:pocket_union/ui/widgets/form_title.dart';
 
 import '../../../../core/providers/providers.dart';
 
-class NewOutScreen extends ConsumerWidget {
-  const NewOutScreen({super.key});
+class NewExpenseScreen extends ConsumerWidget {
+  const NewExpenseScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,7 +36,7 @@ class NewOutScreen extends ConsumerWidget {
       data: (categories) => SingleChildScrollView(
         child: Column(
           children: [
-            const FormTitle(title: "Agregar salida de dinero"),
+            const FormTitle(title: 'Agregar gasto'),
             NewExpenseForm(categories: categories),
           ],
         ),
