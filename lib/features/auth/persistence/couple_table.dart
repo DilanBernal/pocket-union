@@ -3,6 +3,9 @@ import 'package:drift/drift.dart';
 import 'package:pocket_union/features/auth/persistence/user_profile_table.dart';
 
 class Couples extends Table {
+  @override
+  String get actualTableName => 'couple';
+
   TextColumn get id => text()();
 
 

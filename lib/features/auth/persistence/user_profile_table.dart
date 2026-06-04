@@ -5,6 +5,9 @@ import 'couple_table.dart';
 // ─── Tablas ───────────────────────────────────────────────────────────────────
 
 class Profiles extends Table {
+  @override
+  String get actualTableName => 'profile';
+
   TextColumn get id => text()();
 
   TextColumn get fullName => text().nullable()();
@@ -12,6 +15,8 @@ class Profiles extends Table {
   TextColumn get avatarUrl => text().nullable()();
 
   RealColumn get userBalance => real().withDefault(const Constant(0.0))();
+
+  BoolColumn get inCloud => boolean().withDefault(const Constant(false))();
 
   DateTimeColumn get updatedAt => dateTime().nullable()();
 
@@ -30,6 +35,9 @@ class Profiles extends Table {
 
 
 class Categories extends Table {
+  @override
+  String get actualTableName => 'category';
+
   TextColumn get id => text()();
 
   TextColumn get name => text()();
@@ -56,6 +64,9 @@ class Categories extends Table {
 }
 
 class Expenses extends Table {
+  @override
+  String get actualTableName => 'expense';
+
   TextColumn get id => text()();
 
   TextColumn get coupleId => text().references(Couples, #id)();
@@ -91,6 +102,9 @@ class Expenses extends Table {
 }
 
 class ExpenseShares extends Table {
+  @override
+  String get actualTableName => 'expense_share';
+
   TextColumn get id => text()();
 
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
@@ -112,6 +126,9 @@ class ExpenseShares extends Table {
 }
 
 class Incomes extends Table {
+  @override
+  String get actualTableName => 'income';
+
   TextColumn get id => text()();
 
   TextColumn get coupleId => text().nullable().references(Couples, #id)();
@@ -147,6 +164,9 @@ class Incomes extends Table {
 }
 
 class Goals extends Table {
+  @override
+  String get actualTableName => 'goal';
+
   TextColumn get id => text()();
 
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
@@ -174,6 +194,9 @@ class Goals extends Table {
 }
 
 class GoalContributions extends Table {
+  @override
+  String get actualTableName => 'goal_contribution';
+
   TextColumn get id => text()();
 
   TextColumn get goalId => text().references(Goals, #id)();
@@ -195,5 +218,3 @@ class GoalContributions extends Table {
   @override
   Set<Column> get primaryKey => {id};
 }
-
-// ─── AppDatabase ──────────────────────────────────────────────────────────────

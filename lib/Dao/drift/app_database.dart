@@ -1,12 +1,18 @@
 import 'package:drift/drift.dart';
 import 'package:drift_sqflite/drift_sqflite.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
 import '../../features/auth/persistence/couple_table.dart';
 import '../../features/auth/persistence/user_profile_table.dart';
 
 part 'app_database.g.dart';
+
+@riverpod
+Future<AppDatabase> appDatabase(Ref ref) async {
+  return buildAppDatabase();
+}
 
 @DriftDatabase(
   tables: [
@@ -24,11 +30,20 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 4;
 
   @override
-  MigrationStrategy get migration =>
-      MigrationStrategy(onCreate: (m) => m.createAll());
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 4) {
+        await m.addColumn(profiles, profiles.updatedAt);
+        await m.addColumn(profiles, profiles.syncStatus);
+        await m.addColumn(profiles, profiles.localUpdatedAt);
+        await m.addColumn(profiles, profiles.isDeleted);
+      }
+    },
+  );
 }
 
 // ─── Factory con encriptación ─────────────────────────────────────────────────
