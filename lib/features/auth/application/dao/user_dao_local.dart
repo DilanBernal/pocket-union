@@ -52,14 +52,13 @@ class UserDaoLocal extends UserLocalPort {
   Future<bool> upsertUser(UserEntity user) async {
     try {
       user.lastSync = DateTime.now();
-      await _db.into(_db.userProfileTable).insertOnConflictUpdate(
-        userProfileCompanionFromEntity(user),
-      );
+      await _db
+          .into(_db.userProfileTable)
+          .insertOnConflictUpdate(userProfileCompanionFromEntity(user));
       return true;
     } catch (e) {
       _logger.error('Error upserting user: $e');
       return false;
     }
-    return false;
   }
 }

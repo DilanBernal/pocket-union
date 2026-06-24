@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-
 import '../features/auth/login/presentation/screens/login_screen.dart';
-// import 'package:pocket_union/features/auth/login/presentation/screens/login_screen.dart';
-// import 'package:pocket_union/features/auth/register/presentation/screens/register_screen.dart';
+import '../features/auth/register/presentation/screens/register_screen.dart';
 // import 'package:pocket_union/ui/screens/categories/categories_list_screen.dart';
 // import 'package:pocket_union/ui/screens/categories/new_category_screen.dart';
 // import 'package:pocket_union/ui/screens/couple/couple_setup_screen.dart';
@@ -66,7 +64,7 @@ class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
     start: (context) => const LoginScreen(),
     login: (context) => const LoginScreen(),
-    register: (context) => const Placeholder(),
+    register: (context) => const RegisterScreen(),
     home: (context) => const Placeholder(),
     settings: (context) => const Placeholder(),
     historyExpenses: (context) => const Placeholder(),

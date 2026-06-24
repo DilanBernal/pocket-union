@@ -1,12 +1,15 @@
+import 'package:pocket_union/core/common/domain_error.dart';
 import 'package:pocket_union/core/ports/logger_port.dart';
-import 'package:pocket_union/features/auth/application/dtos/login_dto.dart';
+import 'package:pocket_union/features/auth/login/dtos/login_dto.dart';
 import 'package:pocket_union/features/auth/domain/entities/user_entity.dart';
 import 'package:pocket_union/features/auth/domain/models/auth_result_model.dart';
 import 'package:pocket_union/features/auth/domain/ports/auth_port.dart';
 import 'package:pocket_union/features/auth/domain/ports/user_port_local.dart';
+import 'package:pocket_union/features/auth/register/dtos/register_dto.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/common/app_response.dart';
 import '../../../../core/utils/logger_provider.dart';
 import '../../../../core/utils/supabase_client_provider.dart';
 import '../../domain/enums/couple_usable_state.dart';
@@ -40,7 +43,7 @@ class AuthService extends AuthPort {
        _userLocalPort = userLocalPort;
 
   @override
-  Future<AuthResultModel> login(LoginDto request) async {
+  Future<AppResponse<AuthResultModel>> login(LoginDto request) async {
     try {
       // await _sharedPreferences.setBool('isFirstLaunch', false);
       final loginRes = await _supabaseClient.auth.signInWithPassword(
@@ -48,7 +51,12 @@ class AuthService extends AuthPort {
         password: request.password,
       );
       if (loginRes.user?.id == null) {
-        throw Exception('No trae el id del usuario');
+        return Failure(
+          DomainError(
+            message: 'AuthService: Error en login, userId es null',
+            code: 'login_error',
+          ),
+        );
       }
       UserEntity userProfile = UserEntity.fromMap(
         await _supabaseClient
@@ -110,9 +118,45 @@ class AuthService extends AuthPort {
       if (response.isNotEmpty) {
         _logger.info('AuthService: Datos de sesión guardados correctamente');
       }
-      return AuthResultModel(userId: loginRes.user!.id);
+      return Success(AuthResultModel(userId: loginRes.user!.id));
     } catch (error) {
       _logger.error('AuthService: Error en login', error: error);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<AppResponse<AuthResultModel>> register(RegisterDto request) async {
+    try {
+      var res = await _supabaseClient.auth.signUp(
+        password: request.password,
+        email: request.email,
+        data: {'full_name': request.fullName},
+      );
+
+      if (res.user != null) {
+        final domainUser = UserEntity(
+          id: res.user!.id,
+          fullName: request.fullName,
+          balance: 0,
+          inCloud: true,
+        );
+
+        var resultados = await Future.wait([
+          // _sharedPreferences.setBool('isFirstLaunch', false),
+          _userLocalPort.upsertUser(domainUser),
+        ]);
+        if (resultados.isNotEmpty) {
+          _logger.info(
+            'AuthService: Usuario registrado y guardado en SQLite: ${res.user!.id}',
+          );
+        }
+      }
+
+      _logger.info('AuthService: Registro completado');
+      return Success(AuthResultModel(userId: res.user?.id ?? ''));
+    } catch (e) {
+      _logger.error('AuthService: Error al intentar registrarse', error: e);
       rethrow;
     }
   }

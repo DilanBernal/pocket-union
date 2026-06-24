@@ -134,7 +134,7 @@ class LoginForm extends StatelessWidget {
             text: TextSpan(
               recognizer: TapGestureRecognizer()
                 ..onTap = () {
-                  Navigator.pushReplacementNamed(context, AppRoutes.login);
+                  Navigator.pushReplacementNamed(context, AppRoutes.register);
                 },
               text: '¿Aun no tienes una cuenta?\n',
               style: TextStyle(),

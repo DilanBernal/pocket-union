@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/features/auth/login/presentation/widgets/login_form.dart';
+import 'package:pocket_union/features/auth/register/presentation/controllers/register_controller.dart';
 import 'package:pocket_union/ui/widgets/grid_background.dart';
 
-import '../../dtos/login_dto.dart';
-import '../../../domain/models/auth_result_model.dart';
-import '../controllers/login_controller.dart';
+import '../../dtos/register_dto.dart';
+import '../widgets/register_form.dart';
 
-class LoginScreen extends ConsumerWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends ConsumerWidget {
+  const RegisterScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final loginState = ref.watch(loginControllerProvider);
-    ref.listen<AsyncValue<AuthResultModel?>>(loginControllerProvider, (
-      _,
-      next,
-    ) {
+    final registerState = ref.watch(registerControllerProvider);
+    ref.listen(registerControllerProvider, (_, next) {
       next.whenOrNull(
         data: (authResult) async {
           if (authResult != null) {
@@ -25,6 +21,7 @@ class LoginScreen extends ConsumerWidget {
         },
       );
     });
+
     const colorFocusBorderInput = Color.fromRGBO(56, 49, 70, 1);
     const colorEnabledBorderInput = Color.fromRGBO(45, 41, 53, 1);
     return GridBackground(
@@ -41,14 +38,14 @@ class LoginScreen extends ConsumerWidget {
           ),
         ),
         child: SafeArea(
-          child: LoginForm(
+          child: RegisterForm(
+            isLoading: registerState.isLoading,
             colorFocusBorderInput: colorFocusBorderInput,
             colorEnabledBorderInput: colorEnabledBorderInput,
-            isLoading: loginState.isLoading,
-            onLogin: (email, password) async {
+            onRegister: (RegisterDto request) async{
               await ref
-                  .read(loginControllerProvider.notifier)
-                  .login(LoginDto(email: email, password: password));
+                  .read(registerControllerProvider.notifier)
+                  .register(request);
             },
           ),
         ),
