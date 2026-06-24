@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/features/auth/login/presentation/widgets/login_form.dart';
 import 'package:pocket_union/ui/widgets/grid_background.dart';
 
+import '../../../application/dtos/login_dto.dart';
 import '../../../domain/models/auth_result_model.dart';
 import '../controllers/login_controller.dart';
 
@@ -12,7 +13,10 @@ class LoginScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loginState = ref.watch(loginControllerProvider);
-    ref.listen<AsyncValue<AuthResultModel?>>(loginControllerProvider, (_, next) {
+    ref.listen<AsyncValue<AuthResultModel?>>(loginControllerProvider, (
+      _,
+      next,
+    ) {
       next.whenOrNull(
         data: (authResult) async {
           if (authResult != null) {
@@ -41,8 +45,10 @@ class LoginScreen extends ConsumerWidget {
             colorFocusBorderInput: colorFocusBorderInput,
             colorEnabledBorderInput: colorEnabledBorderInput,
             isLoading: loginState.isLoading,
-            onLogin: (email, password) {
-              ref.read(loginControllerProvider.notifier).login(email, password);
+            onLogin: (email, password) async {
+              await ref
+                  .read(loginControllerProvider.notifier)
+                  .login(LoginDto(email: email, password: password));
             },
           ),
         ),

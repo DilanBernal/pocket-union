@@ -53,7 +53,7 @@ class LoginForm extends StatelessWidget {
             formKey: formKey,
             keyboardType: TextInputType.emailAddress,
             fieldLabel: 'Email',
-            inputName: 'Email',
+            inputName: 'email',
             validator: FormBuilderValidators.compose([
               FormBuilderValidators.required(
                 checkNullOrEmpty: true,

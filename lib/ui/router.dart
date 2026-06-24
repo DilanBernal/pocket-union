@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../features/auth/login/presentation/screens/login_screen.dart';
 // import 'package:pocket_union/features/auth/login/presentation/screens/login_screen.dart';
 // import 'package:pocket_union/features/auth/register/presentation/screens/register_screen.dart';
 // import 'package:pocket_union/ui/screens/categories/categories_list_screen.dart';
@@ -62,8 +64,8 @@ class AppRoutes {
   //     return IncomeDetailScreen(incomeId: incomeId);
   //   },
   static Map<String, WidgetBuilder> routes = {
-    start: (context) => const Placeholder(),
-    login: (context) => const Placeholder(),
+    start: (context) => const LoginScreen(),
+    login: (context) => const LoginScreen(),
     register: (context) => const Placeholder(),
     home: (context) => const Placeholder(),
     settings: (context) => const Placeholder(),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pocket_union/ui/router.dart';
+import 'package:pocket_union/ui/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:flutter_localizations/flutter_localizations.dart' show GlobalMaterialLocalizations, GlobalWidgetsLocalizations;
@@ -24,8 +26,8 @@ class PocketUnionApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       initialRoute: initialRoute,
-      // theme: AppTheme.lightTheme,
-      // darkTheme: AppTheme.blackDarkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.blackDarkTheme,
       themeMode: ThemeMode.system,
       supportedLocales: [Locale('es')],
       localizationsDelegates: [
@@ -37,7 +39,7 @@ class PocketUnionApp extends StatelessWidget {
         return Scaffold(body: child);
       },
       debugShowCheckedModeBanner: false,
-      // routes: AppRoutes.routes,
+      routes: AppRoutes.routes,
     );
   }
 }
