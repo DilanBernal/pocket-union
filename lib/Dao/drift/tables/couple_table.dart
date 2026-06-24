@@ -1,19 +1,19 @@
-
 import 'package:drift/drift.dart';
-import 'package:pocket_union/features/auth/persistence/user_profile_table.dart';
+import 'user_profile_table.dart';
 
 class Couples extends Table {
   @override
-  String get actualTableName => 'couple';
+  String get actualTableName => 'couples';
 
   TextColumn get id => text()();
-
 
   @ReferenceName('user1Couples')
   TextColumn get user1Id => text().nullable().references(Profiles, #id)();
 
   @ReferenceName('user2Couples')
   TextColumn get user2Id => text().nullable().references(Profiles, #id)();
+
+  TextColumn get inviteCode => text().nullable()();
 
   TextColumn get isUsable => text().withDefault(const Constant('WAITING'))();
 

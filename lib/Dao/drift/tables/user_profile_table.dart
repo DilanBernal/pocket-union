@@ -2,11 +2,9 @@ import 'package:drift/drift.dart';
 
 import 'couple_table.dart';
 
-// ─── Tablas ───────────────────────────────────────────────────────────────────
-
 class Profiles extends Table {
   @override
-  String get actualTableName => 'profile';
+  String get actualTableName => 'profiles';
 
   TextColumn get id => text()();
 
@@ -22,7 +20,6 @@ class Profiles extends Table {
 
   DateTimeColumn get lastSync => dateTime().nullable()();
 
-  // Sync offline-first
   TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
 
   DateTimeColumn get localUpdatedAt => dateTime().nullable()();
@@ -33,10 +30,9 @@ class Profiles extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-
 class Categories extends Table {
   @override
-  String get actualTableName => 'category';
+  String get actualTableName => 'categories';
 
   TextColumn get id => text()();
 
@@ -50,7 +46,8 @@ class Categories extends Table {
 
   TextColumn get color => text().nullable()();
 
-  TextColumn get categoryHost => text()(); // enum: USER-DEFINED en Supabase
+  TextColumn get categoryHost => text()();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
@@ -65,7 +62,7 @@ class Categories extends Table {
 
 class Expenses extends Table {
   @override
-  String get actualTableName => 'expense';
+  String get actualTableName => 'expenses';
 
   TextColumn get id => text()();
 
@@ -103,7 +100,7 @@ class Expenses extends Table {
 
 class ExpenseShares extends Table {
   @override
-  String get actualTableName => 'expense_share';
+  String get actualTableName => 'expense_shares';
 
   TextColumn get id => text()();
 
@@ -127,7 +124,7 @@ class ExpenseShares extends Table {
 
 class Incomes extends Table {
   @override
-  String get actualTableName => 'income';
+  String get actualTableName => 'incomes';
 
   TextColumn get id => text()();
 
@@ -137,21 +134,23 @@ class Incomes extends Table {
 
   TextColumn get description => text().nullable()();
 
-  TextColumn get categoryId => text().references(Categories, #id)();
+  TextColumn get categoryId => text().nullable().references(Categories, #id)();
 
   DateTimeColumn get transactionDate => dateTime()();
 
   BoolColumn get isRecurring => boolean().withDefault(const Constant(false))();
 
-  TextColumn get recurrenceInterval => text().nullable()(); // JSON como String
+  TextColumn get recurrenceInterval => text().nullable()();
+
   BoolColumn get isReceived => boolean().withDefault(const Constant(true))();
 
-  TextColumn get receivedIn => text().nullable()(); // JSON como String
+  TextColumn get receivedIn => text().nullable()();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   TextColumn get name => text()();
 
-  TextColumn get userRecipientId => text().references(Profiles, #id)();
+  TextColumn get userRecipientId => text().nullable().references(Profiles, #id)();
 
   TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
 
@@ -165,7 +164,7 @@ class Incomes extends Table {
 
 class Goals extends Table {
   @override
-  String get actualTableName => 'goal';
+  String get actualTableName => 'goals';
 
   TextColumn get id => text()();
 
@@ -195,7 +194,7 @@ class Goals extends Table {
 
 class GoalContributions extends Table {
   @override
-  String get actualTableName => 'goal_contribution';
+  String get actualTableName => 'goal_contributions';
 
   TextColumn get id => text()();
 

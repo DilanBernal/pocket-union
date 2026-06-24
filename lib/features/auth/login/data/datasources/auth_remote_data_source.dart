@@ -20,9 +20,8 @@ abstract class AuthRemoteDataSource {
 AuthRemoteDataSource authRemoteDataSource(Ref ref) {
   final client = ref.watch(supabaseClientProvider).requireValue;
   final logger = ref.watch(loggerProvider);
-  final userPort = ref.watch(userDaoProvider);
   final preferences = ref.watch(sharedPreferencesProvider).requireValue;
-  return AuthRemoteDataSourceImpl(client, logger, userPort, preferences);
+  return AuthRemoteDataSourceImpl(ref, client, logger, preferences);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -71,6 +70,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         _sharedPreferences.setString('userProfile', userProfile.toString()),
       ]);
 
+      DomainUser? coupleProfile;
+
       try {
         final coupleRows = await _client
             .from('couple')
@@ -93,7 +94,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
               throw Exception('No se pudo determinar el usuario de la pareja');
             }
 
-            final coupleProfile = DomainUser.fromMap(
+            coupleProfile = DomainUser.fromMap(
               await _client
                   .from('profile')
                   .select()
@@ -103,17 +104,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
             coupleProfile.inCloud = true;
 
-            await Future.wait([
-              _localPort.upsertUser(coupleProfile),
-              _sharedPreferences.setString(
-                'coupleProfile',
-                coupleProfile.toString(),
-              ),
-            ]);
+            await userDao.upsertUser(coupleProfile);
+            await _sharedPreferences.setString(
+              'coupleProfile',
+              coupleProfile.toString(),
+            );
           }
         }
       } catch (e, st) {
-        userDao.upsertUser(coupleProfile);
+        if (coupleProfile != null) {
+          userDao.upsertUser(coupleProfile);
+        }
       }
 
       _logger.info('AuthRemoteDataSource: Login exitoso para $userId');
