@@ -1,25 +1,13 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pocket_union/core/services/util/logger.dart';
-import 'package:pocket_union/domain/port/utils/logger_port.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:pocket_union/core/util/services/logger_service.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-final loggerProvider = Provider<LoggerPort>((ref) {
-  return LoggerService();
-});
+part 'supabase_provider.g.dart';
 
-final sharedPreferencesProvider = FutureProvider<SharedPreferences>((
-  ref,
-) async {
-  final instance = await SharedPreferences.getInstance();
-  var isInSession = instance.getBool('isInSession');
-  if (isInSession == null) {
-    instance.setBool('isInSession', false);
-  }
-  return instance;
-});
 
-final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
+@riverpod
+Future<SupabaseClient> supabaseClientProvider(Ref ref ) async {
   final logger = ref.watch(loggerProvider);
 
   try {
@@ -44,4 +32,4 @@ final supabaseClientProvider = FutureProvider<SupabaseClient>((ref) async {
     logger.error('Error inicializando Supabase', error: e, stackTrace: st);
     rethrow;
   }
-});
+}

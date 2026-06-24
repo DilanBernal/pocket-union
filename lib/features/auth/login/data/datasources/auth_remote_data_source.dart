@@ -1,10 +1,9 @@
+import 'package:pocket_union/core/util/services/logger_service.dart';
 import 'package:pocket_union/domain/enum/couple_usable_state.dart';
 import 'package:pocket_union/domain/models/auth/user.dart';
-import 'package:pocket_union/core/providers/data_local_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:pocket_union/core/providers/utils_providers.dart';
 import 'package:pocket_union/features/auth/domain/entities/user_credentials.dart';
 import 'package:pocket_union/features/auth/domain/entities/auth_result.dart';
 

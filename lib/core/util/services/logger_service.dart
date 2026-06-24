@@ -1,8 +1,16 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
-
-import 'package:pocket_union/domain/enum/log_level.dart';
 import 'package:pocket_union/domain/port/utils/logger_port.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../domain/enum/log_level.dart';
+
+
+part 'logger_service.g.dart';
+
+@riverpod
+LoggerPort logger(Ref ref) {
+  return LoggerService();
+}
 
 class LoggerService extends LoggerPort {
   final String _tag;
