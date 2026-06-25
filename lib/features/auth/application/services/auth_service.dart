@@ -1,5 +1,9 @@
 import 'package:pocket_union/core/common/domain_error.dart';
 import 'package:pocket_union/core/ports/logger_port.dart';
+import 'package:pocket_union/core/utils/shared_preferences.dart';
+import 'package:pocket_union/features/auth/application/services/couple_service.dart';
+import 'package:pocket_union/features/auth/domain/entities/couple_entity.dart';
+import 'package:pocket_union/features/auth/domain/ports/couple_port.dart';
 import 'package:pocket_union/features/auth/login/dtos/login_dto.dart';
 import 'package:pocket_union/features/auth/domain/entities/user_entity.dart';
 import 'package:pocket_union/features/auth/domain/models/auth_result_model.dart';
@@ -7,6 +11,7 @@ import 'package:pocket_union/features/auth/domain/ports/auth_port.dart';
 import 'package:pocket_union/features/auth/domain/ports/user_port_local.dart';
 import 'package:pocket_union/features/auth/register/dtos/register_dto.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/common/app_response.dart';
@@ -22,10 +27,20 @@ Future<AuthPort> authService(Ref ref) async {
   final userLocalPort = await ref.watch(userLocalPortProvider.future);
   final supabaseClient = await ref.watch(supabaseClientProvider.future);
   final logger = ref.watch(loggerProvider);
+  final coupleService = await ref.watch(coupleServiceProvider.future);
+  final sharedPreferencesAsync = await ref.watch(
+    sharedPreferencesAsyncProvider.future,
+  );
+  final sharedPreferencesWithCache = await ref.watch(
+    sharedPreferencesWithCacheProvider.future,
+  );
   return AuthService(
     supabaseClient: supabaseClient,
     userLocalPort: userLocalPort,
     logger: logger,
+    coupleService: coupleService,
+    sharedPreferencesAsync: sharedPreferencesAsync,
+    sharedPreferencesWithCache: sharedPreferencesWithCache,
   );
 }
 
@@ -33,19 +48,31 @@ class AuthService extends AuthPort {
   final UserLocalPort _userLocalPort;
   final SupabaseClient _supabaseClient;
   final LoggerPort _logger;
+  final CouplePort _coupleService;
+  final SharedPreferencesAsync _sharedPreferencesAsync;
+  final SharedPreferencesWithCache _sharedPreferencesWithCache;
 
   AuthService({
     required UserLocalPort userLocalPort,
     required SupabaseClient supabaseClient,
     required LoggerPort logger,
+    required CouplePort coupleService,
+    required SharedPreferencesAsync sharedPreferencesAsync,
+    required SharedPreferencesWithCache sharedPreferencesWithCache,
   }) : _logger = logger,
        _supabaseClient = supabaseClient,
-       _userLocalPort = userLocalPort;
+       _userLocalPort = userLocalPort,
+       _coupleService = coupleService,
+       _sharedPreferencesAsync = sharedPreferencesAsync,
+       _sharedPreferencesWithCache = sharedPreferencesWithCache;
 
   @override
   Future<AppResponse<AuthResultModel>> login(LoginDto request) async {
     try {
-      // await _sharedPreferences.setBool('isFirstLaunch', false);
+      await _sharedPreferencesWithCache.setBool(
+        PreferencesCacheKeys.isFirstLaunch,
+        false,
+      );
       final loginRes = await _supabaseClient.auth.signInWithPassword(
         email: request.email,
         password: request.password,
@@ -67,10 +94,19 @@ class AuthService extends AuthPort {
       );
       userProfile.inCloud = true;
       var response = await Future.wait([
-        // _sharedPreferences.setBool('isInSession', true),
-        // _sharedPreferences.setString('idUser', loginRes.user!.id),
+        _sharedPreferencesWithCache.setBool(
+          PreferencesCacheKeys.isInSession,
+          true,
+        ),
+        _sharedPreferencesWithCache.setString(
+          PreferencesCacheKeys.userId,
+          loginRes.user!.id,
+        ),
         _userLocalPort.upsertUser(userProfile),
-        // _sharedPreferences.setString('userProfile', userProfile.toString()),
+        _sharedPreferencesAsync.setString(
+          'userProfile',
+          userProfile.toString(),
+        ),
       ]);
       _logger.info('AuthService: Login exitoso para ${loginRes.user!.id}');
 
@@ -80,14 +116,14 @@ class AuthService extends AuthPort {
             .from('couple')
             .select('id, user1_id, user2_id, is_usable')
             .or(
-              'user1_id.eq.${loginRes.user!.id},user2_id.eq.${loginRes.user!.id}',
+              'user1_id.eq.${loginRes.user!.id}, user2_id.eq.${loginRes.user!.id}',
             )
             .limit(1);
         if (coupleRows.isNotEmpty) {
-          // await _sharedPreferences.setString(
-          //   'coupleId',
-          //   coupleRows.first['id'],
-          // );
+          await _sharedPreferencesWithCache.setString(
+            PreferencesCacheKeys.coupleId,
+            coupleRows.first['id'],
+          );
           if (coupleRows.first['is_usable'] == CoupleUsableState.ready.value) {
             final idToSearch = loginRes.user!.id == coupleRows.first['user1_id']
                 ? coupleRows.first['user2_id']
@@ -104,10 +140,10 @@ class AuthService extends AuthPort {
 
             await Future.wait([
               _userLocalPort.upsertUser(coupleProfile),
-              // _sharedPreferences.setString(
-              //   'coupleProfile',
-              //   coupleProfile.toString(),
-              // ),
+              _sharedPreferencesAsync.setString(
+                'coupleProfile',
+                coupleProfile.toString(),
+              ),
             ]);
           }
         }
@@ -142,8 +178,19 @@ class AuthService extends AuthPort {
           inCloud: true,
         );
 
+        _sharedPreferencesWithCache.setBool(
+          PreferencesCacheKeys.isFirstLaunch,
+          false,
+        );
+        _sharedPreferencesWithCache.setBool(
+          PreferencesCacheKeys.isInSession,
+          true,
+        );
+        _sharedPreferencesWithCache.setString(
+          PreferencesCacheKeys.userId,
+          res.user!.id,
+        );
         var resultados = await Future.wait([
-          // _sharedPreferences.setBool('isFirstLaunch', false),
           _userLocalPort.upsertUser(domainUser),
         ]);
         if (resultados.isNotEmpty) {
@@ -151,6 +198,9 @@ class AuthService extends AuthPort {
             'AuthService: Usuario registrado y guardado en SQLite: ${res.user!.id}',
           );
         }
+        Future.microtask(() async {
+          await handleCoupleInRegister(res.user!.id);
+        });
       }
 
       _logger.info('AuthService: Registro completado');
@@ -158,6 +208,47 @@ class AuthService extends AuthPort {
     } catch (e) {
       _logger.error('AuthService: Error al intentar registrarse', error: e);
       rethrow;
+    }
+  }
+
+  Future<void> handleCoupleInRegister(String userId) async {
+    final coupleResponse = await _coupleService.getCoupleByUserIdInNetwork(
+      userId,
+    );
+
+    switch (coupleResponse) {
+      case Success<CoupleEntity?>():
+        var coupleValue = coupleResponse.value;
+        if (coupleValue != null) {
+          _logger.info(
+            'AuthService: Usuario registrado y couple encontrada: $userId',
+          );
+          await _coupleService.upsertCouple(coupleValue, inNetwork: false);
+        } else {
+          final response = await _coupleService.createCouple(userId);
+          switch (response) {
+            case Success():
+              _logger.info(
+                'AuthService: Usuario registrado y couple creada: $userId',
+              );
+              break;
+            case Failure():
+              var error = response.error;
+              _logger.error(
+                'AuthService: Error al crear couple en registro: $userId',
+                error: error,
+              );
+              break;
+          }
+        }
+        break;
+      case Failure<CoupleEntity?>():
+        var info = coupleResponse.error;
+        _logger.error(
+          'AuthService: Error al obtener couple en registro: $userId',
+          error: info,
+        );
+        break;
     }
   }
 }

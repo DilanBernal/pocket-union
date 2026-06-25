@@ -5,7 +5,8 @@ import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:flutter_localizations/flutter_localizations.dart' show GlobalMaterialLocalizations, GlobalWidgetsLocalizations;
+import 'package:flutter_localizations/flutter_localizations.dart'
+    show GlobalMaterialLocalizations, GlobalWidgetsLocalizations;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,14 +54,14 @@ Future<String> _initVariables() async {
   final hasCoupleReady = coupleId != null && coupleId.isNotEmpty;
 
   String initialRoute = '';
-  // if (isFirstLaunch) {
-  //   initialRoute = AppRoutes.start;
-  // } else if (!isInSession) {
-  //   initialRoute = AppRoutes.login;
-  // } else if (!hasCoupleReady) {
-  //   initialRoute = AppRoutes.coupleSetup;
-  // } else {
-  //   initialRoute = AppRoutes.home;
-  // }
+  if (isFirstLaunch) {
+    initialRoute = AppRoutes.start;
+  } else if (!isInSession) {
+    initialRoute = AppRoutes.login;
+  } else if (!hasCoupleReady) {
+    initialRoute = AppRoutes.coupleSetup;
+  } else {
+    initialRoute = AppRoutes.home;
+  }
   return initialRoute;
 }

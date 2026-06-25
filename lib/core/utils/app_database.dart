@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
+import '../../features/auth/persistence/tables/couple_table.dart';
 import '../../features/auth/persistence/tables/user_profile_table.dart';
 
 part 'app_database.g.dart';
@@ -13,7 +14,7 @@ Future<AppDatabase> appDatabase(Ref ref) async {
   return buildAppDatabase();
 }
 
-@DriftDatabase(tables: [UserProfileTable])
+@DriftDatabase(tables: [UserProfileTable, CoupleTable])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 

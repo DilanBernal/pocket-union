@@ -7,7 +7,6 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import '../../../ui/widgets/auth_text_form_field.dart';
 import '../../../ui/widgets/form_title.dart';
 
-
 class LoginForm extends StatelessWidget {
   final Color colorFocusBorderInput;
   final Color colorEnabledBorderInput;
@@ -71,7 +70,7 @@ class LoginForm extends StatelessWidget {
           AuthTextFormField(
             colorFocusBorderInput: colorFocusBorderInput,
             colorEnabledBorderInput: colorEnabledBorderInput,
-            keyboardType: TextInputType.text,
+            keyboardType: TextInputType.visiblePassword,
             icon: Icons.key,
             fieldLabel: 'Contraseña',
             formKey: formKey,
@@ -118,8 +117,10 @@ class LoginForm extends StatelessWidget {
                       formKey.currentState?.saveAndValidate();
                       if (formKey.currentState!.validate()) {
                         formKey.currentState!.save();
-                        final emailValue = formKey.currentState!.fields['email']!.value;
-                        final passwordValue = formKey.currentState!.fields['password']!.value;
+                        final emailValue =
+                            formKey.currentState!.fields['email']!.value;
+                        final passwordValue =
+                            formKey.currentState!.fields['password']!.value;
                         onLogin(emailValue, passwordValue);
                       }
                     },

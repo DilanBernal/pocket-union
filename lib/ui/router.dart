@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocket_union/features/auth/couple/presentation/screens/couple_setup_screen.dart';
 import '../features/auth/login/presentation/screens/login_screen.dart';
 import '../features/auth/register/presentation/screens/register_screen.dart';
 // import 'package:pocket_union/ui/screens/categories/categories_list_screen.dart';
@@ -62,28 +63,28 @@ class AppRoutes {
   //     return IncomeDetailScreen(incomeId: incomeId);
   //   },
   static Map<String, WidgetBuilder> routes = {
-    start: (context) => const LoginScreen(),
+    start: (context) => const RegisterScreen(),
     login: (context) => const LoginScreen(),
     register: (context) => const RegisterScreen(),
-    home: (context) => const Placeholder(),
+    home: (context) => const RegisterScreen(),
     settings: (context) => const Placeholder(),
     historyExpenses: (context) => const Placeholder(),
     historyIncome: (context) => const Placeholder(),
     missions: (context) => const Placeholder(),
     categories: (context) => const Placeholder(),
     newCategory: (context) => const Placeholder(),
-    coupleSetup: (context) => const Placeholder(),
+    coupleSetup: (context) => const CoupleSetupScreen(),
     newRecurrentExpense: (context) => const Placeholder(),
     newRecurrentIncome: (context) => const Placeholder(),
     historyRecurrentExpense: (context) => const Placeholder(),
     historyRecurrentIncome: (context) => const Placeholder(),
     expenseDetail: (context) {
       final expenseId = ModalRoute.of(context)!.settings.arguments as String;
-      return Placeholder();
+      return Text(expenseId);
     },
     incomeDetail: (context) {
       final incomeId = ModalRoute.of(context)!.settings.arguments as String;
-      return Placeholder();
+      return Text(incomeId);
     },
   };
 }

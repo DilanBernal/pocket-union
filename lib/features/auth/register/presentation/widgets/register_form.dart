@@ -1,11 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:pocket_union/ui/router.dart';
 
-import '../../../application/services/auth_service.dart';
 import '../../../ui/widgets/auth_text_form_field.dart';
 import '../../../ui/widgets/form_title.dart';
 import '../../dtos/register_dto.dart';
@@ -103,8 +101,34 @@ class RegisterForm extends StatelessWidget {
                 minLowercaseCount: 1,
                 minUppercaseCount: 1,
                 minNumberCount: 1,
+                minSpecialCharCount: 0,
               ),
               FormBuilderValidators.required(),
+            ]),
+          ),
+          AuthTextFormField(
+            colorFocusBorderInput: colorFocusBorderInput,
+            colorEnabledBorderInput: colorEnabledBorderInput,
+            keyboardType: TextInputType.visiblePassword,
+            icon: Icons.key,
+            fieldLabel: 'Confirmar contraseña',
+            inputName: 'password_confirm',
+            formKey: formKey,
+            validator: FormBuilderValidators.compose([
+              FormBuilderValidators.password(
+                errorText: 'La contraseña no esta en el formato correcto',
+                minLength: 6,
+                maxLength: 15,
+                minLowercaseCount: 1,
+                minUppercaseCount: 1,
+                minNumberCount: 1,
+                minSpecialCharCount: 0,
+              ),
+              FormBuilderValidators.required(),
+              // FormBuilderValidators.equal(
+              //   formKey.currentState?.fields['password']?.value,
+              //   errorText: 'Las contraseñas no coinciden',
+              // ),
             ]),
           ),
           Material(
@@ -131,17 +155,31 @@ class RegisterForm extends StatelessWidget {
                     child: InkWell(
                       splashColor: Colors.blue,
                       onTap: () {
+                        if (isLoading) return;
                         formKey.currentState?.saveAndValidate();
-                        if (formKey.currentState!.validate()) {
-                          final request = RegisterDto(
-                            email: formKey.currentState!.fields['email']!.value,
-                            fullName:
-                                formKey.currentState!.fields['full_name']!.value,
-                            password:
-                                formKey.currentState!.fields['password']!.value,
+                        if (!formKey.currentState!.validate()) return;
+
+                        if (formKey.currentState!.fields['password']!.value !=
+                            formKey
+                                .currentState!
+                                .fields['password_confirm']!
+                                .value) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Las contraseñas no coinciden'),
+                              backgroundColor: Colors.red,
+                            ),
                           );
-                          onRegister(request);
+                          return;
                         }
+                        final request = RegisterDto(
+                          email: formKey.currentState!.fields['email']!.value,
+                          fullName:
+                              formKey.currentState!.fields['full_name']!.value,
+                          password:
+                              formKey.currentState!.fields['password']!.value,
+                        );
+                        onRegister(request);
                       },
                       child: Center(
                         child: Text(
@@ -188,102 +226,3 @@ class RegisterForm extends StatelessWidget {
     );
   }
 }
-
-// Future<void> _handleCreateUser() async {
-//   if (!formKey.currentState!.validate()) {
-//     return;
-//   }
-//   formKey.currentState!.save();
-//   try {
-//     final authService = await ref.read(authServiceProvider.future);
-//     var res = await authService.register(
-//       RegisterDto(email: _email, fullName: _fullName, password: _password),
-//     );
-//
-//     if (!mounted) return;
-//     if (res == null) {
-//       showDialog(
-//         context: context,
-//         barrierDismissible: true,
-//         builder: (BuildContext context) {
-//           return AlertDialog(
-//             title: const Text('¡Ocurrio un error al registrarse!'),
-//             content: SingleChildScrollView(
-//               child: ListBody(
-//                 children: [
-//                   const Text(
-//                     'Se ha enviado un correo de confirmación a tu dirección de email.',
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           );
-//         },
-//       );
-//       return;
-//     }
-//
-//     // Mostrar diálogo de confirmación de email
-//     showDialog(
-//       context: context,
-//       barrierDismissible: false,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           title: const Text('¡Cuenta creada exitosamente!'),
-//           content: SingleChildScrollView(
-//             child: ListBody(
-//               children: [
-//                 const Text(
-//                   'Se ha enviado un correo de confirmación a tu dirección de email.',
-//                 ),
-//                 const SizedBox(height: 16),
-//                 Text(
-//                   'Por favor confirma tu correo ($_email) para poder iniciar sesión.',
-//                   style: const TextStyle(fontSize: 14),
-//                 ),
-//                 const SizedBox(height: 16),
-//                 const Text(
-//                   'Después de confirmar tu correo, inicia sesión para '
-//                   'sincronizar con tu pareja. Este paso requiere internet.',
-//                   style: TextStyle(
-//                     fontSize: 12,
-//                     fontStyle: FontStyle.italic,
-//                     color: Colors.grey,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           actions: [
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.pop(context);
-//                 Navigator.pushReplacementNamed(context, AppRoutes.login);
-//               },
-//               child: const Text('Ir a inicio de sesión'),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   } catch (e) {
-//     if (mounted) {
-//       // Mostrar diálogo de error
-//       showDialog(
-//         context: context,
-//         builder: (BuildContext context) {
-//           return AlertDialog(
-//             title: const Text('Error al registrarse'),
-//             content: Text(e.toString().replaceAll('Exception: ', '')),
-//             actions: [
-//               TextButton(
-//                 onPressed: () => Navigator.pop(context),
-//                 child: const Text('Cerrar'),
-//               ),
-//             ],
-//           );
-//         },
-//       );
-//     }
-//   }
-// }
