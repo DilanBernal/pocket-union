@@ -5,7 +5,7 @@ import '../../domain/entities/user_entity.dart';
 
 class UserProfileTable extends Table {
   @override
-  String get actualTableName => 'profiles';
+  String get tableName => 'profiles';
 
   TextColumn get id => text()();
 

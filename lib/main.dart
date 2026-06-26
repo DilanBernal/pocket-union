@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pocket_union/core/utils/shared_preferences.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/theme/app_theme.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'
     show GlobalMaterialLocalizations, GlobalWidgetsLocalizations;
@@ -13,7 +13,9 @@ void main() async {
 
   GoogleFonts.config.allowRuntimeFetching = false;
 
-  final initialRoute = await _initVariables();
+  final container = ProviderContainer();
+
+  final initialRoute = await _initVariables(container);
 
   runApp(ProviderScope(child: PocketUnionApp(initialRoute: initialRoute)));
 }
@@ -45,9 +47,9 @@ class PocketUnionApp extends StatelessWidget {
   }
 }
 
-Future<String> _initVariables() async {
+Future<String> _initVariables(ProviderContainer container) async {
   // Obtener SharedPreferences para determinar la ruta inicial
-  final prefs = await SharedPreferences.getInstance();
+  final prefs = await container.read(sharedPreferencesWithCacheProvider.future);
   final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
   final isInSession = prefs.getBool('isInSession') ?? false;
   final coupleId = prefs.getString('coupleId');

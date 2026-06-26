@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift_sqflite/drift_sqflite.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
@@ -39,7 +42,16 @@ class AppDatabase extends _$AppDatabase {
 
 Future<AppDatabase> buildAppDatabase() async {
   const storage = FlutterSecureStorage();
+
+  final appDocDir = await getApplicationDocumentsDirectory();
   const dbName = 'pocket_union.db';
+  final dbPath = '${appDocDir.path}/$dbName';
+
+  final directory = Directory(appDocDir.path);
+
+  if (!await directory.exists()) {
+    await directory.create(recursive: true);
+  }
 
   // Obtener o generar la clave de encriptación
   String? encryptionKey = await storage.read(key: 'db_encryption_key');
@@ -47,6 +59,18 @@ Future<AppDatabase> buildAppDatabase() async {
     // Genera una clave aleatoria segura la primera vez
     encryptionKey = _generateSecureKey();
     await storage.write(key: 'db_encryption_key', value: encryptionKey);
+  }
+  final dbFile = File(dbPath);
+
+  if (await dbFile.exists()) {
+    try {
+      // Intentar abrir la base de datos con la clave actual
+      final testDb = await openDatabase(dbPath, password: encryptionKey);
+      await testDb.close();
+    } catch (e) {
+      // Si falla, borrar y recrear
+      await dbFile.delete();
+    }
   }
 
   final executor = SqfliteQueryExecutor(

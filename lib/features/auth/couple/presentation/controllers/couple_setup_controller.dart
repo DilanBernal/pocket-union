@@ -42,10 +42,15 @@ class CoupleSetupController extends _$CoupleSetupController {
           final prefs = await ref.read(
             sharedPreferencesWithCacheProvider.future,
           );
-          await prefs.setString('coupleId', coupleData.$1.id);
-          await prefs.setString('inviteCode', coupleData.$2);
+          final asyncPrefs = await ref.read(
+            sharedPreferencesAsyncProvider.future,
+          );
+          Future.wait([
+            prefs.setString(PreferencesCacheKeys.coupleId, coupleData.$1.id),
+            asyncPrefs.setString('inviteCode', coupleData.$2),
+          ]);
 
-          state = const AsyncData(null);
+          state = AsyncData(coupleData);
           return Success(coupleData.$2);
       }
     } catch (e, st) {

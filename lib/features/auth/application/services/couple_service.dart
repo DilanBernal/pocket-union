@@ -64,41 +64,41 @@ class CoupleService implements CouplePort {
     try {
       var inviteCode = generateInviteCode();
 
-      var alreadyExistsCoupleWithCode = await _supabaseClient
-          .from('couple_invite_codes')
-          .select('code')
-          .eq('code', inviteCode)
-          .limit(1)
-          .maybeSingle();
+      var alreadyExistsCoupleWithCode = await _getCoupleCodeFunction(
+        inviteCode,
+        userId,
+      );
+
+      CoupleEntity? couple;
 
       if (alreadyExistsCoupleWithCode != null) {
-        while (alreadyExistsCoupleWithCode != null) {
-          inviteCode = generateInviteCode();
-          alreadyExistsCoupleWithCode = await _supabaseClient
-              .from('couple_invite_codes')
-              .select('code')
-              .eq('code', inviteCode)
-              .limit(1)
-              .maybeSingle();
-        }
+        couple = await _validateCoupleCreation(
+          alreadyExistsCoupleWithCode,
+          userId,
+          inviteCode,
+          couple,
+        );
       }
 
-      final couple = CoupleEntity(
-        id: _uuid.v4(),
-        createdAt: DateTime.now(),
-        user1Id: userId,
-        isUsable: CoupleUsableState.waiting,
-      );
-      final response = await _supabaseClient
-          .from('couple')
-          .insert(couple.toJson())
-          .select()
-          .maybeSingle();
-
-      await _supabaseClient.from('couple_invite_codes').insert({
-        'code': inviteCode,
-        'id': response!['id'],
-      });
+      if (couple == null) {
+        couple = CoupleEntity(
+          id: _uuid.v4(),
+          createdAt: DateTime.now(),
+          user1Id: userId,
+          isUsable: CoupleUsableState.waiting,
+        );
+        final response = await _supabaseClient
+            .from('couple')
+            .insert(couple.toJson())
+            .select()
+            .maybeSingle();
+        await _supabaseClient.from('couple_invite_codes').insert({
+          'code': inviteCode,
+          'id': response!['id'],
+        });
+      } else {
+        inviteCode = alreadyExistsCoupleWithCode?.inviteCode ?? inviteCode;
+      }
 
       await _coupleDao.upsertCouple(couple);
 
@@ -198,4 +198,68 @@ class CoupleService implements CouplePort {
       return Failure(DomainError.fromException(e, ''));
     }
   }
+
+  Future<_CoupleCodeFunctionResponse?> _getCoupleCodeFunction(
+    String inviteCode,
+    String userId,
+  ) async {
+    var response = await _supabaseClient.rpc(
+      'get_couple_invite_code_with_existence',
+      params: {'p_couple_code': inviteCode, 'p_user_id': userId},
+    );
+    if (response == null || response.isEmpty) {
+      return null;
+    }
+    response = response[0];
+
+    return _CoupleCodeFunctionResponse()
+      ..coupleId = response['couple_id']
+      ..inviteCode = response['invite_code']
+      ..userId = response['user_id']
+      ..userPosition = response['user_position'];
+  }
+
+  Future<CoupleEntity?> _validateCoupleCreation(
+    _CoupleCodeFunctionResponse? alreadyExistsCoupleWithCode,
+    String userId,
+    String inviteCode,
+    CoupleEntity? couple,
+  ) async {
+    bool canExit = false;
+    while (alreadyExistsCoupleWithCode != null && !canExit) {
+      if (alreadyExistsCoupleWithCode.userId == userId) {
+        final coupleRow = await _supabaseClient
+            .from('couple')
+            .select()
+            .eq(
+              alreadyExistsCoupleWithCode.userPosition == 1
+                  ? 'user1_id'
+                  : alreadyExistsCoupleWithCode.userPosition == 2
+                  ? 'user2_id'
+                  : 'id',
+              userId,
+            )
+            .limit(1)
+            .maybeSingle();
+        if (coupleRow == null) break;
+        couple = CoupleEntity.fromMap(coupleRow);
+        break;
+      } else {
+        inviteCode = generateInviteCode();
+        alreadyExistsCoupleWithCode = await _getCoupleCodeFunction(
+          inviteCode,
+          userId,
+        );
+      }
+    }
+    return couple;
+  }
+}
+
+class _CoupleCodeFunctionResponse {
+  String? coupleId;
+  String? inviteCode;
+  String? userId;
+  int? userPosition;
+  _CoupleCodeFunctionResponse();
 }

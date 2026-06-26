@@ -5,7 +5,7 @@ import 'user_profile_table.dart';
 
 class CoupleTable extends Table {
   @override
-  String get actualTableName => 'couples';
+  String get tableName => 'couples';
 
   TextColumn get id => text()();
 

@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/common/app_response.dart';
 import 'package:pocket_union/features/auth/couple/presentation/controllers/couple_setup_controller.dart';
+import 'package:pocket_union/features/auth/couple/presentation/widgets/option_card.dart';
 import 'package:pocket_union/features/auth/ui/widgets/form_title.dart';
 import 'package:pocket_union/ui/router.dart';
+import 'internet_warning.dart';
 
 class CoupleSetupBody extends ConsumerStatefulWidget {
   const CoupleSetupBody({super.key});
@@ -34,6 +36,11 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
 
     switch (response) {
       case Failure():
+        final error = response.error;
+        if (error.code == 'couple_setup_user_missing') {
+          Navigator.pushReplacementNamed(context, AppRoutes.login);
+          return;
+        }
         _showError(
           'Error al crear la pareja. Verifica tu conexión a internet.',
         );
@@ -125,12 +132,12 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          _buildInternetWarning(),
+          InternetWarning(),
           const SizedBox(height: 32),
 
           // Show main options or invite/join sections
           if (!_showInviteSection && !_showJoinSection) ...[
-            _buildOptionCard(
+            OptionCard(
               icon: Icons.person_add,
               title: 'Invitar a mi pareja',
               description:
@@ -139,7 +146,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
               color: const Color.fromARGB(255, 116, 11, 218),
             ),
             const SizedBox(height: 16),
-            _buildOptionCard(
+            OptionCard(
               icon: Icons.link,
               title: 'Tengo un código',
               description:
@@ -162,98 +169,6 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
             const Center(child: CircularProgressIndicator()),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildInternetWarning() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.amber.withAlpha(25),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.withAlpha(80)),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.wifi, color: Colors.amber, size: 20),
-          SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Conexión a internet requerida para este paso.',
-              style: TextStyle(color: Colors.amber, fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOptionCard({
-    required IconData icon,
-    required String title,
-    required String description,
-    required VoidCallback? onTap,
-    required Color color,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withAlpha(100)),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [color.withAlpha(30), color.withAlpha(10)],
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withAlpha(40),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white60,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: color.withAlpha(150),
-                size: 16,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

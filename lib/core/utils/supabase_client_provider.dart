@@ -19,11 +19,11 @@ Future<SupabaseClient> supabaseClient(Ref ref) async {
         ? const String.fromEnvironment('SUPABASE_ANON_KEY')
         : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
 
-    if (url == null || url.isEmpty || anonKey == null || anonKey.isEmpty) {
+    if (url.isEmpty || anonKey.isEmpty) {
       throw Exception('Variables de entorno faltantes. ');
     }
 
-    await Supabase.initialize(url: url, anonKey: anonKey);
+    await Supabase.initialize(url: url, publishableKey: anonKey);
     logger.info('Supabase inicializado correctamente');
     return Supabase.instance.client;
   } catch (e, st) {
