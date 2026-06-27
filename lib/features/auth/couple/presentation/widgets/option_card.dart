@@ -70,9 +70,9 @@ class OptionCard extends StatelessWidget {
                 ),
               ),
               Icon(
-                TablerIcons.arrow_badge_left,
+                TablerIcons.caret_right,
                 color: color.withAlpha(150),
-                size: 16,
+                size: 24,
               ),
             ],
           ),

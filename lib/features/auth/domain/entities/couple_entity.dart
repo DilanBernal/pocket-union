@@ -15,6 +15,22 @@ class CoupleEntity {
     this.isUsable = CoupleUsableState.waiting,
   });
 
+  CoupleEntity copyWith({
+    String? id,
+    DateTime? createdAt,
+    String? user1Id,
+    String? user2Id,
+    CoupleUsableState? isUsable,
+  }) {
+    return CoupleEntity(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      user1Id: user1Id ?? this.user1Id,
+      user2Id: user2Id ?? this.user2Id,
+      isUsable: isUsable ?? this.isUsable,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,

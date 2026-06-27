@@ -45,32 +45,42 @@ class RegisterScreen extends ConsumerWidget {
 
     const colorFocusBorderInput = Color.fromRGBO(56, 49, 70, 1);
     const colorEnabledBorderInput = Color.fromRGBO(45, 41, 53, 1);
-    return GridBackground(
-      gridColor: const Color.fromRGBO(27, 7, 35, 1),
-      strokeWidth: 2,
-      gridSize: 40,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: AlignmentGeometry.topRight,
-            focal: AlignmentGeometry.bottomRight,
-            focalRadius: 3,
-            colors: [Colors.red.shade800, Colors.transparent],
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        RepaintBoundary(
+          child: GridBackground(
+            gridColor: const Color.fromRGBO(27, 7, 35, 1),
+            strokeWidth: 2,
+            gridSize: 40,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: AlignmentGeometry.topRight,
+                  focal: AlignmentGeometry.bottomRight,
+                  focalRadius: 3,
+                  colors: [Colors.red.shade800, Colors.transparent],
+                ),
+              ),
+              child: Container(),
+            ),
           ),
         ),
-        child: SafeArea(
-          child: RegisterForm(
-            isLoading: registerState.isLoading,
-            colorFocusBorderInput: colorFocusBorderInput,
-            colorEnabledBorderInput: colorEnabledBorderInput,
-            onRegister: (RegisterDto request) async {
-              await ref
-                  .read(registerControllerProvider.notifier)
-                  .register(request);
-            },
+        RepaintBoundary(
+          child: SafeArea(
+            child: RegisterForm(
+              isLoading: registerState.isLoading,
+              colorFocusBorderInput: colorFocusBorderInput,
+              colorEnabledBorderInput: colorEnabledBorderInput,
+              onRegister: (RegisterDto request) async {
+                await ref
+                    .read(registerControllerProvider.notifier)
+                    .register(request);
+              },
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

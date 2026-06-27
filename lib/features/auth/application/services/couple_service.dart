@@ -126,9 +126,48 @@ class CoupleService implements CouplePort {
   }
 
   @override
-  Future<AppResponse<CoupleEntity?>> getCoupleByUserId(String userId) {
-    // TODO: implement getCoupleByUserId
-    throw UnimplementedError();
+  Future<AppResponse<CoupleEntity?>> getCoupleByUserId(
+    String userId, {
+    bool inNetwork = false,
+  }) async {
+    try {
+      var couple = await _coupleDao.getCoupleByUserId(userId);
+      if (couple != null && !inNetwork) {
+        return Success(couple);
+      }
+      final coupleRow = await _supabaseClient
+          .from('couple')
+          .select()
+          .or('user1_id.eq.$userId,user2_id.eq.$userId')
+          .single()
+          .limit(1);
+
+      if (couple?.user1Id != coupleRow['user1_id']) {
+        couple = couple!.copyWith(user1Id: coupleRow['user1_id']);
+      }
+      if (couple?.user2Id != coupleRow['user2_id']) {
+        couple = couple!.copyWith(user2Id: coupleRow['user2_id']);
+      }
+      if (couple?.isUsable != coupleRow['is_usable']) {
+        couple = couple!.copyWith(
+          isUsable: CoupleUsableState.fromString(
+            coupleRow['is_usable'] ??
+                    couple.user1Id != null && couple.user2Id != null
+                ? 'ACTIVE'
+                : 'WAITING',
+          ),
+        );
+      }
+
+      return Success(couple);
+    } catch (e, st) {
+      _logger.error(
+        'Error getting couple by userId: $userId',
+        error: e,
+        stackTrace: st,
+      );
+      return Failure(DomainError.fromException(e, ''));
+    }
   }
 
   @override

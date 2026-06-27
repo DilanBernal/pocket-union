@@ -63,10 +63,10 @@ class AppRoutes {
   //     return IncomeDetailScreen(incomeId: incomeId);
   //   },
   static Map<String, WidgetBuilder> routes = {
-    start: (context) => const RegisterScreen(),
+    start: (context) => const LoginScreen(),
     login: (context) => const LoginScreen(),
     register: (context) => const RegisterScreen(),
-    home: (context) => const RegisterScreen(),
+    home: (context) => const CoupleSetupScreen(),
     settings: (context) => const Placeholder(),
     historyExpenses: (context) => const Placeholder(),
     historyIncome: (context) => const Placeholder(),

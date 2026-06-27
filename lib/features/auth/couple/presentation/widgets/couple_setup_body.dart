@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pocket_union/core/common/app_response.dart';
 import 'package:pocket_union/features/auth/couple/presentation/controllers/couple_setup_controller.dart';
 import 'package:pocket_union/features/auth/couple/presentation/widgets/option_card.dart';
@@ -138,7 +139,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
           // Show main options or invite/join sections
           if (!_showInviteSection && !_showJoinSection) ...[
             OptionCard(
-              icon: Icons.person_add,
+              icon: TablerIcons.user_plus,
               title: 'Invitar a mi pareja',
               description:
                   'Genera un código de invitación para que tu pareja se una.',
@@ -147,7 +148,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
             ),
             const SizedBox(height: 16),
             OptionCard(
-              icon: Icons.link,
+              icon: TablerIcons.circles_relation,
               title: 'Tengo un código',
               description:
                   'Ingresa el código que te compartió tu pareja para unirte.',
@@ -176,7 +177,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
   Widget _buildInviteSection(bool isLoading) {
     return Column(
       children: [
-        const Icon(Icons.celebration, color: Colors.amber, size: 48),
+        const Icon(TablerIcons.confetti, color: Colors.amber, size: 48),
         const SizedBox(height: 16),
         Text(
           '¡Pareja creada!',
@@ -227,7 +228,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.copy, color: Colors.white60),
+                icon: const Icon(TablerIcons.clipboard, color: Colors.white60),
                 tooltip: 'Copiar código',
               ),
             ],

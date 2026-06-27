@@ -9,8 +9,6 @@ abstract class CouplePortLocal {
 
   Future<CoupleEntity?> getCoupleByUserId(String userId);
 
-  Future<CoupleEntity?> getCoupleByInviteCode(String inviteCode);
-
   Future<List<CoupleEntity>> getByFilter(CoupleEntity filter);
 
   Future<bool> upsertCouple(CoupleEntity couple);

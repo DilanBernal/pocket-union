@@ -13,7 +13,10 @@ abstract class CouplePort {
     String userId,
   );
 
-  Future<AppResponse<CoupleEntity?>> getCoupleByUserId(String userId);
+  Future<AppResponse<CoupleEntity?>> getCoupleByUserId(
+    String userId, {
+    bool inNetwork = false,
+  });
 
   Future<AppResponse<CoupleEntity?>> getCoupleByInviteCode(String inviteCode);
 

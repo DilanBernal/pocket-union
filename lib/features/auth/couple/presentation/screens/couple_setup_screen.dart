@@ -7,21 +7,31 @@ class CoupleSetupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridBackground(
-      gridColor: const Color.fromRGBO(27, 7, 35, 1),
-      strokeWidth: 2,
-      gridSize: 40,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topRight,
-            focal: Alignment.bottomRight,
-            focalRadius: 3,
-            colors: [Colors.deepPurple.shade800, Colors.transparent],
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        RepaintBoundary(
+          child: GridBackground(
+            gridColor: const Color.fromRGBO(27, 7, 35, 1),
+            strokeWidth: 2,
+            gridSize: 40,
+            child: Container(),
           ),
         ),
-        child: const SafeArea(child: CoupleSetupBody()),
-      ),
+        RepaintBoundary(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.topRight,
+                focal: Alignment.bottomRight,
+                focalRadius: 3,
+                colors: [Colors.deepPurple.shade800, Colors.transparent],
+              ),
+            ),
+            child: const SafeArea(child: CoupleSetupBody()),
+          ),
+        ),
+      ],
     );
   }
 }
