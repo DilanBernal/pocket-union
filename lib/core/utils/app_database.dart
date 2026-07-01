@@ -4,6 +4,10 @@ import 'dart:math';
 import 'package:drift/drift.dart';
 import 'package:drift_sqflite/drift_sqflite.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pocket_union/core/enums/sync_status.dart';
+import 'package:pocket_union/features/reference/domain/enums/category_host.dart';
+import 'package:pocket_union/features/reference/persistence/tables/category_table.dart';
+import 'package:pocket_union/features/transaction/persistence/tables/expense_table.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:path/path.dart' as p;
@@ -18,7 +22,15 @@ Future<AppDatabase> appDatabase(Ref ref) async {
   return buildAppDatabase();
 }
 
-@DriftDatabase(tables: [UserProfileTable, CoupleTable])
+@DriftDatabase(
+  tables: [
+    UserProfileTable,
+    CoupleTable,
+    ExpenseTable,
+    ExpenseCategories,
+    CategoryTable,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
