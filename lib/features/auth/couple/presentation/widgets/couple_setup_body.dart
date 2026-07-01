@@ -39,6 +39,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
       case Failure():
         final error = response.error;
         if (error.code == 'couple_setup_user_missing') {
+          if (!mounted) return;
           Navigator.pushReplacementNamed(context, AppRoutes.login);
           return;
         }
@@ -156,6 +157,43 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
                   ? null
                   : () => setState(() => _showJoinSection = true),
               color: const Color.fromRGBO(251, 0, 204, 1),
+            ),
+            RepaintBoundary(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 13,
+                ),
+                child: Material(
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: () async {
+                      if (isLoading) return;
+                      await ref
+                          .read(coupleSetupControllerProvider.notifier)
+                          .back();
+                      if (!mounted) return;
+                      Navigator.pushReplacementNamed(context, AppRoutes.login);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Ink(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color.fromRGBO(255, 0, 0, 1),
+                            Color.fromARGB(255, 242, 4, 75),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.withAlpha(100)),
+                      ),
+                      // color: Colors.red,
+                      child: Center(child: Text('Volver a iniciar sesión')),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
 

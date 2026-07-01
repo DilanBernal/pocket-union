@@ -55,8 +55,8 @@ class LoginScreen extends ConsumerWidget {
                 colorFocusBorderInput: colorFocusBorderInput,
                 colorEnabledBorderInput: colorEnabledBorderInput,
                 isLoading: loginState.isLoading,
-                onLogin: (email, password) async {
-                  await ref
+                onLogin: (email, password) {
+                  ref
                       .read(loginControllerProvider.notifier)
                       .login(LoginDto(email: email, password: password));
                 },

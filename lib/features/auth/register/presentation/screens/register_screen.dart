@@ -72,8 +72,8 @@ class RegisterScreen extends ConsumerWidget {
               isLoading: registerState.isLoading,
               colorFocusBorderInput: colorFocusBorderInput,
               colorEnabledBorderInput: colorEnabledBorderInput,
-              onRegister: (RegisterDto request) async {
-                await ref
+              onRegister: (RegisterDto request) {
+                ref
                     .read(registerControllerProvider.notifier)
                     .register(request);
               },

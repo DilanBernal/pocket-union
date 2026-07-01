@@ -144,4 +144,11 @@ class CoupleSetupController extends _$CoupleSetupController {
       );
     }
   }
+
+  Future back() async {
+    final prefs = await ref.read(sharedPreferencesWithCacheProvider.future);
+    await prefs.remove(PreferencesCacheKeys.coupleId);
+    await prefs.remove(PreferencesCacheKeys.isInSession);
+    await prefs.remove(PreferencesCacheKeys.userId);
+  }
 }

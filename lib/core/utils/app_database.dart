@@ -1,11 +1,12 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:drift/drift.dart';
 import 'package:drift_sqflite/drift_sqflite.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
+import 'package:path/path.dart' as p;
 
 import '../../features/auth/persistence/tables/couple_table.dart';
 import '../../features/auth/persistence/tables/user_profile_table.dart';
@@ -35,6 +36,11 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(userProfileTable, userProfileTable.isDeleted);
       }
     },
+    beforeOpen: (details) async {
+      await customSelect('PRAGMA journal_mode=WAL').get();
+      await customStatement('PRAGMA synchronous=NORMAL');
+      await customStatement('PRAGMA foreign_keys=ON');
+    },
   );
 }
 
@@ -43,12 +49,11 @@ class AppDatabase extends _$AppDatabase {
 Future<AppDatabase> buildAppDatabase() async {
   const storage = FlutterSecureStorage();
 
-  final appDocDir = await getApplicationDocumentsDirectory();
+  final dbFolder = await getDatabasesPath();
   const dbName = 'pocket_union.db';
-  final dbPath = '${appDocDir.path}/$dbName';
+  final dbPath = p.join(dbFolder, dbName);
 
-  final directory = Directory(appDocDir.path);
-
+  final directory = Directory(dbFolder);
   if (!await directory.exists()) {
     await directory.create(recursive: true);
   }
@@ -63,30 +68,68 @@ Future<AppDatabase> buildAppDatabase() async {
   final dbFile = File(dbPath);
 
   if (await dbFile.exists()) {
-    try {
-      // Intentar abrir la base de datos con la clave actual
-      final testDb = await openDatabase(dbPath, password: encryptionKey);
-      await testDb.close();
-    } catch (e) {
-      // Si falla, borrar y recrear
-      await dbFile.delete();
+    final isHealthy = await _isDatabaseHealthy(dbPath, encryptionKey);
+    if (!isHealthy) {
+      await _quarantineCorruptedDatabase(dbPath);
     }
   }
 
   final executor = SqfliteQueryExecutor(
     singleInstance: true,
     creator: (path) => openDatabase(path.path, password: encryptionKey),
-    path: dbName,
+    path: dbPath,
   );
 
   return AppDatabase(executor);
 }
 
+/// Abre la DB y corre un integrity_check real. Un `openDatabase` exitoso
+/// no garantiza que el contenido esté sano (puede abrir y fallar recién
+/// al leer una página corrupta), así que validamos con PRAGMA.
+Future<bool> _isDatabaseHealthy(String dbPath, String encryptionKey) async {
+  Database? testDb;
+  try {
+    testDb = await openDatabase(dbPath, password: encryptionKey);
+    final result = await testDb.rawQuery('PRAGMA integrity_check');
+    final status = result.isNotEmpty ? result.first.values.first : null;
+    return status == 'ok';
+  } catch (_) {
+    return false;
+  } finally {
+    await testDb?.close();
+  }
+}
+
+/// Mueve el archivo corrupto a un backup en vez de borrarlo directo,
+/// y limpia los sidecar files (-wal, -shm, -journal) que si quedan
+/// huérfanos son la causa más común de un open_failed en el siguiente
+/// arranque, incluso con el .db principal sano.
+Future<void> _quarantineCorruptedDatabase(String dbPath) async {
+  final dbFile = File(dbPath);
+  final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+  try {
+    if (await dbFile.exists()) {
+      await dbFile.copy('$dbPath.corrupt_$timestamp');
+      await dbFile.delete();
+    }
+  } catch (_) {
+    // Si ni copiar/borrar funciona, seguimos igual: mejor perder el
+    // archivo que dejar la app sin poder arrancar.
+  }
+
+  for (final suffix in ['-wal', '-shm', '-journal']) {
+    final sidecar = File('$dbPath$suffix');
+    if (await sidecar.exists()) {
+      try {
+        await sidecar.delete();
+      } catch (_) {}
+    }
+  }
+}
+
 String _generateSecureKey() {
-  // 32 bytes aleatorios como hex
-  final random = List.generate(
-    32,
-    (_) => (DateTime.now().microsecondsSinceEpoch & 0xFF),
-  );
-  return random.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  final random = Random.secure();
+  final bytes = List<int>.generate(32, (_) => random.nextInt(256));
+  return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 }

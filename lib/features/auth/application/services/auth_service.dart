@@ -178,29 +178,39 @@ class AuthService extends AuthPort {
           inCloud: true,
         );
 
-        _sharedPreferencesWithCache.setBool(
-          PreferencesCacheKeys.isFirstLaunch,
-          false,
-        );
-        _sharedPreferencesWithCache.setBool(
-          PreferencesCacheKeys.isInSession,
-          true,
-        );
-        _sharedPreferencesWithCache.setString(
-          PreferencesCacheKeys.userId,
-          res.user!.id,
-        );
         var resultados = await Future.wait([
+          _sharedPreferencesWithCache.setBool(
+            PreferencesCacheKeys.isFirstLaunch,
+            false,
+          ),
+          _sharedPreferencesWithCache.setBool(
+            PreferencesCacheKeys.isInSession,
+            true,
+          ),
+          _sharedPreferencesWithCache.setString(
+            PreferencesCacheKeys.userId,
+            res.user!.id,
+          ),
           _userLocalPort.upsertUser(domainUser),
+          _sharedPreferencesAsync.setString(
+            'userProfile',
+            domainUser.toString(),
+          ),
         ]);
+
         if (resultados.isNotEmpty) {
           _logger.info(
             'AuthService: Usuario registrado y guardado en SQLite: ${res.user!.id}',
           );
         }
-        Future.microtask(() async {
-          await handleCoupleInRegister(res.user!.id);
-        });
+
+        final coupleId = await handleCoupleInRegister(res.user!.id);
+        if (coupleId != null) {
+          await _sharedPreferencesWithCache.setString(
+            PreferencesCacheKeys.coupleId,
+            coupleId,
+          );
+        }
       }
 
       _logger.info('AuthService: Registro completado');
@@ -211,7 +221,7 @@ class AuthService extends AuthPort {
     }
   }
 
-  Future<void> handleCoupleInRegister(String userId) async {
+  Future<String?> handleCoupleInRegister(String userId) async {
     final coupleResponse = await _coupleService.getCoupleByUserIdInNetwork(
       userId,
     );
@@ -224,31 +234,31 @@ class AuthService extends AuthPort {
             'AuthService: Usuario registrado y couple encontrada: $userId',
           );
           await _coupleService.upsertCouple(coupleValue, inNetwork: false);
+          return coupleValue.id;
         } else {
           final response = await _coupleService.createCouple(userId);
           switch (response) {
-            case Success():
+            case Success<(CoupleEntity, String)>():
               _logger.info(
                 'AuthService: Usuario registrado y couple creada: $userId',
               );
-              break;
-            case Failure():
+              return response.value.$1.id;
+            case Failure<(CoupleEntity, String)>():
               var error = response.error;
               _logger.error(
                 'AuthService: Error al crear couple en registro: $userId',
                 error: error,
               );
-              break;
+              return null;
           }
         }
-        break;
       case Failure<CoupleEntity?>():
         var info = coupleResponse.error;
         _logger.error(
           'AuthService: Error al obtener couple en registro: $userId',
           error: info,
         );
-        break;
+        return null;
     }
   }
 }

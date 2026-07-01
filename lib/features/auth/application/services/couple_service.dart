@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:pocket_union/core/common/app_response.dart';
 import 'package:pocket_union/features/auth/application/dao/couple_dao_local.dart';
@@ -53,8 +54,65 @@ class CoupleService implements CouplePort {
   Future<AppResponse<CoupleEntity>> createCoupleWithInviteCode(
     String userId,
     String inviteCode,
-  ) {
-    throw UnimplementedError();
+  ) async {
+    try {
+      // Validate invite code uniqueness
+      var alreadyExistsCoupleWithCode = await _getCoupleCodeFunction(
+        inviteCode,
+        userId,
+      );
+
+      if (alreadyExistsCoupleWithCode != null) {
+        _logger.error('Invite code already exists: $inviteCode');
+        return Failure(
+          DomainError.fromException(
+            Exception('Invite code already in use'),
+            'The code $inviteCode already exists',
+          ),
+        );
+      }
+
+      // Create couple locally
+      final couple = CoupleEntity(
+        id: _uuid.v4(),
+        createdAt: DateTime.now(),
+        user1Id: userId,
+        isUsable: CoupleUsableState.waiting,
+      );
+
+      await _coupleDao.upsertCouple(couple);
+
+      // Sync to network (async, non-blocking)
+      unawaited(
+        Future(() async {
+          try {
+            await _supabaseClient.from('couple').insert(couple.toJson());
+            await _supabaseClient.from('couple_invite_codes').insert({
+              'code': inviteCode,
+              'id': couple.id,
+            });
+            _logger.info(
+              'Couple created in network with preset code: ${couple.id}',
+            );
+          } catch (e, st) {
+            _logger.error(
+              'Error syncing couple creation to network',
+              error: e,
+              stackTrace: st,
+            );
+          }
+        }),
+      );
+
+      return Success(couple);
+    } catch (e, st) {
+      _logger.error(
+        'Error creating couple with invite code for userId: $userId',
+        error: e,
+        stackTrace: st,
+      );
+      return Failure(DomainError.fromException(e, ''));
+    }
   }
 
   @override
@@ -114,15 +172,102 @@ class CoupleService implements CouplePort {
   }
 
   @override
-  Future<bool> deleteCouple(String coupleId) {
-    // TODO: implement deleteCouple
-    throw UnimplementedError();
+  Future<bool> deleteCouple(String coupleId) async {
+    try {
+      // Delete locally (soft delete)
+      final result = await _coupleDao.deleteCouple(coupleId);
+
+      if (!result) {
+        _logger.warning('Failed to delete couple locally: $coupleId');
+        return false;
+      }
+
+      // Sync to network (async, non-blocking)
+      unawaited(
+        Future(() async {
+          try {
+            // Soft delete in Supabase
+            await _supabaseClient
+                .from('couple')
+                .update({'is_deleted': true})
+                .eq('id', coupleId);
+
+            // Clean up invite codes
+            await _supabaseClient
+                .from('couple_invite_codes')
+                .delete()
+                .eq('id', coupleId);
+
+            _logger.info('Couple deleted in network: $coupleId');
+          } catch (e, st) {
+            _logger.error(
+              'Error syncing couple deletion to network',
+              error: e,
+              stackTrace: st,
+            );
+          }
+        }),
+      );
+
+      return true;
+    } catch (e, st) {
+      _logger.error(
+        'Error deleting couple: $coupleId',
+        error: e,
+        stackTrace: st,
+      );
+      rethrow;
+    }
   }
 
   @override
-  Future<AppResponse<CoupleEntity?>> getCoupleByInviteCode(String inviteCode) {
-    // TODO: implement getCoupleByInviteCode
-    throw UnimplementedError();
+  Future<AppResponse<CoupleEntity?>> getCoupleByInviteCode(
+    String inviteCode,
+  ) async {
+    try {
+      // Query couple_invite_codes table
+      final codeRow = await _supabaseClient
+          .from('couple_invite_codes')
+          .select()
+          .eq('code', inviteCode)
+          .maybeSingle();
+
+      if (codeRow == null) {
+        _logger.info('Invite code not found: $inviteCode');
+        return const Success(null);
+      }
+
+      final coupleId = codeRow['id'] as String?;
+      if (coupleId == null) {
+        _logger.warning('Invite code has no associated couple ID');
+        return const Success(null);
+      }
+
+      // Fetch couple from couple table
+      final coupleRow = await _supabaseClient
+          .from('couple')
+          .select()
+          .eq('id', coupleId)
+          .maybeSingle();
+
+      if (coupleRow == null) {
+        _logger.warning('Couple not found for code: $inviteCode');
+        return const Success(null);
+      }
+
+      // Map to CoupleEntity and sync locally
+      final couple = CoupleEntity.fromMap(coupleRow);
+      await _coupleDao.upsertCouple(couple);
+
+      return Success(couple);
+    } catch (e, st) {
+      _logger.error(
+        'Error getting couple by invite code: $inviteCode',
+        error: e,
+        stackTrace: st,
+      );
+      return Failure(DomainError.fromException(e, ''));
+    }
   }
 
   @override
@@ -174,9 +319,66 @@ class CoupleService implements CouplePort {
   Future<AppResponse<CoupleEntity>> joinCoupleByCode(
     String inviteCode,
     String userId,
-  ) {
-    // TODO: implement joinCoupleByCode
-    throw UnimplementedError();
+  ) async {
+    try {
+      // Validación rápida local
+      final localCouple = await _coupleDao.getCoupleByUserId(userId);
+
+      if (localCouple != null &&
+          localCouple.user1Id != null &&
+          localCouple.user2Id != null) {
+        return Failure(
+          DomainError.fromException(
+            Exception('User already in a couple'),
+            'You are already in a couple.',
+          ),
+        );
+      }
+
+      // Toda la lógica ocurre en PostgreSQL
+      await _supabaseClient.rpc(
+        'join_couple_by_invite_code',
+        params: {'p_invite_code': inviteCode},
+      );
+
+      final coupleResponse = await getCoupleByUserIdInNetwork(userId);
+
+      if (coupleResponse is Failure ||
+          (coupleResponse is Success &&
+              (coupleResponse as Success<CoupleEntity?>).value == null)) {
+        return Failure(
+          DomainError.fromException(
+            Exception('Failed to fetch couple after joining'),
+            'Failed to fetch couple after joining.',
+          ),
+        );
+      }
+
+      final couple = (coupleResponse as Success<CoupleEntity?>).value;
+      await _coupleDao.upsertCouple(couple!);
+
+      _logger.info('User joined couple: userId=$userId, coupleId=${couple.id}');
+
+      return Success((coupleResponse as Success).value);
+    } on PostgrestException catch (e, st) {
+      _logger.error(
+        'RPC join_couple_by_invite_code failed',
+        error: e,
+        stackTrace: st,
+      );
+
+      return Failure(DomainError.fromException(e, e.message));
+    } catch (e, st) {
+      _logger.error(
+        'Unexpected error joining couple',
+        error: e,
+        stackTrace: st,
+      );
+
+      return Failure(
+        DomainError.fromException(e, 'Unexpected error joining couple.'),
+      );
+    }
   }
 
   @override
@@ -212,6 +414,7 @@ class CoupleService implements CouplePort {
           .from('couple')
           .select()
           .or('user1_id.eq.$userId,user2_id.eq.$userId')
+          .limit(1)
           .maybeSingle();
 
       if (rows != null) {

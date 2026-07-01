@@ -66,7 +66,7 @@ class AppRoutes {
     start: (context) => const LoginScreen(),
     login: (context) => const LoginScreen(),
     register: (context) => const RegisterScreen(),
-    home: (context) => const CoupleSetupScreen(),
+    home: (context) => const Placeholder(),
     settings: (context) => const Placeholder(),
     historyExpenses: (context) => const Placeholder(),
     historyIncome: (context) => const Placeholder(),

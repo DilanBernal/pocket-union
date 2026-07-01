@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../enums/log_level.dart';
@@ -54,13 +55,13 @@ class LoggerService extends LoggerPort {
   }
 
   void _log(LogLevel level, String message) {
-    // if (kDebugMode) {
-    developer.log(
-      message,
-      name: _tag,
-      level: level.value,
-      time: DateTime.now(),
-    );
-    // }
+    if (kDebugMode) {
+      developer.log(
+        message,
+        name: _tag,
+        level: level.value,
+        time: DateTime.now(),
+      );
+    }
   }
 }

@@ -12,15 +12,13 @@ Future<SupabaseClient> supabaseClient(Ref ref) async {
     // return FutureProvider.
     return Supabase.instance.client;
   } on AssertionError catch (_) {
-    final url = const String.fromEnvironment('SUPABASE_API_URL').isNotEmpty
-        ? const String.fromEnvironment('SUPABASE_API_URL')
-        : 'http://10.0.2.2:54321';
-    final anonKey = const String.fromEnvironment('SUPABASE_ANON_KEY').isNotEmpty
-        ? const String.fromEnvironment('SUPABASE_ANON_KEY')
-        : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+    final url = const String.fromEnvironment('SUPABASE_API_URL');
+    final anonKey = const String.fromEnvironment('SUPABASE_ANON_KEY');
 
     if (url.isEmpty || anonKey.isEmpty) {
-      throw Exception('Variables de entorno faltantes. ');
+      throw Exception(
+        'Variables de entorno faltantes. Debes proporcionar SUPABASE_API_URL y SUPABASE_ANON_KEY via --dart-define',
+      );
     }
 
     await Supabase.initialize(url: url, publishableKey: anonKey);
