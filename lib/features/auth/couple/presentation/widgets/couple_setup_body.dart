@@ -279,7 +279,7 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: isLoading ? null : _checkPartnerJoined,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(TablerIcons.refresh),
             label: const Text('Verificar si mi pareja se unió'),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -309,7 +309,11 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
   Widget _buildJoinSection(bool isLoading) {
     return Column(
       children: [
-        const Icon(Icons.link, color: Color.fromRGBO(251, 0, 204, 1), size: 48),
+        const Icon(
+          TablerIcons.circles_relation,
+          color: Color.fromRGBO(251, 0, 204, 1),
+          size: 48,
+        ),
         const SizedBox(height: 16),
         Text(
           'Únete a tu pareja',
@@ -374,11 +378,11 @@ class _CoupleSetupBodyState extends ConsumerState<CoupleSetupBody> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      strokeWidth: 1,
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.group_add),
+                : const Icon(TablerIcons.users_plus),
             label: Text(isLoading ? 'Uniéndose...' : 'Unirme a la pareja'),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),

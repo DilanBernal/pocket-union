@@ -5,6 +5,7 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/category_icon_tile.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/category_list_item.dart';
+import 'package:pocket_union/features/reference/category/presentation/widgets/transaction_type_selector.dart';
 
 class CategoryCommandForm extends ConsumerStatefulWidget {
   final String? categoryId;
@@ -17,7 +18,6 @@ class CategoryCommandForm extends ConsumerStatefulWidget {
 }
 
 class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
-  // CategoryHost _selectedHost = CategoryHost.income;
   IconData? _selectedIcon;
   Color? _selectedColor;
   // bool _isSubmitting = false;
@@ -150,7 +150,9 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                 final isSelected = _selectedColor == color;
                 return GestureDetector(
                   onTap: () => setState(() => _selectedColor = color),
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
@@ -170,34 +172,55 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                           : null,
                     ),
                     child: isSelected
-                        ? const Icon(Icons.check, color: Colors.white, size: 20)
+                        ? const Icon(
+                            TablerIcons.check,
+                            color: Colors.white,
+                            size: 20,
+                          )
                         : null,
                   ),
                 );
               }).toList(),
             ),
-            Text('Vista previa', style: Theme.of(context).textTheme.bodySmall),
             (widget._formKey.currentState?.fields['category_name']?.isValid ??
                         false) &&
                     _selectedColor != null &&
                     _selectedIcon != null
-                ? CategoryListItem(
-                    categoryName:
-                        widget
-                            ._formKey
-                            .currentState
-                            ?.fields['category_name']
-                            ?.value ??
-                        'Nombre de la categoría',
-                    selectedColor: _selectedColor,
-                    selectedIcon: _selectedIcon,
+                ? Wrap(
+                    children: [
+                      Text(
+                        'Vista previa',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      CategoryListItem(
+                        categoryName:
+                            widget
+                                ._formKey
+                                .currentState
+                                ?.fields['category_name']
+                                ?.value ??
+                            'Nombre de la categoría',
+                        selectedColor: _selectedColor,
+                        selectedIcon: _selectedIcon,
+                      ),
+                    ],
                   )
                 : Container(),
             const SizedBox(height: 24),
-            // Text(
-            //   'Tipo de transacción',
-            //   style: Theme.of(context).textTheme.bodySmall,
-            // ),
+            Text(
+              'Tipo de transacción',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 8.0,
+                horizontal: 42.2,
+              ),
+              child: TransactionTypeSelector(
+                name: 'transactionType',
+                initialValue: 1,
+              ),
+            ),
           ],
         ),
       ),

@@ -261,4 +261,37 @@ class AuthService extends AuthPort {
         return null;
     }
   }
+
+  @override
+  Future<AppResponse<UserEntity?>> getCurrentUser() async {
+    final userId = _sharedPreferencesWithCache.getString(
+      PreferencesCacheKeys.userId,
+    );
+
+    if (userId == null) {
+      _logger.info('AuthService: No hay usuario en sesión');
+      return Success(null);
+    }
+
+    UserEntity? user = await _userLocalPort.getUserById(userId);
+
+    if (user == null) {
+      final userProfile = await _supabaseClient
+          .from('profile')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
+      if (userProfile == null) {
+        _logger.info(
+          'AuthService: No se encontró el perfil del usuario en la nube',
+        );
+        return Success(null);
+      }
+      user = UserEntity.fromMap(userProfile);
+      user.inCloud = true;
+      user.lastSync = DateTime.now();
+      await _userLocalPort.upsertUser(user);
+    }
+    return Success(user);
+  }
 }

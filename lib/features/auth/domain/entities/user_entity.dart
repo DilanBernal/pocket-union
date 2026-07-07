@@ -6,13 +6,14 @@ class UserEntity {
   bool inCloud;
   DateTime? lastSync;
 
-  UserEntity(
-      {required this.id,
-        required this.fullName,
-        required this.balance,
-        this.avatarUrl,
-        this.lastSync,
-        required this.inCloud});
+  UserEntity({
+    required this.id,
+    required this.fullName,
+    required this.balance,
+    this.avatarUrl,
+    this.lastSync,
+    required this.inCloud,
+  });
 
   Map<String, dynamic> toMap() {
     return {
@@ -34,7 +35,7 @@ class UserEntity {
       avatarUrl: map['avatar_url'] ?? map['avatarUrl'],
       lastSync: (map['last_sync'] ?? map['lastSync']) != null
           ? DateTime.parse(map['last_sync'] ?? map['lastSync'])
-          : null,
+          : DateTime.now(),
     );
   }
 
@@ -45,8 +46,9 @@ class UserEntity {
       balance: (json['balance'] as num).toDouble(),
       inCloud: json['inCloud'] == 1,
       avatarUrl: json['avatarUrl'],
-      lastSync:
-      json['lastSync'] != null ? DateTime.parse(json['lastSync']) : null,
+      lastSync: json['lastSync'] != null
+          ? DateTime.parse(json['lastSync'])
+          : null,
     );
   }
 
