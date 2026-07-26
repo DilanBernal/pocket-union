@@ -1,6 +1,6 @@
 import 'package:pocket_union/core/common/sync_entity_base.dart';
 import 'package:pocket_union/core/enums/sync_status.dart';
-import 'package:pocket_union/features/reference/domain/entities/category_entities.dart';
+import 'package:pocket_union/features/reference/domain/entities/category_entity.dart';
 
 class ExpenseEntity extends OfflineBaseEntity {
   final String id;

@@ -1,12 +1,10 @@
 import 'package:pocket_union/core/enums/sync_status.dart';
 import 'package:pocket_union/features/reference/application/dto/category_filter_dto.dart';
-import 'package:pocket_union/features/reference/application/dto/new_category_dto.dart';
-import 'package:pocket_union/features/reference/application/dto/update_category_dto.dart';
-import 'package:pocket_union/features/reference/domain/entities/category_entities.dart';
+import 'package:pocket_union/features/reference/domain/entities/category_entity.dart';
 import 'package:pocket_union/features/reference/domain/enums/category_host.dart';
 
 abstract class CategoryPortLocal {
-  Future<String> createCategory(NewCategoryDto categoryDto);
+  Future<String> createCategory(CategoryEntity categoryDto);
 
   Future<CategoryEntity?> getCategoryById(String id);
 
@@ -14,7 +12,7 @@ abstract class CategoryPortLocal {
 
   Future deleteAllCategories();
 
-  Future<bool> createCategories(List<NewCategoryDto> categories);
+  Future<bool> createCategories(List<CategoryEntity> categories);
 
   Future<List<CategoryEntity>> createDefaultCategories(String idCouple);
 
@@ -29,9 +27,9 @@ abstract class CategoryPortLocal {
 
   Future<List<CategoryEntity>> getByFilter(CategoryFilterDto filter);
 
-  Future<bool> updateCategory(UpdateCategoryDto dto);
+  Future<bool> updateCategory(CategoryEntity entity);
 
-  Future<bool> updateCategories(List<UpdateCategoryDto> dtos);
+  Future<bool> updateCategories(List<CategoryEntity> entity);
 
   Future<List<CategoryEntity>> getCategoriesNeedingSync();
 

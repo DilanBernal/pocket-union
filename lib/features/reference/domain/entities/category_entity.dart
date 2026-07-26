@@ -1,0 +1,86 @@
+import 'package:pocket_union/core/common/sync_entity_base.dart';
+import 'package:pocket_union/core/enums/sync_status.dart';
+import 'package:pocket_union/features/reference/domain/enums/category_host.dart';
+
+class CategoryEntity extends OfflineBaseEntity {
+  final String id;
+
+  final String coupleId;
+
+  final String name;
+
+  final String? icon;
+
+  final String? shortDescription;
+
+  final String? color;
+
+  final DateTime createdAt;
+
+  final CategoryHost categoryHost;
+
+  const CategoryEntity({
+    required this.id,
+    required this.coupleId,
+    required this.name,
+    this.icon,
+    this.shortDescription,
+    this.color,
+    required this.createdAt,
+    required this.categoryHost,
+    required super.syncStatus,
+    required super.localUpdatedAt,
+    super.lastSyncedAt,
+    super.localDeletedAt,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'couple_id': coupleId,
+      'name': name,
+      'icon': icon,
+      'short_description': shortDescription,
+      'color': color,
+      'created_at': createdAt,
+      'category_host': categoryHost.index,
+      'sync_status': syncStatus.index,
+      'local_updated_at': localUpdatedAt,
+      'last_synced_at': lastSyncedAt,
+      'local_deleted_at': localDeletedAt,
+    };
+  }
+
+  factory CategoryEntity.fromMap(Map<String, dynamic> map) {
+    return CategoryEntity(
+      id: map['id'],
+      coupleId: map['couple_id'] ?? map['coupleId'],
+      name: map['name'],
+      icon: map['icon'],
+      shortDescription: map['short_description'],
+      color: map['color'],
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'])
+          : DateTime.parse(map['createdAt']),
+      categoryHost: map['category_host'] is int
+          ? CategoryHost.values[map['category_host']]
+          : CategoryHost.values.firstWhere(
+              (e) => e.name == (map['category_host']),
+            ),
+      syncStatus: map['sync_status'] is int
+          ? SyncStatus.values[map['sync_status']]
+          : SyncStatus.values.firstWhere(
+              (e) => e.name == (map['sync_status'] ?? 'pending'),
+            ),
+      localUpdatedAt: map['local_updated_at'] != null
+          ? DateTime.parse(map['local_updated_at'])
+          : DateTime.parse(map['localUpdatedAt']),
+      lastSyncedAt: (map['last_synced_at']) != null
+          ? DateTime.parse((map['last_synced_at']))
+          : null,
+      localDeletedAt: (map['local_deleted_at']) != null
+          ? DateTime.parse((map['local_deleted_at']))
+          : null,
+    );
+  }
+}
