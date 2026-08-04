@@ -15,6 +15,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+part 'category_service.g.dart';
+
 @Riverpod(keepAlive: true)
 Future<CategoryPort> categoryService(Ref ref) async {
   final supabaseClient = await ref.watch(supabaseClientProvider.future);
@@ -101,44 +103,36 @@ class CategoryService extends CategoryPort {
 
   @override
   Future<String> createCategory(CategoryInsDto categoryDto) async {
-    try {
-      final coupleId = _sharedPrefsCache.getString(
-        PreferencesCacheKeys.coupleId,
-      );
-      if (coupleId == null) {
-        throw Exception('Couple ID is null');
-      }
-      final categoryEntity = CategoryEntity(
-        id: _uuid.v4(),
-        coupleId: coupleId,
-        name: categoryDto.name,
-        createdAt: categoryDto.createdAt,
-        categoryHost: categoryDto.host,
-        syncStatus: categoryDto.status,
-        localUpdatedAt: DateTime.now().toUtc(),
-        color: categoryDto.color,
-        icon: categoryDto.icon,
-        shortDescription: categoryDto.shortDescription,
-      );
-
-      final localResult = await _categoryPortLocal.createCategory(
-        categoryEntity,
-      );
-
-      try {
-        await _supabaseClient.from('categories').upsert(categoryEntity.toMap());
-
-        await _categoryPortLocal.updateSyncStatus(
-          categoryEntity.id,
-          SyncStatus.synced,
-        );
-      } catch (e) {
-        _logger.error('Error creating category in cloud', error: e);
-      }
-      return localResult;
-    } catch (e) {
-      rethrow;
+    final coupleId = _sharedPrefsCache.getString(PreferencesCacheKeys.coupleId);
+    if (coupleId == null) {
+      throw Exception('Couple ID is null');
     }
+    final categoryEntity = CategoryEntity(
+      id: _uuid.v4(),
+      coupleId: coupleId,
+      name: categoryDto.name,
+      createdAt: categoryDto.createdAt,
+      categoryHost: categoryDto.host,
+      syncStatus: categoryDto.status,
+      localUpdatedAt: DateTime.now().toUtc(),
+      color: categoryDto.color,
+      icon: categoryDto.icon,
+      shortDescription: categoryDto.shortDescription,
+    );
+
+    final localResult = await _categoryPortLocal.createCategory(categoryEntity);
+
+    try {
+      await _supabaseClient.from('category').upsert(categoryEntity.toMap());
+
+      await _categoryPortLocal.updateSyncStatus(
+        categoryEntity.id,
+        SyncStatus.synced,
+      );
+    } catch (e) {
+      _logger.error('Error creating category in cloud', error: e);
+    }
+    return localResult;
   }
 
   @override

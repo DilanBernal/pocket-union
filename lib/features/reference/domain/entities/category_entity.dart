@@ -42,12 +42,8 @@ class CategoryEntity extends OfflineBaseEntity {
       'icon': icon,
       'short_description': shortDescription,
       'color': color,
-      'created_at': createdAt,
-      'category_host': categoryHost.index,
-      'sync_status': syncStatus.index,
-      'local_updated_at': localUpdatedAt,
-      'last_synced_at': lastSyncedAt,
-      'local_deleted_at': localDeletedAt,
+      'created_at': createdAt.toIso8601String(),
+      'category_host': categoryHost.name.toUpperCase(),
     };
   }
 

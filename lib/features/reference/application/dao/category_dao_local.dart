@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:pocket_union/core/enums/sync_status.dart';
 import 'package:pocket_union/core/ports/logger_port.dart';
 import 'package:pocket_union/core/utils/app_database.dart';
@@ -150,9 +151,17 @@ class CategoryDaoLocal extends CategoryPortLocal {
     String categoryId,
     SyncStatus status, {
     DateTime? lastSyncAt,
-  }) {
-    // TODO: implement updateSyncStatus
-    throw UnimplementedError();
+  }) async {
+    await _db
+        .update(_db.categoryTable)
+        .replace(
+          CategoryTableCompanion(
+            id: Value(categoryId),
+            syncStatus: Value(status),
+            lastSyncedAt: Value(lastSyncAt ?? DateTime.now().toUtc()),
+            localUpdatedAt: Value(lastSyncAt ?? DateTime.now().toUtc()),
+          ),
+        );
   }
 
   @override

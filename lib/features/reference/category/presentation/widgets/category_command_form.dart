@@ -3,9 +3,13 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:pocket_union/core/enums/sync_status.dart';
+import 'package:pocket_union/features/reference/category/dtos/category_ins_dto.dart';
+import 'package:pocket_union/features/reference/category/presentation/controller/category_command_controller.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/category_icon_tile.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/category_list_item.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/transaction_type_selector.dart';
+import 'package:pocket_union/features/reference/domain/enums/category_host.dart';
 
 class CategoryCommandForm extends ConsumerStatefulWidget {
   final String? categoryId;
@@ -20,7 +24,6 @@ class CategoryCommandForm extends ConsumerStatefulWidget {
 class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
   IconData? _selectedIcon;
   Color? _selectedColor;
-  // bool _isSubmitting = false;
 
   static final Set<IconData> _availableIcons = {
     TablerIcons.briefcase_filled,
@@ -74,12 +77,47 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
     Color(0xFF795548),
   ];
 
-  // String _colorToHex(Color color) {
-  //   return '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
-  // }
+  Future<void> onCreate() async {
+    widget._formKey.currentState?.saveAndValidate();
+    if (!(widget._formKey.currentState?.isValid ?? false)) {
+      return;
+    }
+    try {
+      final command = CategoryInsDto(
+        name: widget._formKey.currentState?.fields['category_name']!.value,
+        host:
+            widget._formKey.currentState?.fields['transactionType']!.value == 1
+            ? CategoryHost.expense
+            : CategoryHost.income,
+        icon:
+            _selectedIcon?.codePoint.toString() ??
+            TablerIcons.currency_dollar.codePoint.toString(),
+        color: _colorToHex(_selectedColor ?? Colors.blue),
+        syncStatuss: SyncStatus.pendingCreate,
+      );
+      final controller = ref.read(categoryCommandControllerProvider.notifier);
+      await controller.createCategory(command);
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  String _colorToHex(Color color) {
+    return '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(categoryCommandControllerProvider);
+    ref.listen(categoryCommandControllerProvider, (_, next) {
+      next.whenOrNull(
+        data: (result) {
+          if (result != null) {
+            Navigator.pop(context);
+          }
+        },
+      );
+    });
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: FormBuilder(
@@ -220,6 +258,10 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                 name: 'transactionType',
                 initialValue: 1,
               ),
+            ),
+            TextButton(
+              onPressed: onCreate,
+              child: const Text('Crear categoría'),
             ),
           ],
         ),

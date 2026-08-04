@@ -1,3 +1,4 @@
+import 'package:pocket_union/features/reference/application/services/category_service.dart';
 import 'package:pocket_union/features/reference/category/dtos/category_ins_dto.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -11,9 +12,15 @@ class CategoryCommandController extends _$CategoryCommandController {
   Future<void> createCategory(CategoryInsDto request) async {
     state = const AsyncLoading();
     try {
-      // final categoryPort = await ref.
+      final categoryService = await ref.read(categoryServiceProvider.future);
+      final result = await categoryService.createCategory(request);
+      if (result.isEmpty) {
+        return;
+      }
+      state = AsyncData(result);
     } catch (e, st) {
       state = AsyncError(e, st);
+      return;
     }
   }
 }

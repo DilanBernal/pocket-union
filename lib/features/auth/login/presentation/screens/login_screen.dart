@@ -18,7 +18,7 @@ class LoginScreen extends ConsumerWidget {
       next,
     ) {
       next.whenOrNull(
-        data: (authResult) async {
+        data: (authResult) {
           if (authResult != null) {
             Navigator.pushReplacementNamed(context, '/home');
           }
