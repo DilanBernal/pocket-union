@@ -19,7 +19,7 @@ class CategoryEntity extends OfflineBaseEntity {
 
   final CategoryHost categoryHost;
 
-  const CategoryEntity({
+  CategoryEntity({
     required this.id,
     required this.coupleId,
     required this.name,
@@ -61,16 +61,19 @@ class CategoryEntity extends OfflineBaseEntity {
       categoryHost: map['category_host'] is int
           ? CategoryHost.values[map['category_host']]
           : CategoryHost.values.firstWhere(
-              (e) => e.name == (map['category_host']),
+              (e) => e.name.toUpperCase() == (map['category_host']),
             ),
       syncStatus: map['sync_status'] is int
           ? SyncStatus.values[map['sync_status']]
           : SyncStatus.values.firstWhere(
-              (e) => e.name == (map['sync_status'] ?? 'pending'),
+              (e) =>
+                  e.name.toLowerCase() ==
+                  (map['sync_status'] ??
+                      SyncStatus.pendingCreate.name.toLowerCase()),
             ),
       localUpdatedAt: map['local_updated_at'] != null
           ? DateTime.parse(map['local_updated_at'])
-          : DateTime.parse(map['localUpdatedAt']),
+          : DateTime.now().toUtc(),
       lastSyncedAt: (map['last_synced_at']) != null
           ? DateTime.parse((map['last_synced_at']))
           : null,

@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:pocket_union/core/enums/sync_status.dart';
+import 'package:pocket_union/core/utils/logger_provider.dart';
 import 'package:pocket_union/features/reference/category/dtos/category_ins_dto.dart';
+import 'package:pocket_union/features/reference/category/dtos/category_upd_dto.dart';
 import 'package:pocket_union/features/reference/category/presentation/controller/category_command_controller.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/category_icon_tile.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/category_list_item.dart';
@@ -13,9 +15,8 @@ import 'package:pocket_union/features/reference/domain/enums/category_host.dart'
 
 class CategoryCommandForm extends ConsumerStatefulWidget {
   final String? categoryId;
-  CategoryCommandForm({super.key, this.categoryId});
+  const CategoryCommandForm({super.key, this.categoryId});
 
-  final _formKey = GlobalKey<FormBuilderState>();
   @override
   ConsumerState<CategoryCommandForm> createState() =>
       _CategoryCommandFormState();
@@ -24,6 +25,8 @@ class CategoryCommandForm extends ConsumerStatefulWidget {
 class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
   IconData? _selectedIcon;
   Color? _selectedColor;
+
+  final _formKey = GlobalKey<FormBuilderState>();
 
   static final Set<IconData> _availableIcons = {
     TablerIcons.briefcase_filled,
@@ -77,16 +80,24 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
     Color(0xFF795548),
   ];
 
+  Future<void> handleSubmit() async {
+    if (!mounted) return;
+    _formKey.currentState?.saveAndValidate();
+    if (widget.categoryId != null) {
+      await onEdit();
+      return;
+    }
+    await onCreate();
+  }
+
   Future<void> onCreate() async {
-    widget._formKey.currentState?.saveAndValidate();
-    if (!(widget._formKey.currentState?.isValid ?? false)) {
+    if (!(_formKey.currentState?.isValid ?? false)) {
       return;
     }
     try {
       final command = CategoryInsDto(
-        name: widget._formKey.currentState?.fields['category_name']!.value,
-        host:
-            widget._formKey.currentState?.fields['transactionType']!.value == 1
+        name: _formKey.currentState?.fields['category_name']!.value,
+        host: _formKey.currentState?.fields['transaction_type']!.value == 1
             ? CategoryHost.expense
             : CategoryHost.income,
         icon:
@@ -98,12 +109,73 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
       final controller = ref.read(categoryCommandControllerProvider.notifier);
       await controller.createCategory(command);
     } catch (e) {
-      print(e);
+      final logger = ref.read(loggerProvider);
+      logger.error('Error creating category', error: e);
+    }
+  }
+
+  Future<void> onEdit() async {
+    if (!(_formKey.currentState?.isValid ?? false)) {
+      return;
+    }
+    try {
+      final command = CategoryUpdDto(
+        id: widget.categoryId!,
+        name: _formKey.currentState?.fields['category_name']!.value,
+        host: _formKey.currentState?.fields['transaction_type']!.value == 1
+            ? CategoryHost.expense
+            : CategoryHost.income,
+        icon:
+            _selectedIcon?.codePoint.toString() ??
+            TablerIcons.currency_dollar.codePoint.toString(),
+        color: _colorToHex(_selectedColor ?? Colors.blue),
+      );
+      final controller = ref.read(categoryCommandControllerProvider.notifier);
+      await controller.updateCategory(command);
+    } catch (e) {
+      final logger = ref.read(loggerProvider);
+      logger.error('Error updating category', error: e);
     }
   }
 
   String _colorToHex(Color color) {
     return '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+  }
+
+  @override
+  void initState() {
+    _selectedIcon = _availableIcons.first;
+    _selectedColor = _availableColors.first;
+    super.initState();
+    if (widget.categoryId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final controller = ref.read(categoryCommandControllerProvider.notifier);
+        controller.getCategoryById(widget.categoryId!).then((category) {
+          if (category != null) {
+            setState(() {
+              _selectedIcon = category.icon != null
+                  ? IconData(
+                      int.parse(category.icon!),
+                      fontFamily: 'TablerIcons',
+                    )
+                  : _availableIcons.first;
+              _selectedColor = category.color != null
+                  ? Color(
+                      int.parse(category.color!.substring(1), radix: 16) +
+                          0xFF000000,
+                    )
+                  : _availableColors.first;
+              _formKey.currentState?.fields['category_name']?.didChange(
+                category.name,
+              );
+              _formKey.currentState?.fields['transaction_type']?.didChange(
+                category.categoryHost == CategoryHost.expense ? 1 : 2,
+              );
+            });
+          }
+        });
+      });
+    }
   }
 
   @override
@@ -122,7 +194,7 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
       padding: const EdgeInsets.all(16.0),
       child: FormBuilder(
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        key: widget._formKey,
+        key: _formKey,
         child: Column(
           children: [
             Text(
@@ -220,7 +292,7 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                 );
               }).toList(),
             ),
-            (widget._formKey.currentState?.fields['category_name']?.isValid ??
+            (_formKey.currentState?.fields['category_name']?.isValid ??
                         false) &&
                     _selectedColor != null &&
                     _selectedIcon != null
@@ -230,16 +302,18 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                         'Vista previa',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      CategoryListItem(
-                        categoryName:
-                            widget
-                                ._formKey
-                                .currentState
-                                ?.fields['category_name']
-                                ?.value ??
-                            'Nombre de la categoría',
-                        selectedColor: _selectedColor,
-                        selectedIcon: _selectedIcon,
+                      Hero(
+                        tag: 'category_item_${widget.categoryId ?? 'new'}',
+                        child: CategoryListItem(
+                          categoryName:
+                              _formKey
+                                  .currentState
+                                  ?.fields['category_name']
+                                  ?.value ??
+                              'Nombre de la categoría',
+                          selectedColor: _selectedColor,
+                          selectedIcon: _selectedIcon,
+                        ),
                       ),
                     ],
                   )
@@ -255,13 +329,15 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                 horizontal: 42.2,
               ),
               child: TransactionTypeSelector(
-                name: 'transactionType',
+                name: 'transaction_type',
                 initialValue: 1,
               ),
             ),
             TextButton(
-              onPressed: onCreate,
-              child: const Text('Crear categoría'),
+              onPressed: handleSubmit,
+              child: widget.categoryId != null
+                  ? const Text('Actualizar categoría')
+                  : const Text('Crear categoría'),
             ),
           ],
         ),

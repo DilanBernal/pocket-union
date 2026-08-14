@@ -3,7 +3,8 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/category_command_form.dart';
 
 class CategoryCommandScreen extends StatelessWidget {
-  const CategoryCommandScreen({super.key});
+  final String? categoryId;
+  const CategoryCommandScreen({super.key, this.categoryId});
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +34,7 @@ class CategoryCommandScreen extends StatelessWidget {
               ),
               onSelected: (value) {
                 switch (value) {
-                  case 'edit':
-                    // Navegar a edición
-                    break;
                   case 'delete':
-                    // Mostrar confirmación de borrado
                     break;
                 }
               },
@@ -81,7 +78,7 @@ class CategoryCommandScreen extends StatelessWidget {
               colors: [Color(0xFF1B0A1E), Color.fromARGB(255, 17, 2, 47)],
             ),
           ),
-          child: CategoryCommandForm(categoryId: '2'),
+          child: CategoryCommandForm(categoryId: categoryId),
         ),
       ),
     );

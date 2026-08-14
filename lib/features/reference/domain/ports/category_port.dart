@@ -23,4 +23,6 @@ abstract class CategoryPort {
   Future<bool> syncCategory(String categoryId);
 
   Future<Map<String, bool>> syncAllCategories();
+
+  Future<CategoryEntity?> getCategoryById(String categoryId);
 }

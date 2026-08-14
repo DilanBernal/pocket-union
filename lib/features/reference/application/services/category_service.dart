@@ -80,7 +80,7 @@ class CategoryService extends CategoryPort {
 
       try {
         await _supabaseClient
-            .from('categories')
+            .from('category')
             .insert(categoryEntities.map((e) => e.toMap()));
 
         for (final category in categoryEntities) {
@@ -142,15 +142,73 @@ class CategoryService extends CategoryPort {
   }
 
   @override
-  Future<bool> deleteCategory(String idCategory) {
-    // TODO: implement deleteCategory
-    throw UnimplementedError();
+  Future<bool> deleteCategory(String idCategory) async {
+    try {
+      await _categoryPortLocal.updateSyncStatus(
+        idCategory,
+        SyncStatus.pendingDelete,
+      );
+      try {
+        await _supabaseClient
+            .from('category')
+            .update({'is_deleted': true})
+            .eq('id', idCategory);
+        await _categoryPortLocal.deleteCategory(idCategory);
+      } catch (e) {
+        _logger.error('Error deleting category in cloud', error: e);
+      }
+
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   @override
-  Future<List<CategoryEntity>> getAllCategories() {
-    // TODO: implement getAllCategories
-    throw UnimplementedError();
+  Future<List<CategoryEntity>> getAllCategories() async {
+    try {
+      final categoriesInLocal = await _categoryPortLocal.getAllCategories();
+
+      try {
+        final categoriesInCloudMap = await _supabaseClient
+            .from('category')
+            .select()
+            .eq('is_deleted', false);
+
+        List<CategoryEntity> categoriesInCloud = [];
+        for (final map in categoriesInCloudMap) {
+          try {
+            final category = CategoryEntity.fromMap(map);
+            categoriesInCloud.add(
+              category
+                ..lastSyncedAt = DateTime.now().toUtc()
+                ..syncStatus = SyncStatus.synced
+                ..localUpdatedAt = DateTime.now().toUtc(),
+            );
+          } catch (e) {
+            _logger.error('Error parsing category from cloud: $map', error: e);
+          }
+        }
+
+        if (categoriesInCloud.isNotEmpty) {
+          if (categoriesInCloud.length > categoriesInLocal.length) {
+            await _categoryPortLocal.createCategories(
+              categoriesInCloud,
+              // .where((e) => !categoriesInLocal.any((x) => x.id == e.id))
+              // .toList(),
+            );
+          }
+          return categoriesInCloud.toList();
+        }
+      } catch (e) {
+        _logger.logObject(e);
+      }
+      return categoriesInLocal
+          .where((category) => category.isDeleted == false)
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
   }
 
   @override
@@ -181,5 +239,10 @@ class CategoryService extends CategoryPort {
   Future<bool> updateCategory(CategoryUpdDto dto) {
     // TODO: implement updateCategory
     throw UnimplementedError();
+  }
+
+  @override
+  Future<CategoryEntity?> getCategoryById(String categoryId) {
+    return _categoryPortLocal.getCategoryById(categoryId);
   }
 }

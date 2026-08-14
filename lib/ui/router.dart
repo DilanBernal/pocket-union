@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocket_union/features/auth/couple/presentation/screens/couple_setup_screen.dart';
 import 'package:pocket_union/features/home/screens/home_screen.dart';
 import 'package:pocket_union/features/reference/category/presentation/screens/category_command_screen.dart';
+import 'package:pocket_union/features/reference/category/presentation/screens/category_list_screen.dart';
 import '../features/auth/login/presentation/screens/login_screen.dart';
 import '../features/auth/register/presentation/screens/register_screen.dart';
 // import 'package:pocket_union/ui/screens/categories/categories_list_screen.dart';
@@ -32,6 +33,7 @@ class AppRoutes {
   static const String missions = '/missions';
   static const String categories = '/categories';
   static const String newCategory = '/new-category';
+  static const String editCategory = '/edit-category/:id';
   static const String coupleSetup = '/couple-setup';
   static const String expenseDetail = '/expense-detail';
   static const String incomeDetail = '/income-detail';
@@ -73,8 +75,12 @@ class AppRoutes {
     historyExpenses: (context) => const Placeholder(),
     historyIncome: (context) => const Placeholder(),
     missions: (context) => const Placeholder(),
-    categories: (context) => const CategoryCommandScreen(),
-    newCategory: (context) => const Placeholder(),
+    categories: (context) => const CategoryListScreen(),
+    newCategory: (context) => const CategoryCommandScreen(),
+    editCategory: (context) {
+      final categoryId = ModalRoute.of(context)!.settings.arguments as String;
+      return CategoryCommandScreen(categoryId: categoryId);
+    },
     coupleSetup: (context) => const CoupleSetupScreen(),
     newRecurrentExpense: (context) => const Placeholder(),
     newRecurrentIncome: (context) => const Placeholder(),

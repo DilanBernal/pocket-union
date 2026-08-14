@@ -32,14 +32,14 @@ class CategoryDaoLocal extends CategoryPortLocal {
 
   @override
   Future<bool> createCategories(List<CategoryEntity> categories) async {
-    // await _appDatabase
-    //     .into(_appDatabase.categoryTable)
-    //     .insert(
-    //       categories
-    //           .map((category) => categoryTableCompanionFromEntity(category))
-    //           .toList(),
-    //     );
-    throw UnimplementedError();
+    await _db.batch((batch) {
+      batch.insertAll(
+        _db.categoryTable,
+        categories.map(categoryTableCompanionFromEntity).toList(),
+        mode: InsertMode.insertOrReplace,
+      );
+    });
+    return true;
   }
 
   @override
@@ -63,15 +63,35 @@ class CategoryDaoLocal extends CategoryPortLocal {
   }
 
   @override
-  Future<bool> deleteCategory(String idCategory) {
-    // TODO: implement deleteCategory
-    throw UnimplementedError();
+  Future<bool> deleteCategory(String idCategory) async {
+    await (_db.delete(
+      _db.categoryTable,
+    )..where((tbl) => tbl.id.equals(idCategory))).go();
+    return true;
   }
 
   @override
-  Future<List<CategoryEntity>> getAllCategories() {
-    // TODO: implement getAllCategories
-    throw UnimplementedError();
+  Future<List<CategoryEntity>> getAllCategories() async {
+    final entities = await _db
+        .select(_db.categoryTable)
+        .map(
+          (row) => CategoryEntity(
+            id: row.id,
+            coupleId: row.coupleId,
+            name: row.name,
+            createdAt: row.createdAt,
+            categoryHost: row.categoryHost,
+            syncStatus: row.syncStatus,
+            localUpdatedAt: row.localUpdatedAt ?? DateTime.now().toUtc(),
+            localDeletedAt: row.localDeletedAt,
+            icon: row.icon,
+            color: row.color,
+            lastSyncedAt: row.lastSyncedAt,
+            shortDescription: row.shortDescription,
+          ),
+        )
+        .get();
+    return entities.toList();
   }
 
   @override

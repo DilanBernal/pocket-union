@@ -2,18 +2,18 @@ import 'package:pocket_union/core/enums/sync_status.dart';
 
 abstract class OfflineBaseEntity {
   /// Estado de sincronización con el servidor.
-  final SyncStatus syncStatus;
+  SyncStatus syncStatus;
 
   /// Última vez que el servidor confirmó esta entidad.
-  final DateTime? lastSyncedAt;
+  DateTime? lastSyncedAt;
 
   /// Última modificación realizada localmente.
-  final DateTime localUpdatedAt;
+  DateTime localUpdatedAt;
 
   /// Marca de borrado lógico.
-  final DateTime? localDeletedAt;
+  DateTime? localDeletedAt;
 
-  const OfflineBaseEntity({
+  OfflineBaseEntity({
     required this.syncStatus,
     required this.localUpdatedAt,
     this.lastSyncedAt,
