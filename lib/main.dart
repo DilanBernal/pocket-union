@@ -6,7 +6,10 @@ import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/theme/app_theme.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'
-    show GlobalMaterialLocalizations, GlobalWidgetsLocalizations;
+    show
+        GlobalMaterialLocalizations,
+        GlobalWidgetsLocalizations,
+        GlobalCupertinoLocalizations;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +40,7 @@ class PocketUnionApp extends StatelessWidget {
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         FormBuilderLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
       ],
       builder: (context, child) {
         return Scaffold(body: child);

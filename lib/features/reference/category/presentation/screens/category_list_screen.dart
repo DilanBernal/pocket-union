@@ -6,6 +6,7 @@ import 'package:pocket_union/core/utils/color_parser.dart';
 import 'package:pocket_union/features/reference/application/services/category_service.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/category_list_item.dart';
 import 'package:pocket_union/features/reference/domain/entities/category_entity.dart';
+import 'package:pocket_union/features/reference/domain/enums/category_host.dart';
 import 'package:pocket_union/ui/router.dart';
 
 class CategoryListScreen extends ConsumerStatefulWidget {
@@ -18,6 +19,7 @@ class CategoryListScreen extends ConsumerStatefulWidget {
 
 class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
   final Set<String> _hiddenCategoryIds = <String>{};
+  CategoryHost? _categoryFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,7 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
       ),
       child: Scaffold(
         appBar: AppBar(title: const Text('Categorías')),
-        extendBodyBehindAppBar: true,
+        // extendBodyBehindAppBar: true,
         backgroundColor: Colors.transparent,
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
@@ -43,61 +45,102 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
           child: const Icon(TablerIcons.plus),
         ),
 
-        body: categoriesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Center(
-            child: Text(
-              'Error al cargar: $error',
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-          data: (categories) {
-            final visibleCategories = categories
-                .where((category) => !_hiddenCategoryIds.contains(category.id))
-                .toList();
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(allCategoriesListProvider);
-                await ref.read(allCategoriesListProvider.future);
+        primary: false,
+        body: Column(
+          children: [
+            SegmentedButton<CategoryHost?>(
+              segments: const [
+                ButtonSegment(
+                  value: CategoryHost.income,
+                  label: Text('Ingreso'),
+                  icon: Icon(Icons.arrow_downward, color: Colors.green),
+                ),
+                ButtonSegment(
+                  value: CategoryHost.expense,
+                  label: Text('Gasto'),
+                  icon: Icon(Icons.arrow_upward, color: Colors.red),
+                ),
+                // ButtonSegment(
+                //   value: CategoryHost.expense,
+                //   label: Text('Todos'),
+                //   icon: Icon(TablerIcons.abc, color: Colors.red),
+                // ),
+              ],
+              emptySelectionAllowed: true,
+              selected: {_categoryFilter},
+              onSelectionChanged: (s) {
+                setState(() {
+                  _categoryFilter = s.isEmpty ? null : s.first;
+                });
               },
-              child: visibleCategories.isEmpty
-                  ? ListView(
-                      children: const [
-                        SizedBox(height: 200),
-                        Center(
-                          child: Text(
-                            'No hay categorías. ¡Crea una!',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                            ),
+            ),
+            Expanded(
+              child: categoriesAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => Center(
+                  child: Text(
+                    'Error al cargar: $error',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+                data: (categories) {
+                  final visibleCategories = categories
+                      .where(
+                        (category) => !_hiddenCategoryIds.contains(category.id),
+                      )
+                      .where(
+                        (category) => _categoryFilter != null
+                            ? category.categoryHost == _categoryFilter
+                            : true,
+                      )
+                      .toList();
+
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(allCategoriesListProvider);
+                      await ref.read(allCategoriesListProvider.future);
+                    },
+                    child: visibleCategories.isEmpty
+                        ? ListView(
+                            children: const [
+                              SizedBox(height: 200),
+                              Center(
+                                child: Text(
+                                  'No hay categorías. ¡Crea una!',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.builder(
+                            itemCount: visibleCategories.length,
+
+                            itemBuilder: (context, index) {
+                              final category = visibleCategories[index];
+                              return _CategoryListTile(
+                                category: category,
+                                onDismissed: () {
+                                  setState(() {
+                                    _hiddenCategoryIds.add(category.id);
+                                  });
+                                },
+                                onDismissFailed: () {
+                                  if (!mounted) return;
+                                  setState(() {
+                                    _hiddenCategoryIds.remove(category.id);
+                                  });
+                                },
+                              );
+                            },
                           ),
-                        ),
-                      ],
-                    )
-                  : ListView.builder(
-                      itemCount: visibleCategories.length,
-                      itemBuilder: (context, index) {
-                        final category = visibleCategories[index];
-                        return _CategoryListTile(
-                          category: category,
-                          onDismissed: () {
-                            setState(() {
-                              _hiddenCategoryIds.add(category.id);
-                            });
-                          },
-                          onDismissFailed: () {
-                            if (!mounted) return;
-                            setState(() {
-                              _hiddenCategoryIds.remove(category.id);
-                            });
-                          },
-                        );
-                      },
-                    ),
-            );
-          },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
