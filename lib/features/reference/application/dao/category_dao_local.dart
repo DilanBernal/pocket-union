@@ -9,6 +9,7 @@ import 'package:pocket_union/features/reference/domain/enums/category_host.dart'
 import 'package:pocket_union/features/reference/domain/ports/category_port_local.dart';
 import 'package:pocket_union/features/reference/persistence/tables/category_table.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:uuid/uuid.dart';
 
 part 'category_dao_local.g.dart';
 
@@ -23,6 +24,7 @@ class CategoryDaoLocal extends CategoryPortLocal {
   final AppDatabase _db;
   // final Uuid _uuid = const Uuid();
   final LoggerPort _logger;
+  final Uuid _uuid = const Uuid();
 
   CategoryDaoLocal({
     required AppDatabase appDatabase,
@@ -51,15 +53,74 @@ class CategoryDaoLocal extends CategoryPortLocal {
   }
 
   @override
-  Future<List<CategoryEntity>> createDefaultCategories(String idCouple) {
-    // TODO: implement createDefaultCategories
-    throw UnimplementedError();
+  Future<List<CategoryEntity>> createDefaultCategories(String idCouple) async {
+    final now = DateTime.now().toUtc();
+    final defaults = <CategoryEntity>[
+      CategoryEntity(
+        id: _uuid.v4(),
+        coupleId: idCouple,
+        name: 'Food',
+        icon: '🍽️',
+        color: '#FF8A65',
+        createdAt: now,
+        categoryHost: CategoryHost.expense,
+        syncStatus: SyncStatus.synced,
+        localUpdatedAt: now,
+        lastSyncedAt: now,
+      ),
+      CategoryEntity(
+        id: _uuid.v4(),
+        coupleId: idCouple,
+        name: 'Housing',
+        icon: '🏠',
+        color: '#64B5F6',
+        createdAt: now,
+        categoryHost: CategoryHost.expense,
+        syncStatus: SyncStatus.synced,
+        localUpdatedAt: now,
+        lastSyncedAt: now,
+      ),
+      CategoryEntity(
+        id: _uuid.v4(),
+        coupleId: idCouple,
+        name: 'Transport',
+        icon: '🚗',
+        color: '#81C784',
+        createdAt: now,
+        categoryHost: CategoryHost.expense,
+        syncStatus: SyncStatus.synced,
+        localUpdatedAt: now,
+        lastSyncedAt: now,
+      ),
+      CategoryEntity(
+        id: _uuid.v4(),
+        coupleId: idCouple,
+        name: 'Salary',
+        icon: '💰',
+        color: '#FFD54F',
+        createdAt: now,
+        categoryHost: CategoryHost.income,
+        syncStatus: SyncStatus.synced,
+        localUpdatedAt: now,
+        lastSyncedAt: now,
+      ),
+    ];
+
+    await _db.batch((batch) {
+      batch.insertAll(
+        _db.categoryTable,
+        defaults.map(categoryTableCompanionFromEntity).toList(),
+        mode: InsertMode.insertOrReplace,
+      );
+    });
+
+    return defaults;
   }
 
   @override
-  Future<dynamic> deleteAllCategories() {
-    // TODO: implement deleteAllCategories
-    throw UnimplementedError();
+  Future<dynamic> deleteAllCategories() async {
+    await _db.delete(_db.categoryTable).go();
+    return true;
   }
 
   @override
@@ -95,30 +156,107 @@ class CategoryDaoLocal extends CategoryPortLocal {
   }
 
   @override
-  Future<List<CategoryEntity>> getAllCategoriesByCouple({String? coupleId}) {
-    // TODO: implement getAllCategoriesByCouple
-    throw UnimplementedError();
+  Future<List<CategoryEntity>> getAllCategoriesByCouple({
+    String? coupleId,
+  }) async {
+    var query = _db.select(_db.categoryTable)
+      ..where((tbl) => tbl.localDeletedAt.isNull());
+
+    if (coupleId != null && coupleId.isNotEmpty) {
+      query = query..where((tbl) => tbl.coupleId.equals(coupleId));
+    }
+
+    final rows = await query
+        .map(
+          (row) => CategoryEntity(
+            id: row.id,
+            coupleId: row.coupleId,
+            name: row.name,
+            createdAt: row.createdAt,
+            categoryHost: row.categoryHost,
+            syncStatus: row.syncStatus,
+            localUpdatedAt: row.localUpdatedAt ?? DateTime.now().toUtc(),
+            localDeletedAt: row.localDeletedAt,
+            icon: row.icon,
+            color: row.color,
+            lastSyncedAt: row.lastSyncedAt,
+            shortDescription: row.shortDescription,
+          ),
+        )
+        .get();
+
+    return rows.toList();
   }
 
   @override
-  Future<List<CategoryEntity>> getByFilter(CategoryFilterDto filter) {
-    // TODO: implement getByFilter
-    throw UnimplementedError();
+  Future<List<CategoryEntity>> getByFilter(CategoryFilterDto filter) async {
+    return getAllCategoriesByCouple();
   }
 
   @override
   Future<List<CategoryEntity>> getCategoriesByHost(
     CategoryHost host, {
     String? coupleId,
-  }) {
-    // TODO: implement getCategoriesByHost
-    throw UnimplementedError();
+  }) async {
+    var query = _db.select(_db.categoryTable)
+      ..where(
+        (tbl) =>
+            tbl.categoryHost.equals(host.index) & tbl.localDeletedAt.isNull(),
+      );
+
+    if (coupleId != null && coupleId.isNotEmpty) {
+      query = query..where((tbl) => tbl.coupleId.equals(coupleId));
+    }
+
+    final rows = await query
+        .map(
+          (row) => CategoryEntity(
+            id: row.id,
+            coupleId: row.coupleId,
+            name: row.name,
+            createdAt: row.createdAt,
+            categoryHost: row.categoryHost,
+            syncStatus: row.syncStatus,
+            localUpdatedAt: row.localUpdatedAt ?? DateTime.now().toUtc(),
+            localDeletedAt: row.localDeletedAt,
+            icon: row.icon,
+            color: row.color,
+            lastSyncedAt: row.lastSyncedAt,
+            shortDescription: row.shortDescription,
+          ),
+        )
+        .get();
+
+    return rows.toList();
   }
 
   @override
-  Future<List<CategoryEntity>> getCategoriesNeedingSync() {
-    // TODO: implement getCategoriesNeedingSync
-    throw UnimplementedError();
+  Future<List<CategoryEntity>> getCategoriesNeedingSync() async {
+    final rows =
+        await (_db.select(_db.categoryTable)..where(
+              (tbl) =>
+                  tbl.syncStatus.isNotValue(SyncStatus.synced.index) &
+                  tbl.localDeletedAt.isNull(),
+            ))
+            .map(
+              (row) => CategoryEntity(
+                id: row.id,
+                coupleId: row.coupleId,
+                name: row.name,
+                createdAt: row.createdAt,
+                categoryHost: row.categoryHost,
+                syncStatus: row.syncStatus,
+                localUpdatedAt: row.localUpdatedAt ?? DateTime.now().toUtc(),
+                localDeletedAt: row.localDeletedAt,
+                icon: row.icon,
+                color: row.color,
+                lastSyncedAt: row.lastSyncedAt,
+                shortDescription: row.shortDescription,
+              ),
+            )
+            .get();
+
+    return rows.toList();
   }
 
   @override
@@ -155,15 +293,23 @@ class CategoryDaoLocal extends CategoryPortLocal {
   }
 
   @override
-  Future<bool> updateCategories(List<CategoryEntity> dtos) {
-    // TODO: implement updateCategories
-    throw UnimplementedError();
+  Future<bool> updateCategories(List<CategoryEntity> dtos) async {
+    await _db.batch((batch) {
+      batch.insertAll(
+        _db.categoryTable,
+        dtos.map(categoryTableCompanionFromEntity).toList(),
+        mode: InsertMode.insertOrReplace,
+      );
+    });
+    return true;
   }
 
   @override
-  Future<bool> updateCategory(CategoryEntity entity) {
-    // TODO: implement updateCategory
-    throw UnimplementedError();
+  Future<bool> updateCategory(CategoryEntity entity) async {
+    await _db
+        .into(_db.categoryTable)
+        .insertOnConflictUpdate(categoryTableCompanionFromEntity(entity));
+    return true;
   }
 
   @override
@@ -185,8 +331,28 @@ class CategoryDaoLocal extends CategoryPortLocal {
   }
 
   @override
-  Future<bool> upsertFromCloud(CategoryEntity category) {
-    // TODO: implement upsertFromCloud
-    throw UnimplementedError();
+  Future<bool> upsertFromCloud(CategoryEntity category) async {
+    final now = DateTime.now().toUtc();
+    await _db
+        .into(_db.categoryTable)
+        .insertOnConflictUpdate(
+          categoryTableCompanionFromEntity(
+            CategoryEntity(
+              id: category.id,
+              coupleId: category.coupleId,
+              name: category.name,
+              icon: category.icon,
+              shortDescription: category.shortDescription,
+              color: category.color,
+              createdAt: category.createdAt,
+              categoryHost: category.categoryHost,
+              syncStatus: SyncStatus.synced,
+              localUpdatedAt: category.localUpdatedAt,
+              lastSyncedAt: now,
+              localDeletedAt: category.localDeletedAt,
+            ),
+          ),
+        );
+    return true;
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:pocket_union/core/enums/sync_status.dart';
+import 'package:pocket_union/core/utils/categories_list_provider.dart';
 import 'package:pocket_union/core/utils/logger_provider.dart';
 import 'package:pocket_union/features/reference/category/dtos/category_ins_dto.dart';
 import 'package:pocket_union/features/reference/category/dtos/category_upd_dto.dart';
@@ -105,6 +106,8 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
             TablerIcons.currency_dollar.codePoint.toString(),
         color: _colorToHex(_selectedColor ?? Colors.blue),
         syncStatuss: SyncStatus.pendingCreate,
+        shortDescription:
+            _formKey.currentState?.fields['category_description']?.value,
       );
       final controller = ref.read(categoryCommandControllerProvider.notifier);
       await controller.createCategory(command);
@@ -129,8 +132,12 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
             _selectedIcon?.codePoint.toString() ??
             TablerIcons.currency_dollar.codePoint.toString(),
         color: _colorToHex(_selectedColor ?? Colors.blue),
+        shortDescription:
+            _formKey.currentState?.fields['category_description']?.value,
       );
       final controller = ref.read(categoryCommandControllerProvider.notifier);
+      ref.invalidate(allCategoriesListProvider);
+      ref.invalidate(categoriesByHostProvider);
       await controller.updateCategory(command);
     } catch (e) {
       final logger = ref.read(loggerProvider);
@@ -195,151 +202,179 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
       child: FormBuilder(
         autovalidateMode: AutovalidateMode.onUserInteraction,
         key: _formKey,
-        child: Column(
-          children: [
-            Text(
-              'Nombre de la categoría',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            FormBuilderTextField(
-              name: 'category_name',
-              decoration: const InputDecoration(
-                hintText: 'Ej: Alimentos, Entretenimiento, Salud',
-                border: OutlineInputBorder(
-                  gapPadding: 2,
-                  borderRadius: BorderRadius.all(Radius.circular(80)),
-                ),
-                filled: true,
-                fillColor: Color.fromARGB(255, 42, 22, 46),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Text(
+                'Nombre de la categoría',
+                style: Theme.of(context).textTheme.titleSmall,
               ),
-              validator: FormBuilderValidators.compose([
-                FormBuilderValidators.required(
-                  errorText: 'El nombre de la categoría es obligatorio',
+              FormBuilderTextField(
+                name: 'category_name',
+                decoration: const InputDecoration(
+                  hintText: 'Ej: Alimentos, Entretenimiento, Salud',
+                  border: OutlineInputBorder(
+                    gapPadding: 2,
+                    borderRadius: BorderRadius.all(Radius.circular(80)),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromARGB(255, 42, 22, 46),
                 ),
-                FormBuilderValidators.maxLength(
-                  50,
-                  errorText:
-                      'El nombre de la categoría no puede exceder 50 caracteres',
-                ),
-              ]),
-            ),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(
+                    errorText: 'El nombre de la categoría es obligatorio',
+                  ),
+                  FormBuilderValidators.maxLength(
+                    50,
+                    errorText:
+                        'El nombre de la categoría no puede exceder 50 caracteres',
+                  ),
+                ]),
+              ),
 
-            // icon
-            Text('Icono', style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 200,
-              child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 0,
-                  mainAxisSpacing: 0,
-                  childAspectRatio: 1,
+              // icon
+              Text('Icono', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 200,
+                child: GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 0,
+                    mainAxisSpacing: 0,
+                    childAspectRatio: 1,
+                  ),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _availableIcons.length,
+                  itemBuilder: (context, index) {
+                    final icon = _availableIcons.elementAt(index);
+                    final isSelected = _selectedIcon == icon;
+                    return CategoryIconTile(
+                      icon: icon,
+                      isSelected: isSelected,
+                      selectedColor: _selectedColor,
+                      onTap: () => setState(() => _selectedIcon = icon),
+                    );
+                  },
                 ),
-                scrollDirection: Axis.horizontal,
-                itemCount: _availableIcons.length,
-                itemBuilder: (context, index) {
-                  final icon = _availableIcons.elementAt(index);
-                  final isSelected = _selectedIcon == icon;
-                  return CategoryIconTile(
-                    icon: icon,
-                    isSelected: isSelected,
-                    selectedColor: _selectedColor,
-                    onTap: () => setState(() => _selectedIcon = icon),
-                  );
-                },
               ),
-            ),
-            // --- Color ---
-            Text('Color', style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: _availableColors.map((color) {
-                final isSelected = _selectedColor == color;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedColor = color),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOut,
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: isSelected
-                          ? Border.all(color: Colors.white, width: 3)
-                          : null,
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: color.withAlpha(150),
-                                blurRadius: 8,
-                                spreadRadius: 2,
-                              ),
-                            ]
+              // --- Color ---
+              Text('Color', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: _availableColors.map((color) {
+                  final isSelected = _selectedColor == color;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedColor = color),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: isSelected
+                            ? Border.all(color: Colors.white, width: 3)
+                            : null,
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: color.withAlpha(150),
+                                  blurRadius: 8,
+                                  spreadRadius: 2,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: isSelected
+                          ? const Icon(
+                              TablerIcons.check,
+                              color: Colors.white,
+                              size: 20,
+                            )
                           : null,
                     ),
-                    child: isSelected
-                        ? const Icon(
-                            TablerIcons.check,
-                            color: Colors.white,
-                            size: 20,
-                          )
-                        : null,
-                  ),
-                );
-              }).toList(),
-            ),
-            (_formKey.currentState?.fields['category_name']?.isValid ??
-                        false) &&
-                    _selectedColor != null &&
-                    _selectedIcon != null
-                ? Wrap(
-                    children: [
-                      Text(
-                        'Vista previa',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      Hero(
-                        tag: 'category_item_${widget.categoryId ?? 'new'}',
-                        child: CategoryListItem(
-                          categoryName:
-                              _formKey
-                                  .currentState
-                                  ?.fields['category_name']
-                                  ?.value ??
-                              'Nombre de la categoría',
-                          selectedColor: _selectedColor,
-                          selectedIcon: _selectedIcon,
+                  );
+                }).toList(),
+              ),
+              (_formKey.currentState?.fields['category_name']?.isValid ??
+                          false) &&
+                      _selectedColor != null &&
+                      _selectedIcon != null
+                  ? Wrap(
+                      children: [
+                        Text(
+                          'Vista previa',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                      ),
-                    ],
-                  )
-                : Container(),
-            const SizedBox(height: 24),
-            Text(
-              'Tipo de transacción',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 8.0,
-                horizontal: 42.2,
+                        Hero(
+                          tag: 'category_item_${widget.categoryId ?? 'new'}',
+                          child: CategoryListItem(
+                            categoryName:
+                                _formKey
+                                    .currentState
+                                    ?.fields['category_name']
+                                    ?.value ??
+                                'Nombre de la categoría',
+                            selectedColor: _selectedColor,
+                            selectedIcon: _selectedIcon,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Container(),
+              const SizedBox(height: 24),
+              Text(
+                'Tipo de transacción',
+                style: Theme.of(context).textTheme.titleSmall,
               ),
-              child: TransactionTypeSelector(
-                name: 'transaction_type',
-                initialValue: 1,
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8.0,
+                  horizontal: 42.2,
+                ),
+                child: TransactionTypeSelector(
+                  name: 'transaction_type',
+                  initialValue: 1,
+                ),
               ),
-            ),
-            TextButton(
-              onPressed: handleSubmit,
-              child: widget.categoryId != null
-                  ? const Text('Actualizar categoría')
-                  : const Text('Crear categoría'),
-            ),
-          ],
+              Text('Descripcion'),
+              FormBuilderTextField(
+                name: 'category_description',
+                decoration: InputDecoration(
+                  hintText: 'Ej: Alimentos, Entretenimiento, Salud',
+                  errorText:
+                      _formKey
+                          .currentState
+                          ?.fields['category_description']!
+                          .errorText ??
+                      '',
+                  border: OutlineInputBorder(
+                    gapPadding: 2,
+                    borderRadius: BorderRadius.all(Radius.circular(80)),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromARGB(255, 42, 22, 46),
+                ),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.maxLength(
+                    100,
+                    errorText:
+                        'La descripcion de la categoría no puede exceder 100 xdcaracteres',
+                  ),
+                ]),
+              ),
+              TextButton(
+                onPressed: handleSubmit,
+                child: widget.categoryId != null
+                    ? const Text('Actualizar categoría')
+                    : const Text('Crear categoría'),
+              ),
+            ],
+          ),
         ),
       ),
     );
