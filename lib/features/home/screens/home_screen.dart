@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocket_union/features/home/screens/new_entry_screen.dart';
 import 'package:pocket_union/features/home/widgets/list_menu.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,12 +24,11 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             switch (indexScreen) {
-              // 0 => Expanded(child: NewEntryScreen()),
+              0 => Expanded(child: NewEntryScreen()),
               // 1 => Expanded(
               //   child: StartHeroWidget(name1: "1", name2: "2"),
               // ),
               // 2 => Expanded(child: NewExpenseScreen()),
-              0 => Expanded(child: Text('Agregar una entrada')),
               1 => Expanded(child: Placeholder()),
               2 => Expanded(child: Text('Agregar una salida')),
               int() => throw UnimplementedError(),

@@ -273,6 +273,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
+  currency_text_input_formatter:
+    dependency: "direct main"
+    description:
+      name: currency_text_input_formatter
+      sha256: "38c708c736f098ae8e1e26d7f42012e39e463d3c84afc7b4ac081d986563df7b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.1"
   dart_jsonwebtoken:
     dependency: transitive
     description:

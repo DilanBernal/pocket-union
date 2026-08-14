@@ -111,6 +111,8 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
       );
       final controller = ref.read(categoryCommandControllerProvider.notifier);
       await controller.createCategory(command);
+      ref.invalidate(allCategoriesListProvider);
+      ref.invalidate(categoriesByHostProvider);
     } catch (e) {
       final logger = ref.read(loggerProvider);
       logger.error('Error creating category', error: e);
@@ -136,9 +138,9 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
             _formKey.currentState?.fields['category_description']?.value,
       );
       final controller = ref.read(categoryCommandControllerProvider.notifier);
+      await controller.updateCategory(command);
       ref.invalidate(allCategoriesListProvider);
       ref.invalidate(categoriesByHostProvider);
-      await controller.updateCategory(command);
     } catch (e) {
       final logger = ref.read(loggerProvider);
       logger.error('Error updating category', error: e);
@@ -346,12 +348,10 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                 name: 'category_description',
                 decoration: InputDecoration(
                   hintText: 'Ej: Alimentos, Entretenimiento, Salud',
-                  errorText:
-                      _formKey
-                          .currentState
-                          ?.fields['category_description']!
-                          .errorText ??
-                      '',
+                  errorText: _formKey
+                      .currentState
+                      ?.fields['category_description']!
+                      .errorText,
                   border: OutlineInputBorder(
                     gapPadding: 2,
                     borderRadius: BorderRadius.all(Radius.circular(80)),
@@ -360,11 +360,11 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                   fillColor: Color.fromARGB(255, 42, 22, 46),
                 ),
                 validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.maxLength(
-                    100,
-                    errorText:
-                        'La descripcion de la categoría no puede exceder 100 xdcaracteres',
-                  ),
+                  // FormBuilderValidators.maxLength(
+                  //   100,
+                  //   errorText:
+                  //       'La descripcion de la categoría no puede exceder 100 xdcaracteres',
+                  // ),
                 ]),
               ),
               TextButton(

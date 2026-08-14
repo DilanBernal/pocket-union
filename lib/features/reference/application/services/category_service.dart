@@ -136,9 +136,29 @@ class CategoryService extends CategoryPort {
   }
 
   @override
-  Future<dynamic> deleteAllCategories() {
-    // TODO: implement deleteAllCategories
-    throw UnimplementedError();
+  Future<dynamic> deleteAllCategories() async {
+    try {
+      final localResult = await _categoryPortLocal.deleteAllCategories();
+
+      try {
+        final coupleId = _sharedPrefsCache.getString(
+          PreferencesCacheKeys.coupleId,
+        );
+        if (coupleId != null) {
+          await _supabaseClient
+              .from('category')
+              .update({'is_deleted': true})
+              .eq('couple_id', coupleId);
+        }
+      } catch (e) {
+        _logger.error('Error deleting all categories in cloud', error: e);
+      }
+
+      return localResult;
+    } catch (e, st) {
+      _logger.error('Error deleting all categories', error: e, stackTrace: st);
+      rethrow;
+    }
   }
 
   @override
@@ -212,33 +232,227 @@ class CategoryService extends CategoryPort {
   }
 
   @override
-  Future<List<CategoryEntity>> getCategoriesByHost(CategoryHost host) {
-    // TODO: implement getCategoriesByHost
-    throw UnimplementedError();
+  Future<List<CategoryEntity>> getCategoriesByHost(CategoryHost host) async {
+    try {
+      final coupleId = _sharedPrefsCache.getString(
+        PreferencesCacheKeys.coupleId,
+      );
+      final categoriesInLocal = await _categoryPortLocal.getCategoriesByHost(
+        host,
+        coupleId: coupleId,
+      );
+
+      try {
+        var query = _supabaseClient
+            .from('category')
+            .select()
+            .eq('is_deleted', false)
+            .eq('category_host', host.name.toUpperCase());
+
+        if (coupleId != null) {
+          query = query.eq('couple_id', coupleId);
+        }
+
+        final categoriesInCloudMap = await query;
+        final categoriesInCloud = <CategoryEntity>[];
+
+        for (final map in categoriesInCloudMap) {
+          try {
+            final category = CategoryEntity.fromMap(map)
+              ..lastSyncedAt = DateTime.now().toUtc()
+              ..syncStatus = SyncStatus.synced
+              ..localUpdatedAt = DateTime.now().toUtc();
+
+            categoriesInCloud.add(category);
+            await _categoryPortLocal.upsertFromCloud(category);
+          } catch (e) {
+            _logger.error(
+              'Error parsing category by host from cloud: $map',
+              error: e,
+            );
+          }
+        }
+
+        if (categoriesInCloud.isNotEmpty) {
+          return categoriesInCloud;
+        }
+      } catch (e) {
+        _logger.error('Error getting categories by host from cloud', error: e);
+      }
+
+      return categoriesInLocal;
+    } catch (e, st) {
+      _logger.error(
+        'Error getting categories by host',
+        error: e,
+        stackTrace: st,
+      );
+      rethrow;
+    }
   }
 
   @override
-  Future<Map<String, bool>> syncAllCategories() {
-    // TODO: implement syncAllCategories
-    throw UnimplementedError();
+  Future<Map<String, bool>> syncAllCategories() async {
+    final syncResults = <String, bool>{};
+
+    try {
+      final categoriesNeedingSync = await _categoryPortLocal
+          .getCategoriesNeedingSync();
+
+      for (final category in categoriesNeedingSync) {
+        syncResults[category.id] = await syncCategory(category.id);
+      }
+
+      return syncResults;
+    } catch (e, st) {
+      _logger.error('Error syncing all categories', error: e, stackTrace: st);
+      return syncResults;
+    }
   }
 
   @override
-  Future<bool> syncCategory(String categoryId) {
-    // TODO: implement syncCategory
-    throw UnimplementedError();
+  Future<bool> syncCategory(String categoryId) async {
+    try {
+      final category = await _categoryPortLocal.getCategoryById(categoryId);
+      if (category == null) {
+        return false;
+      }
+
+      if (category.syncStatus == SyncStatus.pendingDelete ||
+          category.localDeletedAt != null) {
+        await _supabaseClient
+            .from('category')
+            .update({'is_deleted': true})
+            .eq('id', categoryId);
+        await _categoryPortLocal.deleteCategory(categoryId);
+        return true;
+      }
+
+      await _supabaseClient.from('category').upsert(category.toMap());
+      await _categoryPortLocal.updateSyncStatus(
+        categoryId,
+        SyncStatus.synced,
+        lastSyncAt: DateTime.now().toUtc(),
+      );
+
+      return true;
+    } catch (e, st) {
+      _logger.error(
+        'Error syncing category $categoryId',
+        error: e,
+        stackTrace: st,
+      );
+      return false;
+    }
   }
 
   @override
-  Future<bool> updateCategories(List<CategoryUpdDto> dtos) {
-    // TODO: implement updateCategories
-    throw UnimplementedError();
+  Future<bool> updateCategories(List<CategoryUpdDto> dtos) async {
+    try {
+      final now = DateTime.now().toUtc();
+      final entitiesToUpdate = <CategoryEntity>[];
+      var localResult = true;
+
+      for (final dto in dtos) {
+        final current = await _categoryPortLocal.getCategoryById(dto.id);
+        if (current == null) {
+          localResult = false;
+          continue;
+        }
+
+        entitiesToUpdate.add(
+          CategoryEntity(
+            id: current.id,
+            coupleId: current.coupleId,
+            name: dto.name,
+            icon: dto.icon,
+            shortDescription: dto.shortDescription,
+            color: dto.color,
+            createdAt: current.createdAt,
+            categoryHost: dto.host,
+            syncStatus: SyncStatus.pendingUpdate,
+            localUpdatedAt: now,
+            lastSyncedAt: current.lastSyncedAt,
+            localDeletedAt: current.localDeletedAt,
+          ),
+        );
+      }
+
+      if (entitiesToUpdate.isEmpty) {
+        return false;
+      }
+
+      localResult =
+          localResult &&
+          await _categoryPortLocal.updateCategories(entitiesToUpdate);
+
+      try {
+        await _supabaseClient
+            .from('category')
+            .upsert(entitiesToUpdate.map((entity) => entity.toMap()).toList());
+
+        for (final category in entitiesToUpdate) {
+          await _categoryPortLocal.updateSyncStatus(
+            category.id,
+            SyncStatus.synced,
+            lastSyncAt: DateTime.now().toUtc(),
+          );
+        }
+      } catch (e) {
+        _logger.error('Error updating categories in cloud', error: e);
+      }
+
+      return localResult;
+    } catch (e, st) {
+      _logger.error('Error updating categories', error: e, stackTrace: st);
+      return false;
+    }
   }
 
   @override
-  Future<bool> updateCategory(CategoryUpdDto dto) {
-    // TODO: implement updateCategory
-    throw UnimplementedError();
+  Future<bool> updateCategory(CategoryUpdDto dto) async {
+    try {
+      final current = await _categoryPortLocal.getCategoryById(dto.id);
+      if (current == null) {
+        return false;
+      }
+
+      final categoryEntity = CategoryEntity(
+        id: current.id,
+        coupleId: current.coupleId,
+        name: dto.name,
+        icon: dto.icon,
+        shortDescription: dto.shortDescription,
+        color: dto.color,
+        createdAt: current.createdAt,
+        categoryHost: dto.host,
+        syncStatus: SyncStatus.pendingUpdate,
+        localUpdatedAt: DateTime.now().toUtc(),
+        lastSyncedAt: current.lastSyncedAt,
+        localDeletedAt: current.localDeletedAt,
+      );
+
+      final localResult = await _categoryPortLocal.updateCategory(
+        categoryEntity,
+      );
+
+      try {
+        await _supabaseClient.from('category').upsert(categoryEntity.toMap());
+
+        await _categoryPortLocal.updateSyncStatus(
+          categoryEntity.id,
+          SyncStatus.synced,
+          lastSyncAt: DateTime.now().toUtc(),
+        );
+      } catch (e) {
+        _logger.error('Error updating category in cloud', error: e);
+      }
+
+      return localResult;
+    } catch (e, st) {
+      _logger.error('Error updating category', error: e, stackTrace: st);
+      return false;
+    }
   }
 
   @override
