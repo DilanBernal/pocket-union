@@ -13,7 +13,7 @@ class ConcurrencyInput extends StatefulWidget {
     this.onChanged,
   });
 
-  final FormFieldValidator<String>? validator;
+  final FormFieldValidator<num>? validator;
   final InputDecoration? decoration;
   final String name;
   final ValueChanged<dynamic>? onChanged;
@@ -34,17 +34,20 @@ class _ConcurrencyInputState extends State<ConcurrencyInput> {
     return FormBuilderField<num>(
       name: widget.name,
       initialValue: 0.0 as num,
+      validator: FormBuilderValidators.transform((_) {
+        return _formatter.getUnformattedValue();
+      }, widget.validator ?? FormBuilderValidators.compose([])),
       builder: (field) => TextFormField(
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         onChanged: (value) {
           final unformatted = _formatter.getUnformattedValue();
-          widget.onChanged?.call(unformatted);
           field.didChange(unformatted);
+          widget.onChanged?.call(unformatted);
         },
-        validator: FormBuilderValidators.transform((_) {
-          final unformatted = _formatter.getUnformattedValue();
-          return unformatted.toString();
-        }, widget.validator ?? FormBuilderValidators.compose([])),
+        // validator: FormBuilderValidators.transform((_) {
+        //   final unformatted = _formatter.getUnformattedValue();
+        //   return unformatted.toString();
+        // }, widget.validator ?? FormBuilderValidators.compose([])),
         inputFormatters: <TextInputFormatter>[_formatter],
         decoration: widget.decoration,
       ),

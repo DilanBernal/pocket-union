@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocket_union/core/utils/color_parser.dart';
 import 'package:pocket_union/features/reference/domain/entities/category_entity.dart';
 import 'package:pocket_union/features/transaction/presentation/widgets/category_item_widget.dart';
 
-class CategoryHorizontalList extends ConsumerWidget {
+class CategoryHorizontalList extends StatefulWidget {
   final List<CategoryEntity> categories;
   final ValueChanged<List<String>> onChanged;
   final FormFieldValidator<List<String>>? validator;
@@ -18,8 +17,13 @@ class CategoryHorizontalList extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (categories.isEmpty) {
+  State<CategoryHorizontalList> createState() => _CategoryHorizontalListState();
+}
+
+class _CategoryHorizontalListState extends State<CategoryHorizontalList> {
+  @override
+  Widget build(BuildContext context) {
+    if (widget.categories.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Text('No hay categorías disponibles'),
@@ -29,17 +33,17 @@ class CategoryHorizontalList extends ConsumerWidget {
     return FormBuilderField<List<String>>(
       name: 'categories',
       onChanged: (value) {
-        onChanged(value ?? []);
+        widget.onChanged(value ?? []);
       },
-      validator: validator,
+      validator: widget.validator,
       builder: (field) => SizedBox(
         height: 42,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          itemCount: categories.length,
+          itemCount: widget.categories.length,
           separatorBuilder: (_, _) => const SizedBox(width: 8),
           itemBuilder: (context, index) {
-            final category = categories[index];
+            final category = widget.categories[index];
             final List<String> selectedIds = field.value ?? [];
             final isSelected = selectedIds.contains(category.id);
             final chipColor = parseColorFromHex(
