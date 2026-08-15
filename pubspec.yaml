@@ -20,11 +20,13 @@ dependencies:
   riverpod_annotation: ^4.0.2
 
   # Backend & Data
-  supabase_flutter: ^2.0.0
+  supabase_flutter: 2.15.0 
   drift: ^2.23.1
+  drift_flutter: ^0.3.1
   drift_sqflite: ^2.0.1
   sqflite_sqlcipher: ^3.1.0
   path: ^1.9.0
+  path_provider: ^2.1.6
   sqlite3_flutter_libs: ^0.5.0
 
   # Storage
@@ -44,6 +46,10 @@ dependencies:
 
   # Testing
   golden_toolkit: ^0.15.0
+  
+  flutter_localizations:
+    sdk: flutter
+  currency_text_input_formatter: ^2.3.1
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +71,8 @@ dev_dependencies:
   mock_supabase_http_client: ^0.0.3+2
   drift_dev: ^2.23.1
 
+dependency_overrides:
+  intl: ^0.20.2
 flutter:
   uses-material-design: true
   assets:

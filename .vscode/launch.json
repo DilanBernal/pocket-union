@@ -13,18 +13,21 @@
     {
       "name": "pocket-union",
       "request": "launch",
+      "args": ["--dart-define-from-file=env.local.json"],
       "type": "dart"
     },
     {
       "name": "pocket-union (profile mode)",
       "request": "launch",
       "type": "dart",
+      "args": ["--dart-define-from-file=env.local.json"],
       "flutterMode": "profile"
     },
     {
       "name": "pocket-union (release mode)",
       "request": "launch",
       "type": "dart",
+      "args": ["--dart-define-from-file=env.local.json"],
       "flutterMode": "release"
     }
   ]
