@@ -22,6 +22,8 @@ abstract class CouplePort {
 
   Future<AppResponse<CoupleEntity?>> getCoupleByUserIdInNetwork(String userId);
 
+  Future<AppResponse<CoupleEntity?>> syncCoupleAndPartnerLocal(String userId);
+
   Future<bool> upsertCouple(CoupleEntity couple, {bool inNetwork = false});
 
   Future<bool> deleteCouple(String coupleId);

@@ -233,7 +233,7 @@ class AuthService extends AuthPort {
           _logger.info(
             'AuthService: Usuario registrado y couple encontrada: $userId',
           );
-          await _coupleService.upsertCouple(coupleValue, inNetwork: false);
+          await _coupleService.syncCoupleAndPartnerLocal(userId);
           return coupleValue.id;
         } else {
           final response = await _coupleService.createCouple(userId);
@@ -291,7 +291,40 @@ class AuthService extends AuthPort {
       user.inCloud = true;
       user.lastSync = DateTime.now();
       await _userLocalPort.upsertUser(user);
+
+      await _syncCoupleAndPartnerLocally(userId);
     }
     return Success(user);
+  }
+
+  Future<void> _syncCoupleAndPartnerLocally(String userId) async {
+    try {
+      final coupleResponse = await _coupleService.syncCoupleAndPartnerLocal(
+        userId,
+      );
+      switch (coupleResponse) {
+        case Success<CoupleEntity?>(:final value) when value != null:
+          await _sharedPreferencesWithCache.setString(
+            PreferencesCacheKeys.coupleId,
+            value.id,
+          );
+          _logger.info(
+            'AuthService: Couple y pareja sincronizadas localmente: ${value.id}',
+          );
+        case Success<CoupleEntity?>():
+          _logger.info('AuthService: No hay couple en la nube para $userId');
+        case Failure<CoupleEntity?>():
+          _logger.error(
+            'AuthService: Error al sincronizar couple y pareja: $userId',
+            error: coupleResponse.error,
+          );
+      }
+    } catch (e, st) {
+      _logger.error(
+        'AuthService: No se pudo sincronizar la couple localmente',
+        error: e,
+        stackTrace: st,
+      );
+    }
   }
 }

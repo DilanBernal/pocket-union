@@ -3,11 +3,6 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:pocket_union/core/enums/sync_status.dart';
-import 'package:pocket_union/core/utils/categories_list_provider.dart';
-import 'package:pocket_union/core/utils/logger_provider.dart';
-import 'package:pocket_union/features/reference/category/dtos/category_ins_dto.dart';
-import 'package:pocket_union/features/reference/category/dtos/category_upd_dto.dart';
 import 'package:pocket_union/features/reference/category/presentation/controller/category_command_controller.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/category_icon_tile.dart';
 import 'package:pocket_union/features/reference/category/presentation/widgets/category_list_item.dart';
@@ -24,9 +19,6 @@ class CategoryCommandForm extends ConsumerStatefulWidget {
 }
 
 class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
-  IconData? _selectedIcon;
-  Color? _selectedColor;
-
   final _formKey = GlobalKey<FormBuilderState>();
 
   static final Set<IconData> _availableIcons = {
@@ -83,105 +75,30 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
 
   Future<void> handleSubmit() async {
     if (!mounted) return;
-    _formKey.currentState?.saveAndValidate();
-    if (widget.categoryId != null) {
-      await onEdit();
-      return;
-    }
-    await onCreate();
-  }
-
-  Future<void> onCreate() async {
-    if (!(_formKey.currentState?.isValid ?? false)) {
-      return;
-    }
-    try {
-      final command = CategoryInsDto(
-        name: _formKey.currentState?.fields['category_name']!.value,
-        host: _formKey.currentState?.fields['transaction_type']!.value == 1
-            ? CategoryHost.expense
-            : CategoryHost.income,
-        icon:
-            _selectedIcon?.codePoint.toString() ??
-            TablerIcons.currency_dollar.codePoint.toString(),
-        color: _colorToHex(_selectedColor ?? Colors.blue),
-        syncStatuss: SyncStatus.pendingCreate,
-        shortDescription:
-            _formKey.currentState?.fields['category_description']?.value,
-      );
-      final controller = ref.read(categoryCommandControllerProvider.notifier);
-      await controller.createCategory(command);
-      ref.invalidate(allCategoriesListProvider);
-      ref.invalidate(categoriesByHostProvider);
-    } catch (e) {
-      final logger = ref.read(loggerProvider);
-      logger.error('Error creating category', error: e);
-    }
-  }
-
-  Future<void> onEdit() async {
-    if (!(_formKey.currentState?.isValid ?? false)) {
-      return;
-    }
-    try {
-      final command = CategoryUpdDto(
-        id: widget.categoryId!,
-        name: _formKey.currentState?.fields['category_name']!.value,
-        host: _formKey.currentState?.fields['transaction_type']!.value == 1
-            ? CategoryHost.expense
-            : CategoryHost.income,
-        icon:
-            _selectedIcon?.codePoint.toString() ??
-            TablerIcons.currency_dollar.codePoint.toString(),
-        color: _colorToHex(_selectedColor ?? Colors.blue),
-        shortDescription:
-            _formKey.currentState?.fields['category_description']?.value,
-      );
-      final controller = ref.read(categoryCommandControllerProvider.notifier);
-      await controller.updateCategory(command);
-      ref.invalidate(allCategoriesListProvider);
-      ref.invalidate(categoriesByHostProvider);
-    } catch (e) {
-      final logger = ref.read(loggerProvider);
-      logger.error('Error updating category', error: e);
-    }
-  }
-
-  String _colorToHex(Color color) {
-    return '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+    final controller = ref.read(categoryCommandControllerProvider.notifier);
+    await controller.submit(
+      _formKey.currentState,
+      categoryId: widget.categoryId,
+    );
   }
 
   @override
   void initState() {
-    _selectedIcon = _availableIcons.first;
-    _selectedColor = _availableColors.first;
     super.initState();
+    final controller = ref.read(categoryCommandControllerProvider.notifier);
+    controller.selectIcon(_availableIcons.first);
+    controller.selectColor(_availableColors.first);
     if (widget.categoryId != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final controller = ref.read(categoryCommandControllerProvider.notifier);
-        controller.getCategoryById(widget.categoryId!).then((category) {
-          if (category != null) {
-            setState(() {
-              _selectedIcon = category.icon != null
-                  ? IconData(
-                      int.parse(category.icon!),
-                      fontFamily: 'TablerIcons',
-                    )
-                  : _availableIcons.first;
-              _selectedColor = category.color != null
-                  ? Color(
-                      int.parse(category.color!.substring(1), radix: 16) +
-                          0xFF000000,
-                    )
-                  : _availableColors.first;
-              _formKey.currentState?.fields['category_name']?.didChange(
-                category.name,
-              );
-              _formKey.currentState?.fields['transaction_type']?.didChange(
-                category.categoryHost == CategoryHost.expense ? 1 : 2,
-              );
-            });
-          }
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final category = await controller.loadCategory(widget.categoryId!);
+        if (!mounted || category == null) return;
+        setState(() {
+          _formKey.currentState?.fields['category_name']?.didChange(
+            category.name,
+          );
+          _formKey.currentState?.fields['transaction_type']?.didChange(
+            category.categoryHost == CategoryHost.expense ? 1 : 2,
+          );
         });
       });
     }
@@ -189,7 +106,8 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(categoryCommandControllerProvider);
+    ref.watch(categoryCommandControllerProvider);
+    final controller = ref.read(categoryCommandControllerProvider.notifier);
     ref.listen(categoryCommandControllerProvider, (_, next) {
       next.whenOrNull(
         data: (result) {
@@ -250,12 +168,15 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                   itemCount: _availableIcons.length,
                   itemBuilder: (context, index) {
                     final icon = _availableIcons.elementAt(index);
-                    final isSelected = _selectedIcon == icon;
+                    final isSelected = controller.selectedIcon == icon;
                     return CategoryIconTile(
                       icon: icon,
                       isSelected: isSelected,
-                      selectedColor: _selectedColor,
-                      onTap: () => setState(() => _selectedIcon = icon),
+                      selectedColor: controller.selectedColor,
+                      onTap: () {
+                        controller.selectIcon(icon);
+                        setState(() {});
+                      },
                     );
                   },
                 ),
@@ -267,9 +188,12 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                 spacing: 10,
                 runSpacing: 10,
                 children: _availableColors.map((color) {
-                  final isSelected = _selectedColor == color;
+                  final isSelected = controller.selectedColor == color;
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedColor = color),
+                    onTap: () {
+                      controller.selectColor(color);
+                      setState(() {});
+                    },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeOut,
@@ -304,8 +228,8 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
               ),
               (_formKey.currentState?.fields['category_name']?.isValid ??
                           false) &&
-                      _selectedColor != null &&
-                      _selectedIcon != null
+                      controller.selectedColor != null &&
+                      controller.selectedIcon != null
                   ? Wrap(
                       children: [
                         Text(
@@ -321,8 +245,8 @@ class _CategoryCommandFormState extends ConsumerState<CategoryCommandForm> {
                                     ?.fields['category_name']
                                     ?.value ??
                                 'Nombre de la categoría',
-                            selectedColor: _selectedColor,
-                            selectedIcon: _selectedIcon,
+                            selectedColor: controller.selectedColor,
+                            selectedIcon: controller.selectedIcon,
                           ),
                         ),
                       ],

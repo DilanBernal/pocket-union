@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:math';
 import 'package:pocket_union/core/common/app_response.dart';
 import 'package:pocket_union/features/auth/application/dao/couple_dao_local.dart';
+import 'package:pocket_union/features/auth/application/dao/user_dao_local.dart';
 import 'package:pocket_union/features/auth/domain/entities/couple_entity.dart';
+import 'package:pocket_union/features/auth/domain/entities/user_entity.dart';
 import 'package:pocket_union/features/auth/domain/enums/couple_usable_state.dart';
 import 'package:pocket_union/features/auth/domain/ports/couple_port.dart';
 import 'package:pocket_union/features/auth/domain/ports/couple_port_local.dart';
+import 'package:pocket_union/features/auth/domain/ports/user_port_local.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -22,10 +25,12 @@ Future<CouplePort> coupleService(Ref ref) async {
   final supabaseClient = await ref.watch(supabaseClientProvider.future);
   final logger = ref.watch(loggerProvider);
   final couplePort = await ref.watch(coupleDaoLocalProvider.future);
+  final userLocalPort = await ref.watch(userLocalPortProvider.future);
   return CoupleService(
     supabaseClient: supabaseClient,
     logger: logger,
     coupleService: couplePort,
+    userLocalPort: userLocalPort,
   );
 }
 
@@ -33,15 +38,18 @@ class CoupleService implements CouplePort {
   final CouplePortLocal _coupleDao;
   final SupabaseClient _supabaseClient;
   final LoggerPort _logger;
+  final UserLocalPort _userLocalPort;
   final Uuid _uuid = const Uuid();
 
   CoupleService({
     required SupabaseClient supabaseClient,
     required LoggerPort logger,
     required CouplePortLocal coupleService,
+    required UserLocalPort userLocalPort,
   }) : _coupleDao = coupleService,
        _supabaseClient = supabaseClient,
-       _logger = logger;
+       _logger = logger,
+       _userLocalPort = userLocalPort;
 
   /// Generates a 6-character alphanumeric invite code.
   static String generateInviteCode() {
@@ -287,21 +295,22 @@ class CoupleService implements CouplePort {
           .single()
           .limit(1);
 
-      if (couple?.user1Id != coupleRow['user1_id']) {
-        couple = couple!.copyWith(user1Id: coupleRow['user1_id']);
-      }
-      if (couple?.user2Id != coupleRow['user2_id']) {
-        couple = couple!.copyWith(user2Id: coupleRow['user2_id']);
-      }
-      if (couple?.isUsable != coupleRow['is_usable']) {
-        couple = couple!.copyWith(
-          isUsable: CoupleUsableState.fromString(
-            coupleRow['is_usable'] ??
-                    couple.user1Id != null && couple.user2Id != null
-                ? 'ACTIVE'
-                : 'WAITING',
-          ),
-        );
+      if (couple == null) {
+        couple = CoupleEntity.fromMap(coupleRow);
+      } else {
+        if (couple.user1Id != coupleRow['user1_id']) {
+          couple = couple.copyWith(user1Id: coupleRow['user1_id']);
+        }
+        if (couple.user2Id != coupleRow['user2_id']) {
+          couple = couple.copyWith(user2Id: coupleRow['user2_id']);
+        }
+        if (couple.isUsable !=
+            CoupleUsableState.fromString(coupleRow['is_usable'] ?? 'WAITING')) {
+          couple = couple.copyWith(
+            isUsable: CoupleUsableState.fromString(coupleRow['is_usable'] ??
+                'WAITING'),
+          );
+        }
       }
 
       return Success(couple);
@@ -394,7 +403,7 @@ class CoupleService implements CouplePort {
         } catch (_) {}
       }
       await _coupleDao.upsertCouple(couple);
-      return _coupleDao.upsertCouple(couple);
+      return true;
     } catch (e, st) {
       _logger.error(
         'Error upserting couple: ${couple.id}',
@@ -418,22 +427,59 @@ class CoupleService implements CouplePort {
           .maybeSingle();
 
       if (rows != null) {
-        try {
-          final couple = CoupleEntity.fromMap(rows);
-          await _coupleDao.upsertCouple(couple);
-          return Success(couple);
-        } catch (e, st) {
-          _logger.error(
-            'Ocurrió un error al guardar la couple',
-            error: e,
-            stackTrace: st,
-          );
-        }
+        return Success(CoupleEntity.fromMap(rows));
       }
       return Success(null);
     } catch (e, st) {
       _logger.error(
         'Error getting couple by userId in network: $userId',
+        error: e,
+        stackTrace: st,
+      );
+      return Failure(DomainError.fromException(e, ''));
+    }
+  }
+
+  @override
+  Future<AppResponse<CoupleEntity?>> syncCoupleAndPartnerLocal(
+    String userId,
+  ) async {
+    try {
+      final coupleRow = await _supabaseClient
+          .from('couple')
+          .select()
+          .or('user1_id.eq.$userId,user2_id.eq.$userId')
+          .limit(1)
+          .maybeSingle();
+
+      if (coupleRow == null) {
+        return const Success(null);
+      }
+
+      final couple = CoupleEntity.fromMap(coupleRow);
+      final partnerId = couple.user1Id == userId
+          ? couple.user2Id
+          : couple.user1Id;
+
+      if (partnerId != null) {
+        final partnerRow = await _supabaseClient
+            .from('profile')
+            .select()
+            .eq('id', partnerId)
+            .maybeSingle();
+
+        if (partnerRow != null) {
+          final partner = UserEntity.fromMap(partnerRow);
+          partner.inCloud = true;
+          await _userLocalPort.upsertUser(partner);
+        }
+      }
+
+      await _coupleDao.upsertCouple(couple);
+      return Success(couple);
+    } catch (e, st) {
+      _logger.error(
+        'Error syncing couple and partner locally for userId: $userId',
         error: e,
         stackTrace: st,
       );
