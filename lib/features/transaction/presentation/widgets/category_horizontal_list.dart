@@ -23,52 +23,52 @@ class CategoryHorizontalList extends StatefulWidget {
 class _CategoryHorizontalListState extends State<CategoryHorizontalList> {
   @override
   Widget build(BuildContext context) {
-    if (widget.categories.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text('No hay categorías disponibles'),
-      );
-    }
-
     return FormBuilderField<List<String>>(
       name: 'categories',
       onChanged: (value) {
         widget.onChanged(value ?? []);
       },
       validator: widget.validator,
-      builder: (field) => SizedBox(
-        height: 42,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: widget.categories.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 8),
-          itemBuilder: (context, index) {
-            final category = widget.categories[index];
-            final List<String> selectedIds = field.value ?? [];
-            final isSelected = selectedIds.contains(category.id);
-            final chipColor = parseColorFromHex(
-              category.color,
-              fallback: Theme.of(context).colorScheme.primary,
-            );
+      builder: (field) {
+        if (widget.categories.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text('No hay categorías disponibles'),
+          );
+        }
 
-            final iconCodePoint = int.tryParse(category.icon ?? '');
-            final categoryIcon = iconCodePoint != null
-                ? IconData(iconCodePoint, fontFamily: 'MaterialIcons')
-                : null;
+        return SizedBox(
+          height: 52,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: widget.categories.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final category = widget.categories[index];
+              final List<String> selectedIds = field.value ?? [];
+              final isSelected = selectedIds.contains(category.id);
+              final chipColor = parseColorFromHex(
+                category.color,
+                fallback: Theme.of(context).colorScheme.primary,
+              );
 
-            return CategoryItemWidget(
-              isSelected: isSelected,
-              chipColor: chipColor,
-              category: category,
-              categoryIcon: categoryIcon,
-              selectedIds: selectedIds,
-              onChanged: (value) {
-                return field.didChange(value);
-              },
-            );
-          },
-        ),
-      ),
+              final iconCodePoint = int.tryParse(category.icon ?? '');
+              final categoryIcon = iconCodePoint != null
+                  ? IconData(iconCodePoint, fontFamily: 'MaterialIcons')
+                  : null;
+
+              return CategoryItemWidget(
+                isSelected: isSelected,
+                chipColor: chipColor,
+                category: category,
+                categoryIcon: categoryIcon,
+                selectedIds: selectedIds,
+                onChanged: field.didChange,
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

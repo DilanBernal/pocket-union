@@ -11,46 +11,61 @@ class ConcurrencyInput extends StatefulWidget {
     this.decoration,
     required this.name,
     this.onChanged,
+    this.formKey,
   });
 
-  final FormFieldValidator<num>? validator;
+  final FormFieldValidator<String>? validator;
   final InputDecoration? decoration;
   final String name;
   final ValueChanged<dynamic>? onChanged;
+  final GlobalKey<FormBuilderState>? formKey;
 
   @override
   State<ConcurrencyInput> createState() => _ConcurrencyInputState();
 }
 
 class _ConcurrencyInputState extends State<ConcurrencyInput> {
-  final CurrencyTextInputFormatter _formatter =
-      CurrencyTextInputFormatter.currency(
-        // locale: 'es_COP',
-        symbol: '\$',
-        decimalDigits: 2,
-      );
+  late final CurrencyTextInputFormatter _formatter;
+
+  @override
+  void initState() {
+    super.initState();
+    _formatter = CurrencyTextInputFormatter.currency(
+      symbol: '\$',
+      decimalDigits: 2,
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FormBuilderField<num>(
+    return FormBuilderTextField(
       name: widget.name,
-      initialValue: 0.0 as num,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      initialValue: _formatter.formatString('0'),
+      inputFormatters: <TextInputFormatter>[_formatter],
+      decoration: widget.decoration!,
       validator: FormBuilderValidators.transform((_) {
-        return _formatter.getUnformattedValue();
-      }, widget.validator ?? FormBuilderValidators.compose([])),
-      builder: (field) => TextFormField(
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        onChanged: (value) {
-          final unformatted = _formatter.getUnformattedValue();
-          field.didChange(unformatted);
-          widget.onChanged?.call(unformatted);
-        },
-        // validator: FormBuilderValidators.transform((_) {
-        //   final unformatted = _formatter.getUnformattedValue();
-        //   return unformatted.toString();
-        // }, widget.validator ?? FormBuilderValidators.compose([])),
-        inputFormatters: <TextInputFormatter>[_formatter],
-        decoration: widget.decoration,
-      ),
+        return _formatter.getUnformattedValue().toString();
+      }, widget.validator!),
+      valueTransformer: (value) {
+        if (value == null || value.isEmpty) {
+          return 0.0;
+        }
+        final unformatted = _formatter.getUnformattedValue();
+        return unformatted;
+      },
+      onChanged: (value) {
+        final unformatted = _formatter.getUnformattedValue();
+        widget.formKey?.currentState?.fields[widget.name]?.didChange(
+          unformatted.toString(),
+        );
+        widget.onChanged?.call(unformatted);
+      },
     );
   }
 }

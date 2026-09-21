@@ -4,11 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:pocket_union/core/utils/categories_list_provider.dart';
-import 'package:pocket_union/core/utils/color_parser.dart';
 import 'package:pocket_union/features/reference/domain/enums/category_host.dart';
 import 'package:pocket_union/features/transaction/entry/presentation/controllers/entry_command_form.dart';
 import 'package:pocket_union/features/transaction/presentation/widgets/category_horizontal_list.dart';
-import 'package:pocket_union/features/transaction/presentation/widgets/category_item_widget.dart';
 import 'package:pocket_union/features/transaction/presentation/widgets/concurrency_input.dart';
 
 class EntryCommandForm extends ConsumerStatefulWidget {
@@ -24,8 +22,7 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = ref.watch(categoriesByHostProvider(CategoryHost.income));
-    final controller = ref.watch(entryCommandFormProvider.notifier);
+    // final controller = ref.watch(EntryCommandFormProvider.notifier);
     return FormBuilder(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -60,6 +57,7 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
             ),
             ConcurrencyInput(
               name: 'amount',
+              formKey: _formKey,
               validator: FormBuilderValidators.compose([
                 FormBuilderValidators.required(
                   errorText: 'El monto es requerido',
@@ -68,14 +66,12 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
                   errorText: 'El monto debe ser un número válido',
                 ),
               ]),
-              // onChanged: (value) => setState(() {}),
               decoration: const InputDecoration(
                 labelText: 'Monto del ingreso',
                 hintText: 'Ej: 1000, 500.50, 2000',
                 prefixIcon: Icon(TablerIcons.currency_dollar),
               ),
             ),
-
             Text(
               'Fecha del ingreso',
               style: Theme.of(context).textTheme.titleSmall,
@@ -87,108 +83,42 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
               ),
               initialValue: DateTime.now(),
             ),
-            Text(
-              'Fecha del ingreso',
-              style: Theme.of(context).textTheme.titleSmall,
+            Consumer(
+              builder: (context, ref, _) {
+                final categories = ref.watch(
+                  categoriesByHostProvider(CategoryHost.income),
+                );
+
+                return Column(
+                  children: [
+                    Text(
+                      'Categorías del ingreso',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    categories.when(
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, _) =>
+                          Text('No se pudieron cargar las categorías: $error'),
+                      data: (items) => CategoryHorizontalList(
+                        categories: items,
+                        validator: FormBuilderValidators.compose([
+                          FormBuilderValidators.minLength(1),
+                          FormBuilderValidators.required(
+                            errorText: 'Seleccione al menos una categoría',
+                          ),
+                          FormBuilderValidators.maxLength(
+                            5,
+                            errorText: 'Seleccione un máximo de 5 categorías',
+                          ),
+                        ]),
+                        onChanged: (_) {},
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-
-            // RepaintBoundary(
-            //   child: categories.isLoading
-            //       ? const CircularProgressIndicator()
-            //       : categories.hasError
-            //       ? Text('Error: ${categories.error}')
-            //       : CategoryHorizontalList(
-            //           validator: FormBuilderValidators.compose([
-            //             FormBuilderValidators.minLength(1),
-            //             FormBuilderValidators.required(
-            //               errorText: 'Seleccione al menos una categoría',
-            //             ),
-            //             FormBuilderValidators.maxLength(
-            //               5,
-            //               errorText: 'Seleccione un máximo de 5 categorías',
-            //             ),
-            //           ]),
-            //           categories: categories.value ?? [],
-            //           onChanged: (ids) {},
-            //         ),
-            // ),
-            // CategoryHorizontalList(
-            //   validator: FormBuilderValidators.compose([
-            //     FormBuilderValidators.minLength(1),
-            //     FormBuilderValidators.required(
-            //       errorText: 'Seleccione al menos una categoría',
-            //     ),
-            //     FormBuilderValidators.maxLength(
-            //       5,
-            //       errorText: 'Seleccione un máximo de 5 categorías',
-            //     ),
-            //   ]),
-            //   categories: categories.value ?? [],
-            //   onChanged: (ids) {},
-            // ),
-            // FormBuilderField<List<String>>(
-            //   name: 'categories',
-
-            //   validator: FormBuilderValidators.compose([
-            //     FormBuilderValidators.minLength(1),
-            //     FormBuilderValidators.required(
-            //       errorText: 'Seleccione al menos una categoría',
-            //     ),
-            //     FormBuilderValidators.maxLength(
-            //       5,
-            //       errorText: 'Seleccione un máximo de 5 categorías',
-            //     ),
-            //   ]),
-            //   builder: (field) => Text('sdfsdf'),
-            // ),
-            // FormBuilderField<List<String>>(
-            //   name: 'categories',
-            //   validator: FormBuilderValidators.compose([
-            //     FormBuilderValidators.minLength(1),
-            //     FormBuilderValidators.required(
-            //       errorText: 'Seleccione al menos una categoría',
-            //     ),
-            //     FormBuilderValidators.maxLength(
-            //       5,
-            //       errorText: 'Seleccione un máximo de 5 categorías',
-            //     ),
-            //   ]),
-            //   builder: (field) => SizedBox(
-            //     height: 42,
-            //     child: Text(''),
-            //     // child: ListView.separated(
-            //     //   scrollDirection: Axis.horizontal,
-            //     //   itemCount: categories.value?.length ?? 0,
-            //     //   separatorBuilder: (_, _) => const SizedBox(width: 8),
-            //     //   itemBuilder: (context, index) {
-            //     //     final category = categories.value![index];
-            //     //     final List<String> selectedIds = field.value ?? [];
-            //     //     final isSelected = selectedIds.contains(category.id);
-            //     //     final chipColor = parseColorFromHex(
-            //     //       category.color,
-            //     //       fallback: Theme.of(context).colorScheme.primary,
-            //     //     );
-
-            //     //     final iconCodePoint = int.tryParse(category.icon ?? '');
-            //     //     final categoryIcon = iconCodePoint != null
-            //     //         ? IconData(iconCodePoint, fontFamily: 'MaterialIcons')
-            //     //         : null;
-
-            //     //     return Text('CategoryItemWidget is commented out for now');
-            //     //     // return CategoryItemWidget(
-            //     //     //   isSelected: isSelected,
-            //     //     //   chipColor: chipColor,
-            //     //     //   category: category,
-            //     //     //   categoryIcon: categoryIcon,
-            //     //     //   selectedIds: selectedIds,
-            //     //     //   onChanged: (value) {
-            //     //     //     return field.didChange(value);
-            //     //     //   },
-            //     //     // );
-            //     //   },
-            //     // ),
-            //   ),
-            // ),
             Text(
               'A quien le llego',
               style: Theme.of(context).textTheme.titleSmall,
@@ -214,42 +144,19 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
               initialValue: 0,
             ),
 
-            // FormBuilderSwitch(
-            //   name: 'is_received',
-            //   initialValue: true,
-            //   title: Text(
-            //     'Ya se recibio?',
-            //     style: Theme.of(context).textTheme.titleSmall,
-            //   ),
-            // ),
-
-            // Text('Descripción', style: Theme.of(context).textTheme.titleSmall),
-            // FormBuilderTextField(name: 'description'),
-            // FormBuilderSwitch(
-            //   name: 'fixed',
-            //   initialValue: false,
-            //   title: Text(
-            //     'Es fijo?',
-            //     style: Theme.of(context).textTheme.titleSmall,
-            //   ),
-            // ),
-            // FormBuilderSwitch(
-            //   name: 'planned',
-            //   initialValue: false,
-            //   title: Text(
-            //     'Es planeado?',
-            //     style: Theme.of(context).textTheme.titleSmall,
-            //   ),
-            // ),
-            // RepaintBoundary(
-            //   child: TextButton(
-            //     child: Text('Guardar'),
-            //     onPressed: () {
-            //       _formKey.currentState?.saveAndValidate();
-            //       controller.submit(_formKey.currentState!);
-            //     },
-            //   ),
-            // ),
+            RepaintBoundary(
+              child: TextButton(
+                child: Text('Guardar'),
+                onPressed: () {
+                  _formKey.currentState?.saveAndValidate();
+                  // _formKey.su();
+                  final value = _formKey.currentState?.fields['amount']?.value;
+                  print('Amount value: $value');
+                  _formKey.currentState?.saveAndValidate();
+                  // controller.submit(_formKey.currentState!);
+                },
+              ),
+            ),
           ],
         ),
       ),

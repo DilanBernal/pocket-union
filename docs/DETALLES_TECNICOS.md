@@ -24,6 +24,17 @@ Utilizamos una jerarquía de Providers para desacoplar la lógica:
 2. **Service Providers:** Encapsulan la lógica de negocio (ej. `authServiceProvider`).
 3. **State Providers:** Gestionan la UI reactiva (ej. `allIncomesProvider`).
 
+### Formulario de ingresos: categorías sin reiniciar campos
+
+La sección de categorías del formulario de ingresos observa su provider dentro
+de un `Consumer` local. Esto evita que los cambios de carga o sincronización de
+categorías reconstruyan el formulario completo y reinicien el texto introducido
+en el campo monetario. La selección se mantiene como un `FormBuilderField` y
+cada categoría se muestra con su nombre, color e icono configurado.
+
+La decisión resuelve la pérdida de estado percibida al escribir montos y
+mantiene la validación de categorías dentro del mismo `FormBuilder`.
+
 ## 🔐 Seguridad y Precisión Financiera
 
 * **Cálculos:** Todos los montos se manejan en **centavos (enteros)** en la base de datos para evitar errores de redondeo de punto flotante de IEEE 754. La clase `intl` se encarga de la visualización.
