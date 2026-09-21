@@ -8,4 +8,7 @@ abstract class AuthPort {
   Future<AppResponse<AuthResultModel>> login(LoginDto request);
   Future<AppResponse<AuthResultModel>> register(RegisterDto request);
   Future<AppResponse<UserEntity?>> getCurrentUser();
+
+  /// Este método es para obtener el usuario de la pareja actual.
+  Future<AppResponse<UserEntity?>> getCurrentUserPartner();
 }

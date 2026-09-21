@@ -8,14 +8,14 @@ class CategoryHorizontalList extends StatefulWidget {
   final List<CategoryEntity> categories;
   final ValueChanged<List<String>> onChanged;
   final FormFieldValidator<List<String>>? validator;
-  final ValueChanged<String?> onPrimaryCategoryChanged;
+  final ValueNotifier<CategoryEntity?> primaryCategoryId;
 
   const CategoryHorizontalList({
     super.key,
     required this.categories,
     required this.onChanged,
     this.validator,
-    required this.onPrimaryCategoryChanged,
+    required this.primaryCategoryId,
   });
 
   @override
@@ -31,7 +31,22 @@ class _CategoryHorizontalListState extends State<CategoryHorizontalList> {
       name: 'categories',
       onChanged: (value) {
         widget.onChanged(value ?? []);
-        widget.onPrimaryCategoryChanged(primaryCategory?.id);
+
+        if (!value!.any((id) => id == primaryCategory?.id)) {
+          setState(() {
+            primaryCategory = null;
+          });
+        } else {
+          if (primaryCategory == null) {
+            setState(() {
+              primaryCategory = widget.categories.firstWhere(
+                (cat) => cat.id == value.first,
+                orElse: () => widget.categories.first,
+              );
+            });
+          }
+        }
+        widget.primaryCategoryId.value = primaryCategory;
       },
       validator: widget.validator,
       builder: (field) {
@@ -62,6 +77,12 @@ class _CategoryHorizontalListState extends State<CategoryHorizontalList> {
               final categoryIcon = iconCodePoint != null
                   ? IconData(iconCodePoint, fontFamily: 'MaterialIcons')
                   : null;
+
+              final isPrimary =
+                  isSelected && isPrimaryCategory(category, selectedIds);
+              if (isPrimary) {
+                widget.primaryCategoryId.value = category;
+              }
 
               return CategoryItemWidget(
                 isSelected: isSelected,

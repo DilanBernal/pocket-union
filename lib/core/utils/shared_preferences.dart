@@ -18,6 +18,7 @@ Future<SharedPreferencesWithCache> sharedPreferencesWithCache(Ref ref) async {
         PreferencesCacheKeys.isInSession,
         PreferencesCacheKeys.coupleId,
         PreferencesCacheKeys.userId,
+        PreferencesCacheKeys.coupleProfileId,
       },
     ),
   );
@@ -28,5 +29,6 @@ class PreferencesCacheKeys {
   static const String isFirstLaunch = 'isFirstLaunch';
   static const String isInSession = 'isInSession';
   static const String coupleId = 'coupleId';
+  static const String coupleProfileId = 'coupleProfileId';
   static const String userId = 'userId';
 }

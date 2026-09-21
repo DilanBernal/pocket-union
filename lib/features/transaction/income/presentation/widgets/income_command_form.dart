@@ -19,14 +19,15 @@ class EntryCommandForm extends ConsumerStatefulWidget {
 
 class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
   final _formKey = GlobalKey<FormBuilderState>();
-  final _primaryCategoryId = ValueNotifier<String?>(null);
 
   @override
   Widget build(BuildContext context) {
-    // final controller = ref.watch(EntryCommandFormProvider.notifier);
+    final controller = ref.watch(incomeCommandFormControllerProvider.notifier);
+    final primaryCategoryId = controller.primaryCategoryId;
+
     return FormBuilder(
       key: _formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
+      autovalidateMode: AutovalidateMode.onUnfocus,
       child: SingleChildScrollView(
         child: Column(
           children: [
@@ -114,9 +115,7 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
                           ),
                         ]),
                         onChanged: (_) {},
-                        onPrimaryCategoryChanged: (String? value) {
-                          _primaryCategoryId.value = value;
-                        },
+                        primaryCategoryId: primaryCategoryId,
                       ),
                     ),
                   ],
@@ -175,9 +174,6 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
                   debugPrint('Amount value: $ammountValue');
 
                   _formKey.currentState?.saveAndValidate();
-                  final controller = ref.read(
-                    incomeCommandFormControllerProvider.notifier,
-                  );
                   controller.submit(_formKey.currentState!);
                 },
               ),

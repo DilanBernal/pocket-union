@@ -327,4 +327,81 @@ class AuthService extends AuthPort {
       );
     }
   }
+
+  @override
+  Future<AppResponse<UserEntity?>> getCurrentUserPartner() async {
+    try {
+      final coupleProfileId = _sharedPreferencesWithCache.getString(
+        PreferencesCacheKeys.coupleProfileId,
+      );
+
+      if (coupleProfileId == null) {
+        final coupleResposne = await _coupleService.getCoupleByUserId(
+          _sharedPreferencesWithCache.getString(PreferencesCacheKeys.userId)!,
+        );
+        switch (coupleResposne) {
+          case Success<CoupleEntity?>(:final value) when value != null:
+            final partnerId = await _supabaseClient
+                .from('profile')
+                .select('id')
+                .eq('couple_id', value.id)
+                .maybeSingle();
+            break;
+          case Failure<CoupleEntity?>():
+            // TODO: Handle this case.
+            throw UnimplementedError();
+          case Success<CoupleEntity?>():
+            // TODO: Handle this case.
+            throw UnimplementedError();
+        }
+        return Success(null);
+      }
+
+      if (_sharedPreferencesWithCache.getString(
+            PreferencesCacheKeys.coupleId,
+          ) !=
+          null) {
+        _logger.info('AuthService: No hay couple en sesión');
+        return Success(null);
+      }
+      final partnerProfileLocal = await _userLocalPort.getUserById(
+        coupleProfileId,
+      );
+      if (partnerProfileLocal == null) {
+        final userProfile = await _supabaseClient
+            .from('profile')
+            .select()
+            .eq('id', coupleProfileId)
+            .maybeSingle();
+        if (userProfile == null) {
+          _logger.info(
+            'AuthService: No se encontró el perfil de la pareja en la nube',
+          );
+          return Failure(
+            DomainError(
+              message: 'No se encontró el perfil de la pareja en la nube',
+              code: 'user_profile_not_found',
+            ),
+          );
+        }
+        final userEntity = UserEntity.fromMap(userProfile);
+        userEntity.inCloud = true;
+        userEntity.lastSync = DateTime.now();
+        await _userLocalPort.upsertUser(userEntity);
+        return Success(userEntity);
+      }
+      return Success(partnerProfileLocal);
+    } catch (e) {
+      _logger.error(
+        'AuthService: Error al obtener el usuario de la pareja actual',
+        error: e,
+      );
+      return Failure(
+        DomainError(
+          message: 'Error al obtener el usuario de la pareja actual',
+          code: 'get_current_user_couple_error',
+        ),
+      );
+    }
+  }
 }

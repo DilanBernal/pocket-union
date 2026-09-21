@@ -16,3 +16,15 @@ Future<UserEntity?> currentUser(Ref ref) async {
       return null;
   }
 }
+
+@riverpod
+Future<UserEntity?> currentPartnerUser(Ref ref) async {
+  final authService = await ref.watch(authServiceProvider.future);
+  var currentUserResponse = await authService.getCurrentUserPartner();
+  switch (currentUserResponse) {
+    case Success<UserEntity?>(:final value):
+      return value;
+    case Failure<UserEntity?>():
+      return null;
+  }
+}

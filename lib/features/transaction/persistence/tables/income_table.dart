@@ -6,7 +6,7 @@ import 'package:pocket_union/features/reference/persistence/tables/category_tabl
 
 class IncomeTable extends Table {
   @override
-  String? get tableName => 'expense';
+  String? get tableName => 'income';
 
   TextColumn get id => text()();
 
