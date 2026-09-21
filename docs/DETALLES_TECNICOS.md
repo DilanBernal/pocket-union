@@ -248,3 +248,22 @@ Adicionalmente:
 ### Tradeoffs
 
 1. Algunas pantallas avanzadas quedaron temporalmente como placeholders en `presentation/router.dart` mientras se remigran por feature.
+
+## 🧾 Cambios Importantes (Septiembre 2026) - Entidad de dominio `income`
+
+### Cambio aplicado
+
+Se creo `IncomeEntity` en `lib/features/transaction/domain/entities/income_entity.dart` con los campos de la tabla remota `income` y los metadatos transversales de sincronizacion offline.
+
+### Razon del cambio
+
+La tabla `income` no tenia una representacion en la capa de dominio de transacciones, lo que dificultaba compartir el contrato de ingresos entre persistencia local, Supabase y la capa de aplicacion.
+
+### Impacto tecnico
+
+1. Los tipos del dominio reflejan las restricciones de la tabla: `amount` como `double`, fechas como `DateTime`, `userRecipientId` nullable y `isReceived` como `bool`.
+2. La entidad hereda `OfflineBaseEntity`, por lo que puede participar en el flujo de sincronizacion sin acoplar el dominio a Drift o Supabase.
+
+### Tradeoffs
+
+La entidad representa `categoryId` como una sola categoria, igual que la tabla `income`; cualquier relacion de multiples categorias debe resolverse mediante la tabla puente local sin alterar este contrato.

@@ -8,6 +8,7 @@ import 'package:pocket_union/core/enums/sync_status.dart';
 import 'package:pocket_union/features/reference/domain/enums/category_host.dart';
 import 'package:pocket_union/features/reference/persistence/tables/category_table.dart';
 import 'package:pocket_union/features/transaction/persistence/tables/expense_table.dart';
+import 'package:pocket_union/features/transaction/persistence/tables/income_table.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:path/path.dart' as p;
@@ -29,6 +30,8 @@ Future<AppDatabase> appDatabase(Ref ref) async {
     ExpenseTable,
     ExpenseCategories,
     CategoryTable,
+    IncomeTable,
+    IncomeCategories,
   ],
 )
 class AppDatabase extends _$AppDatabase {

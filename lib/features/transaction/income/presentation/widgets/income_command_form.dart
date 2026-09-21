@@ -5,7 +5,7 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:pocket_union/core/utils/categories_list_provider.dart';
 import 'package:pocket_union/features/reference/domain/enums/category_host.dart';
-import 'package:pocket_union/features/transaction/entry/presentation/controllers/entry_command_form.dart';
+import 'package:pocket_union/features/transaction/income/presentation/controllers/income_command_form.controller.dart';
 import 'package:pocket_union/features/transaction/presentation/widgets/category_horizontal_list.dart';
 import 'package:pocket_union/features/transaction/presentation/widgets/concurrency_input.dart';
 
@@ -19,6 +19,7 @@ class EntryCommandForm extends ConsumerStatefulWidget {
 
 class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
   final _formKey = GlobalKey<FormBuilderState>();
+  final _primaryCategoryId = ValueNotifier<String?>(null);
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +114,9 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
                           ),
                         ]),
                         onChanged: (_) {},
+                        onPrimaryCategoryChanged: (String? value) {
+                          _primaryCategoryId.value = value;
+                        },
                       ),
                     ),
                   ],
@@ -143,6 +147,22 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
               alignment: WrapAlignment.spaceAround,
               initialValue: 0,
             ),
+            Text('Descripción', style: Theme.of(context).textTheme.titleSmall),
+            FormBuilderTextField(
+              name: 'description',
+              validator: FormBuilderValidators.compose([
+                FormBuilderValidators.maxLength(
+                  200,
+                  errorText: 'La descripción no puede exceder 200 caracteres',
+                ),
+              ]),
+              decoration: const InputDecoration(
+                labelText: 'Descripción',
+                hintText: 'Ej: Pago de proyecto, Bonificación, etc.',
+                prefixIcon: Icon(TablerIcons.notes),
+              ),
+              maxLines: 3,
+            ),
 
             RepaintBoundary(
               child: TextButton(
@@ -150,10 +170,15 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
                 onPressed: () {
                   _formKey.currentState?.saveAndValidate();
                   // _formKey.su();
-                  final value = _formKey.currentState?.fields['amount']?.value;
-                  print('Amount value: $value');
+                  final ammountValue =
+                      _formKey.currentState?.fields['amount']?.transformedValue;
+                  debugPrint('Amount value: $ammountValue');
+
                   _formKey.currentState?.saveAndValidate();
-                  // controller.submit(_formKey.currentState!);
+                  final controller = ref.read(
+                    incomeCommandFormControllerProvider.notifier,
+                  );
+                  controller.submit(_formKey.currentState!);
                 },
               ),
             ),

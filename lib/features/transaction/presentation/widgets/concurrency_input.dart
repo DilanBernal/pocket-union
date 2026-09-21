@@ -37,11 +37,6 @@ class _ConcurrencyInputState extends State<ConcurrencyInput> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return FormBuilderTextField(
       name: widget.name,
@@ -50,6 +45,7 @@ class _ConcurrencyInputState extends State<ConcurrencyInput> {
       inputFormatters: <TextInputFormatter>[_formatter],
       decoration: widget.decoration!,
       validator: FormBuilderValidators.transform((_) {
+        debugPrint('Transforming value...');
         return _formatter.getUnformattedValue().toString();
       }, widget.validator!),
       valueTransformer: (value) {
@@ -58,13 +54,6 @@ class _ConcurrencyInputState extends State<ConcurrencyInput> {
         }
         final unformatted = _formatter.getUnformattedValue();
         return unformatted;
-      },
-      onChanged: (value) {
-        final unformatted = _formatter.getUnformattedValue();
-        widget.formKey?.currentState?.fields[widget.name]?.didChange(
-          unformatted.toString(),
-        );
-        widget.onChanged?.call(unformatted);
       },
     );
   }

@@ -8,12 +8,14 @@ class CategoryHorizontalList extends StatefulWidget {
   final List<CategoryEntity> categories;
   final ValueChanged<List<String>> onChanged;
   final FormFieldValidator<List<String>>? validator;
+  final ValueChanged<String?> onPrimaryCategoryChanged;
 
   const CategoryHorizontalList({
     super.key,
     required this.categories,
     required this.onChanged,
     this.validator,
+    required this.onPrimaryCategoryChanged,
   });
 
   @override
@@ -21,12 +23,15 @@ class CategoryHorizontalList extends StatefulWidget {
 }
 
 class _CategoryHorizontalListState extends State<CategoryHorizontalList> {
+  CategoryEntity? primaryCategory;
+
   @override
   Widget build(BuildContext context) {
     return FormBuilderField<List<String>>(
       name: 'categories',
       onChanged: (value) {
         widget.onChanged(value ?? []);
+        widget.onPrimaryCategoryChanged(primaryCategory?.id);
       },
       validator: widget.validator,
       builder: (field) {
@@ -41,8 +46,9 @@ class _CategoryHorizontalListState extends State<CategoryHorizontalList> {
           height: 52,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
+            addRepaintBoundaries: true,
             itemCount: widget.categories.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, index) {
               final category = widget.categories[index];
               final List<String> selectedIds = field.value ?? [];
@@ -64,11 +70,25 @@ class _CategoryHorizontalListState extends State<CategoryHorizontalList> {
                 categoryIcon: categoryIcon,
                 selectedIds: selectedIds,
                 onChanged: field.didChange,
+                onLongPress: () {
+                  if (!selectedIds.contains(category.id)) return;
+                  setState(() {
+                    primaryCategory = category;
+                  });
+                },
+                isPrimary: isPrimaryCategory(category, selectedIds),
               );
             },
           ),
         );
       },
     );
+  }
+
+  bool isPrimaryCategory(CategoryEntity category, List<String> selectedIds) {
+    if (!selectedIds.contains(category.id)) return false;
+    if (primaryCategory == null) return selectedIds.first == category.id;
+
+    return primaryCategory?.id == category.id;
   }
 }
