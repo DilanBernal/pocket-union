@@ -24,6 +24,17 @@ Utilizamos una jerarquía de Providers para desacoplar la lógica:
 2. **Service Providers:** Encapsulan la lógica de negocio (ej. `authServiceProvider`).
 3. **State Providers:** Gestionan la UI reactiva (ej. `allIncomesProvider`).
 
+### Formulario de ingresos: categorías sin reiniciar campos
+
+La sección de categorías del formulario de ingresos observa su provider dentro
+de un `Consumer` local. Esto evita que los cambios de carga o sincronización de
+categorías reconstruyan el formulario completo y reinicien el texto introducido
+en el campo monetario. La selección se mantiene como un `FormBuilderField` y
+cada categoría se muestra con su nombre, color e icono configurado.
+
+La decisión resuelve la pérdida de estado percibida al escribir montos y
+mantiene la validación de categorías dentro del mismo `FormBuilder`.
+
 ## 🔐 Seguridad y Precisión Financiera
 
 * **Cálculos:** Todos los montos se manejan en **centavos (enteros)** en la base de datos para evitar errores de redondeo de punto flotante de IEEE 754. La clase `intl` se encarga de la visualización.
@@ -237,3 +248,22 @@ Adicionalmente:
 ### Tradeoffs
 
 1. Algunas pantallas avanzadas quedaron temporalmente como placeholders en `presentation/router.dart` mientras se remigran por feature.
+
+## 🧾 Cambios Importantes (Septiembre 2026) - Entidad de dominio `income`
+
+### Cambio aplicado
+
+Se creo `IncomeEntity` en `lib/features/transaction/domain/entities/income_entity.dart` con los campos de la tabla remota `income` y los metadatos transversales de sincronizacion offline.
+
+### Razon del cambio
+
+La tabla `income` no tenia una representacion en la capa de dominio de transacciones, lo que dificultaba compartir el contrato de ingresos entre persistencia local, Supabase y la capa de aplicacion.
+
+### Impacto tecnico
+
+1. Los tipos del dominio reflejan las restricciones de la tabla: `amount` como `double`, fechas como `DateTime`, `userRecipientId` nullable y `isReceived` como `bool`.
+2. La entidad hereda `OfflineBaseEntity`, por lo que puede participar en el flujo de sincronizacion sin acoplar el dominio a Drift o Supabase.
+
+### Tradeoffs
+
+La entidad representa `categoryId` como una sola categoria, igual que la tabla `income`; cualquier relacion de multiples categorias debe resolverse mediante la tabla puente local sin alterar este contrato.

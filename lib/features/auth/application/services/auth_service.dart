@@ -1,0 +1,407 @@
+import 'package:pocket_union/core/common/domain_error.dart';
+import 'package:pocket_union/core/ports/logger_port.dart';
+import 'package:pocket_union/core/utils/shared_preferences.dart';
+import 'package:pocket_union/features/auth/application/services/couple_service.dart';
+import 'package:pocket_union/features/auth/domain/entities/couple_entity.dart';
+import 'package:pocket_union/features/auth/domain/ports/couple_port.dart';
+import 'package:pocket_union/features/auth/login/dtos/login_dto.dart';
+import 'package:pocket_union/features/auth/domain/entities/user_entity.dart';
+import 'package:pocket_union/features/auth/domain/models/auth_result_model.dart';
+import 'package:pocket_union/features/auth/domain/ports/auth_port.dart';
+import 'package:pocket_union/features/auth/domain/ports/user_port_local.dart';
+import 'package:pocket_union/features/auth/register/dtos/register_dto.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../../core/common/app_response.dart';
+import '../../../../core/utils/logger_provider.dart';
+import '../../../../core/utils/supabase_client_provider.dart';
+import '../../domain/enums/couple_usable_state.dart';
+import '../dao/user_dao_local.dart';
+
+part 'auth_service.g.dart';
+
+@Riverpod(keepAlive: true)
+Future<AuthPort> authService(Ref ref) async {
+  final userLocalPort = await ref.watch(userLocalPortProvider.future);
+  final supabaseClient = await ref.watch(supabaseClientProvider.future);
+  final logger = ref.watch(loggerProvider);
+  final coupleService = await ref.watch(coupleServiceProvider.future);
+  final sharedPreferencesAsync = await ref.watch(
+    sharedPreferencesAsyncProvider.future,
+  );
+  final sharedPreferencesWithCache = await ref.watch(
+    sharedPreferencesWithCacheProvider.future,
+  );
+  return AuthService(
+    supabaseClient: supabaseClient,
+    userLocalPort: userLocalPort,
+    logger: logger,
+    coupleService: coupleService,
+    sharedPreferencesAsync: sharedPreferencesAsync,
+    sharedPreferencesWithCache: sharedPreferencesWithCache,
+  );
+}
+
+class AuthService extends AuthPort {
+  final UserLocalPort _userLocalPort;
+  final SupabaseClient _supabaseClient;
+  final LoggerPort _logger;
+  final CouplePort _coupleService;
+  final SharedPreferencesAsync _sharedPreferencesAsync;
+  final SharedPreferencesWithCache _sharedPreferencesWithCache;
+
+  AuthService({
+    required UserLocalPort userLocalPort,
+    required SupabaseClient supabaseClient,
+    required LoggerPort logger,
+    required CouplePort coupleService,
+    required SharedPreferencesAsync sharedPreferencesAsync,
+    required SharedPreferencesWithCache sharedPreferencesWithCache,
+  }) : _logger = logger,
+       _supabaseClient = supabaseClient,
+       _userLocalPort = userLocalPort,
+       _coupleService = coupleService,
+       _sharedPreferencesAsync = sharedPreferencesAsync,
+       _sharedPreferencesWithCache = sharedPreferencesWithCache;
+
+  @override
+  Future<AppResponse<AuthResultModel>> login(LoginDto request) async {
+    try {
+      await _sharedPreferencesWithCache.setBool(
+        PreferencesCacheKeys.isFirstLaunch,
+        false,
+      );
+      final loginRes = await _supabaseClient.auth.signInWithPassword(
+        email: request.email,
+        password: request.password,
+      );
+      if (loginRes.user?.id == null) {
+        return Failure(
+          DomainError(
+            message: 'AuthService: Error en login, userId es null',
+            code: 'login_error',
+          ),
+        );
+      }
+      UserEntity userProfile = UserEntity.fromMap(
+        await _supabaseClient
+            .from('profile')
+            .select('id, full_name, user_balance, last_sync')
+            .filter('id', 'eq', loginRes.user!.id)
+            .single(),
+      );
+      userProfile.inCloud = true;
+      var response = await Future.wait([
+        _sharedPreferencesWithCache.setBool(
+          PreferencesCacheKeys.isInSession,
+          true,
+        ),
+        _sharedPreferencesWithCache.setString(
+          PreferencesCacheKeys.userId,
+          loginRes.user!.id,
+        ),
+        _userLocalPort.upsertUser(userProfile),
+        _sharedPreferencesAsync.setString(
+          'userProfile',
+          userProfile.toString(),
+        ),
+      ]);
+      _logger.info('AuthService: Login exitoso para ${loginRes.user!.id}');
+
+      // Guardar coupleId en SharedPreferences
+      try {
+        final coupleRows = await _supabaseClient
+            .from('couple')
+            .select('id, user1_id, user2_id, is_usable')
+            .or(
+              'user1_id.eq.${loginRes.user!.id}, user2_id.eq.${loginRes.user!.id}',
+            )
+            .limit(1);
+        if (coupleRows.isNotEmpty) {
+          await _sharedPreferencesWithCache.setString(
+            PreferencesCacheKeys.coupleId,
+            coupleRows.first['id'],
+          );
+          if (coupleRows.first['is_usable'] == CoupleUsableState.ready.value) {
+            final idToSearch = loginRes.user!.id == coupleRows.first['user1_id']
+                ? coupleRows.first['user2_id']
+                : coupleRows.first['user1_id'];
+            UserEntity coupleProfile = UserEntity.fromMap(
+              await _supabaseClient
+                  .from('profile')
+                  .select()
+                  .eq('id', idToSearch)
+                  .single(),
+            );
+
+            coupleProfile.inCloud = true;
+
+            await Future.wait([
+              _userLocalPort.upsertUser(coupleProfile),
+              _sharedPreferencesAsync.setString(
+                'coupleProfile',
+                coupleProfile.toString(),
+              ),
+            ]);
+          }
+        }
+      } catch (e) {
+        _logger.error('AuthService: No se pudo obtener coupleId', error: e);
+      }
+
+      if (response.isNotEmpty) {
+        _logger.info('AuthService: Datos de sesión guardados correctamente');
+      }
+      return Success(AuthResultModel(userId: loginRes.user!.id));
+    } catch (error) {
+      _logger.error('AuthService: Error en login', error: error);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<AppResponse<AuthResultModel>> register(RegisterDto request) async {
+    try {
+      var res = await _supabaseClient.auth.signUp(
+        password: request.password,
+        email: request.email,
+        data: {'full_name': request.fullName},
+      );
+
+      if (res.user != null) {
+        final domainUser = UserEntity(
+          id: res.user!.id,
+          fullName: request.fullName,
+          balance: 0,
+          inCloud: true,
+        );
+
+        var resultados = await Future.wait([
+          _sharedPreferencesWithCache.setBool(
+            PreferencesCacheKeys.isFirstLaunch,
+            false,
+          ),
+          _sharedPreferencesWithCache.setBool(
+            PreferencesCacheKeys.isInSession,
+            true,
+          ),
+          _sharedPreferencesWithCache.setString(
+            PreferencesCacheKeys.userId,
+            res.user!.id,
+          ),
+          _userLocalPort.upsertUser(domainUser),
+          _sharedPreferencesAsync.setString(
+            'userProfile',
+            domainUser.toString(),
+          ),
+        ]);
+
+        if (resultados.isNotEmpty) {
+          _logger.info(
+            'AuthService: Usuario registrado y guardado en SQLite: ${res.user!.id}',
+          );
+        }
+
+        final coupleId = await handleCoupleInRegister(res.user!.id);
+        if (coupleId != null) {
+          await _sharedPreferencesWithCache.setString(
+            PreferencesCacheKeys.coupleId,
+            coupleId,
+          );
+        }
+      }
+
+      _logger.info('AuthService: Registro completado');
+      return Success(AuthResultModel(userId: res.user?.id ?? ''));
+    } catch (e) {
+      _logger.error('AuthService: Error al intentar registrarse', error: e);
+      rethrow;
+    }
+  }
+
+  Future<String?> handleCoupleInRegister(String userId) async {
+    final coupleResponse = await _coupleService.getCoupleByUserIdInNetwork(
+      userId,
+    );
+
+    switch (coupleResponse) {
+      case Success<CoupleEntity?>():
+        var coupleValue = coupleResponse.value;
+        if (coupleValue != null) {
+          _logger.info(
+            'AuthService: Usuario registrado y couple encontrada: $userId',
+          );
+          await _coupleService.syncCoupleAndPartnerLocal(userId);
+          return coupleValue.id;
+        } else {
+          final response = await _coupleService.createCouple(userId);
+          switch (response) {
+            case Success<(CoupleEntity, String)>():
+              _logger.info(
+                'AuthService: Usuario registrado y couple creada: $userId',
+              );
+              return response.value.$1.id;
+            case Failure<(CoupleEntity, String)>():
+              var error = response.error;
+              _logger.error(
+                'AuthService: Error al crear couple en registro: $userId',
+                error: error,
+              );
+              return null;
+          }
+        }
+      case Failure<CoupleEntity?>():
+        var info = coupleResponse.error;
+        _logger.error(
+          'AuthService: Error al obtener couple en registro: $userId',
+          error: info,
+        );
+        return null;
+    }
+  }
+
+  @override
+  Future<AppResponse<UserEntity?>> getCurrentUser() async {
+    final userId = _sharedPreferencesWithCache.getString(
+      PreferencesCacheKeys.userId,
+    );
+
+    if (userId == null) {
+      _logger.info('AuthService: No hay usuario en sesión');
+      return Success(null);
+    }
+
+    UserEntity? user = await _userLocalPort.getUserById(userId);
+
+    if (user == null) {
+      final userProfile = await _supabaseClient
+          .from('profile')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
+      if (userProfile == null) {
+        _logger.info(
+          'AuthService: No se encontró el perfil del usuario en la nube',
+        );
+        return Success(null);
+      }
+      user = UserEntity.fromMap(userProfile);
+      user.inCloud = true;
+      user.lastSync = DateTime.now();
+      await _userLocalPort.upsertUser(user);
+
+      await _syncCoupleAndPartnerLocally(userId);
+    }
+    return Success(user);
+  }
+
+  Future<void> _syncCoupleAndPartnerLocally(String userId) async {
+    try {
+      final coupleResponse = await _coupleService.syncCoupleAndPartnerLocal(
+        userId,
+      );
+      switch (coupleResponse) {
+        case Success<CoupleEntity?>(:final value) when value != null:
+          await _sharedPreferencesWithCache.setString(
+            PreferencesCacheKeys.coupleId,
+            value.id,
+          );
+          _logger.info(
+            'AuthService: Couple y pareja sincronizadas localmente: ${value.id}',
+          );
+        case Success<CoupleEntity?>():
+          _logger.info('AuthService: No hay couple en la nube para $userId');
+        case Failure<CoupleEntity?>():
+          _logger.error(
+            'AuthService: Error al sincronizar couple y pareja: $userId',
+            error: coupleResponse.error,
+          );
+      }
+    } catch (e, st) {
+      _logger.error(
+        'AuthService: No se pudo sincronizar la couple localmente',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<AppResponse<UserEntity?>> getCurrentUserPartner() async {
+    try {
+      final coupleProfileId = _sharedPreferencesWithCache.getString(
+        PreferencesCacheKeys.coupleProfileId,
+      );
+
+      if (coupleProfileId == null) {
+        final coupleResposne = await _coupleService.getCoupleByUserId(
+          _sharedPreferencesWithCache.getString(PreferencesCacheKeys.userId)!,
+        );
+        switch (coupleResposne) {
+          case Success<CoupleEntity?>(:final value) when value != null:
+            final partnerId = await _supabaseClient
+                .from('profile')
+                .select('id')
+                .eq('couple_id', value.id)
+                .maybeSingle();
+            break;
+          case Failure<CoupleEntity?>():
+            // TODO: Handle this case.
+            throw UnimplementedError();
+          case Success<CoupleEntity?>():
+            // TODO: Handle this case.
+            throw UnimplementedError();
+        }
+        return Success(null);
+      }
+
+      if (_sharedPreferencesWithCache.getString(
+            PreferencesCacheKeys.coupleId,
+          ) !=
+          null) {
+        _logger.info('AuthService: No hay couple en sesión');
+        return Success(null);
+      }
+      final partnerProfileLocal = await _userLocalPort.getUserById(
+        coupleProfileId,
+      );
+      if (partnerProfileLocal == null) {
+        final userProfile = await _supabaseClient
+            .from('profile')
+            .select()
+            .eq('id', coupleProfileId)
+            .maybeSingle();
+        if (userProfile == null) {
+          _logger.info(
+            'AuthService: No se encontró el perfil de la pareja en la nube',
+          );
+          return Failure(
+            DomainError(
+              message: 'No se encontró el perfil de la pareja en la nube',
+              code: 'user_profile_not_found',
+            ),
+          );
+        }
+        final userEntity = UserEntity.fromMap(userProfile);
+        userEntity.inCloud = true;
+        userEntity.lastSync = DateTime.now();
+        await _userLocalPort.upsertUser(userEntity);
+        return Success(userEntity);
+      }
+      return Success(partnerProfileLocal);
+    } catch (e) {
+      _logger.error(
+        'AuthService: Error al obtener el usuario de la pareja actual',
+        error: e,
+      );
+      return Failure(
+        DomainError(
+          message: 'Error al obtener el usuario de la pareja actual',
+          code: 'get_current_user_couple_error',
+        ),
+      );
+    }
+  }
+}
