@@ -43,13 +43,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         FutureBuilder(
                           future: future,
                           builder: (context, snapshot) {
-                            if (!snapshot.hasData) {
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
                               return Text(
                                 snapshot.data?.first?.fullName ??
                                     'No user found',
                               );
                             }
-                            return (snapshot.data?.first?.fullName != null)
+                            return (snapshot.data?.first?.fullName != null &&
+                                    snapshot.data?.last?.fullName != null)
                                 ? Text(
                                     '$snapshot.data!.first!.fullName and ${snapshot.data!.last!.fullName}',
                                   )
