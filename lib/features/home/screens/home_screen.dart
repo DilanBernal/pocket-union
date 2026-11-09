@@ -38,27 +38,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     final partnerUser = homeController.getActualPartnerUser();
                     final future = Future.wait([user, partnerUser]);
 
-                    return Stack(
-                      children: [
-                        FutureBuilder(
-                          future: future,
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return Text(
-                                snapshot.data?.first?.fullName ??
-                                    'No user found',
-                              );
-                            }
-                            return (snapshot.data?.first?.fullName != null &&
-                                    snapshot.data?.last?.fullName != null)
-                                ? Text(
-                                    '$snapshot.data!.first!.fullName and ${snapshot.data!.last!.fullName}',
-                                  )
-                                : const Text('No user found');
-                          },
-                        ),
-                        const Placeholder(),
-                      ],
+                    return FutureBuilder(
+                      future: future,
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return Text(
+                            snapshot.data?.first?.fullName ?? 'No user found',
+                          );
+                        }
+                        return (snapshot.data?.first?.fullName != null &&
+                                snapshot.data?.last?.fullName != null)
+                            ? Text(
+                                '${snapshot.data!.first!.fullName} and ${snapshot.data!.last!.fullName}',
+                              )
+                            : const Text('No user found');
+                      },
                     );
                   },
                 ),
@@ -71,8 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         landscapeLayout: BottomNavigationBarLandscapeLayout.centered,
-        selectedItemColor: Color.fromRGBO(128, 128, 204, 1.0),
-        unselectedItemColor: Color.fromRGBO(255, 17, 203, 1),
+        selectedItemColor: const Color.fromRGBO(128, 128, 204, 1.0),
+        unselectedItemColor: const Color.fromRGBO(255, 17, 203, 1),
         currentIndex: indexScreen,
         elevation: 10,
         type: BottomNavigationBarType.shifting,

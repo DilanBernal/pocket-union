@@ -235,22 +235,21 @@ class AuthService extends AuthPort {
           );
           await _coupleService.syncCoupleAndPartnerLocal(userId);
           return coupleValue.id;
-        } else {
-          final response = await _coupleService.createCouple(userId);
-          switch (response) {
-            case Success<(CoupleEntity, String)>():
-              _logger.info(
-                'AuthService: Usuario registrado y couple creada: $userId',
-              );
-              return response.value.$1.id;
-            case Failure<(CoupleEntity, String)>():
-              var error = response.error;
-              _logger.error(
-                'AuthService: Error al crear couple en registro: $userId',
-                error: error,
-              );
-              return null;
-          }
+        }
+        final response = await _coupleService.createCouple(userId);
+        switch (response) {
+          case Success<(CoupleEntity, String)>():
+            _logger.info(
+              'AuthService: Usuario registrado y couple creada: $userId',
+            );
+            return response.value.$1.id;
+          case Failure<(CoupleEntity, String)>():
+            var error = response.error;
+            _logger.error(
+              'AuthService: Error al crear couple en registro: $userId',
+              error: error,
+            );
+            return null;
         }
       case Failure<CoupleEntity?>():
         var info = coupleResponse.error;
@@ -331,7 +330,7 @@ class AuthService extends AuthPort {
   @override
   Future<AppResponse<UserEntity?>> getCurrentUserPartner() async {
     try {
-      final coupleProfileId = _sharedPreferencesWithCache.getString(
+      String? coupleProfileId = _sharedPreferencesWithCache.getString(
         PreferencesCacheKeys.coupleProfileId,
       );
 
@@ -341,25 +340,62 @@ class AuthService extends AuthPort {
         );
         switch (coupleResposne) {
           case Success<CoupleEntity?>(:final value) when value != null:
-            final partnerId = await _supabaseClient
+            coupleProfileId =
+                value.user1Id ==
+                    _sharedPreferencesWithCache.getString(
+                      PreferencesCacheKeys.userId,
+                    )
+                ? value.user2Id
+                : value.user1Id;
+            if (coupleProfileId == null) {
+              return Failure(
+                DomainError(
+                  message: 'No se encontró el perfil de la pareja',
+                  code: 'partner_profile_not_found',
+                ),
+              );
+            }
+            await _sharedPreferencesWithCache.setString(
+              PreferencesCacheKeys.coupleProfileId,
+              coupleProfileId,
+            );
+            final partnerProfile = await _supabaseClient
                 .from('profile')
-                .select('id')
-                .eq('couple_id', value.id)
+                .select('''
+                  id,
+                  full_name,
+                  avatar_url,
+                  user_balance
+                  ''')
+                .eq('id', coupleProfileId)
                 .maybeSingle();
-            break;
+            if (partnerProfile == null) {
+              return Failure(
+                DomainError(
+                  message: 'No se encontró el perfil de la pareja en la nube',
+                  code: 'partner_profile_not_found',
+                ),
+              );
+            }
+            final partnerUserEntity = UserEntity.fromMap(partnerProfile);
+            partnerUserEntity.inCloud = true;
+            return Success(partnerUserEntity);
           case Failure<CoupleEntity?>():
-            // TODO: Handle this case.
-            throw UnimplementedError();
+            return Failure(
+              DomainError(
+                message: 'Error al obtener la couple del usuario',
+                code: 'get_couple_error',
+              ),
+            );
           case Success<CoupleEntity?>():
             // TODO: Handle this case.
             throw UnimplementedError();
         }
-        return Success(null);
       }
 
       if (_sharedPreferencesWithCache.getString(
             PreferencesCacheKeys.coupleId,
-          ) !=
+          ) ==
           null) {
         _logger.info('AuthService: No hay couple en sesión');
         return Success(null);
