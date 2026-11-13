@@ -1,0 +1,1 @@
+enum CategoryHost { expense, income }

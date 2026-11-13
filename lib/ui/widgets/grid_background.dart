@@ -16,13 +16,15 @@ class GridBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: GridPainter(
-        gridColor: gridColor,
-        gridSize: gridSize,
-        strokeWidth: strokeWidth,
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: GridPainter(
+          gridColor: gridColor,
+          gridSize: gridSize,
+          strokeWidth: strokeWidth,
+        ),
+        child: child,
       ),
-      child: child,
     );
   }
 }
@@ -47,20 +49,12 @@ class GridPainter extends CustomPainter {
 
     // Dibujar líneas verticales
     for (double i = 0; i < size.width; i += gridSize) {
-      canvas.drawLine(
-        Offset(i, 0),
-        Offset(i, size.height),
-        paint,
-      );
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
     }
 
     // Dibujar líneas horizontales
     for (double i = 0; i < size.height; i += gridSize) {
-      canvas.drawLine(
-        Offset(0, i),
-        Offset(size.width, i),
-        paint,
-      );
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
     }
   }
 
