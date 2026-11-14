@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:pocket_union/core/common/app_response.dart';
 import 'package:pocket_union/core/ports/logger_port.dart';
 import 'package:pocket_union/core/utils/app_database.dart';
 import 'package:pocket_union/core/utils/current_user_provider.dart';
@@ -47,7 +48,7 @@ class IncomeService extends IncomePort {
        _prefs = sharedPreferences;
 
   @override
-  Future<void> createIncome(IncomeInsDto data) async {
+  Future<AppResponse<String?>> createIncome(IncomeInsDto data) async {
     try {
       final id = _uuid.v4();
       final response = await _db
@@ -59,12 +60,16 @@ class IncomeService extends IncomePort {
               amount: data.amount ?? 0.0,
               description: Value(data.description),
               categoryId: Value(data.primaryCategoryId),
+              createdBy: Value(_prefs.getString(PreferencesCacheKeys.userId)),
               userRecipientId: data.recipient == 0
                   ? Value(_prefs.getString(PreferencesCacheKeys.userId))
                   : data.recipient == 1
-                  ? Value(_prefs.getString(PreferencesCacheKeys.coupleId))
+                  ? Value(
+                      _prefs.getString(PreferencesCacheKeys.coupleProfileId),
+                    )
                   : Value.absent(),
               coupleId: Value(_prefs.getString(PreferencesCacheKeys.coupleId)),
+              isReceived: Value(data.isReceived ?? true),
             ),
           );
 
@@ -77,7 +82,22 @@ class IncomeService extends IncomePort {
             'description': response.description,
             'category_id': response.categoryId,
             'user_recipient_id': response.userRecipientId,
+            'couple_id': _prefs.getString(PreferencesCacheKeys.coupleId),
+            'created_by': _prefs.getString(PreferencesCacheKeys.userId),
+            'is_received': response.isReceived,
           });
+          final responseCategory = await _supabaseClient
+              .from('income_category')
+              .insert(
+                data.categoryIds?.map((categoryId) {
+                      return {
+                        'income_id': response.id,
+                        'category_id': categoryId,
+                      };
+                    }).toList() ??
+                    [],
+              );
+          _logger.debug(responseCategory.toString());
         } catch (e) {
           _logger.error(
             'Error processing income creation in cloud response: {e}',
@@ -87,6 +107,7 @@ class IncomeService extends IncomePort {
       }
       // final response = await _supabaseClient.from('income').select();
       _logger.debug(response.toString());
+      return Success(id);
     } catch (e) {
       _logger.error('Error creating income: $e', error: e);
       rethrow;

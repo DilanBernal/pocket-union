@@ -33,7 +33,7 @@ class _ListMenuState extends ConsumerState<ListMenu> {
       );
 
       // Navigate back to login screen
-      Navigator.of(context).pushReplacementNamed(AppRoutes.start);
+      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

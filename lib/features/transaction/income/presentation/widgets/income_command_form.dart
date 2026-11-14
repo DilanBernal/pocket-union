@@ -24,6 +24,24 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
   Widget build(BuildContext context) {
     final controller = ref.watch(incomeCommandFormControllerProvider.notifier);
     final primaryCategoryId = controller.primaryCategoryId;
+    ref.listen<AsyncValue>(incomeCommandFormControllerProvider, (prev, next) {
+      next.whenOrNull(
+        data: (value) {
+          if (value == null) return;
+          _formKey.currentState?.reset();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Ingreso creado')));
+          Navigator.pop(context);
+        },
+        error: (err, st) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error: $err')));
+        },
+      );
+    });
+    final isLoading = ref.watch(incomeCommandFormControllerProvider).isLoading;
 
     return FormBuilder(
       key: _formKey,
@@ -152,6 +170,7 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
               validator: FormBuilderValidators.compose([
                 FormBuilderValidators.maxLength(
                   200,
+                  checkNullOrEmpty: false,
                   errorText: 'La descripción no puede exceder 200 caracteres',
                 ),
               ]),
@@ -162,10 +181,28 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
               ),
               maxLines: 3,
             ),
+            Text(
+              '¿Ya se recibio?',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            FormBuilderSwitch(
+              name: 'is_received',
+              initialValue: true,
+              title: const Text('¿Ya se recibio el ingreso?'),
+              decoration: const InputDecoration(
+                hintText:
+                    'Indica si el ingreso ya fue recibido en alguna cuenta, billetera o efectivo',
+                prefixIcon: Icon(TablerIcons.check),
+              ),
+            ),
 
             RepaintBoundary(
-              child: TextButton(
+              child: ElevatedButton(
+                statesController: isLoading
+                    ? WidgetStatesController({WidgetState.disabled})
+                    : null,
                 child: Text('Guardar'),
+
                 onPressed: () {
                   _formKey.currentState?.saveAndValidate();
                   // _formKey.su();

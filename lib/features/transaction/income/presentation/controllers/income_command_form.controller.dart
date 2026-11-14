@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:pocket_union/core/common/app_response.dart';
 import 'package:pocket_union/features/reference/domain/entities/category_entity.dart';
 import 'package:pocket_union/features/transaction/application/dto/income_ins_dto.dart';
 import 'package:pocket_union/features/transaction/application/services/income_service.dart';
@@ -21,17 +22,23 @@ class IncomeCommandFormController extends _$IncomeCommandFormController {
     }
     final formData = formState.value;
     final incomeService = await ref.read(incomeServiceProvider.future);
-    incomeService.createIncome(
+    final response = await incomeService.createIncome(
       IncomeInsDto(
         amount: formData['amount'],
         name: formData['name'],
         description: formData['description'],
         recipient: formData['recipient'],
-        categoryIds: formData['categoryIds'] ?? [],
+        isReceived: formData['is_received'],
+        categoryIds: formData['categories'] ?? [],
         primaryCategoryId:
             primaryCategoryId.value?.id ??
             (formData['categoryIds'] as List<String>).firstOrNull,
       ),
     );
+    if (response is Success<String?>) {
+      state = AsyncData(response.value);
+    } else if (response is Failure<String?>) {
+      state = AsyncError(response.error, StackTrace.current);
+    }
   }
 }

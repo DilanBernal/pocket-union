@@ -67,7 +67,6 @@ class AppRoutes {
   //     return IncomeDetailScreen(incomeId: incomeId);
   //   },
   static Map<String, WidgetBuilder> routes = {
-    start: (context) => const LoginScreen(),
     login: (context) => const LoginScreen(),
     register: (context) => const RegisterScreen(),
     home: (context) => const HomeScreen(),

@@ -6,6 +6,7 @@ class IncomeInsDto {
   final String? primaryCategoryId;
   final DateTime? date;
   final int? recipient;
+  final bool? isReceived;
 
   IncomeInsDto({
     required this.name,
@@ -15,5 +16,6 @@ class IncomeInsDto {
     this.date,
     this.primaryCategoryId,
     this.recipient,
+    this.isReceived,
   });
 }

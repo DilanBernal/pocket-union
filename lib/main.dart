@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pocket_union/core/utils/shared_preferences.dart';
 import 'package:pocket_union/ui/router.dart';
 import 'package:pocket_union/ui/theme/app_theme.dart';
+import 'package:pocket_union/ui/widgets/startup_gate.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'
     show
@@ -16,22 +16,16 @@ void main() async {
 
   GoogleFonts.config.allowRuntimeFetching = false;
 
-  final container = ProviderContainer();
-
-  final initialRoute = await _initVariables(container);
-
-  runApp(ProviderScope(child: PocketUnionApp(initialRoute: initialRoute)));
+  runApp(const ProviderScope(child: PocketUnionApp()));
 }
 
 class PocketUnionApp extends StatelessWidget {
-  final String initialRoute;
-
-  const PocketUnionApp({super.key, required this.initialRoute});
+  const PocketUnionApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: initialRoute,
+      home: const StartupGate(),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.blackDarkTheme,
       themeMode: ThemeMode.system,
@@ -49,25 +43,4 @@ class PocketUnionApp extends StatelessWidget {
       routes: AppRoutes.routes,
     );
   }
-}
-
-Future<String> _initVariables(ProviderContainer container) async {
-  // Obtener SharedPreferences para determinar la ruta inicial
-  final prefs = await container.read(sharedPreferencesWithCacheProvider.future);
-  final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
-  final isInSession = prefs.getBool('isInSession') ?? false;
-  final coupleId = prefs.getString('coupleId');
-  final hasCoupleReady = coupleId != null && coupleId.isNotEmpty;
-
-  String initialRoute = '';
-  if (isFirstLaunch) {
-    initialRoute = AppRoutes.start;
-  } else if (!isInSession) {
-    initialRoute = AppRoutes.login;
-  } else if (!hasCoupleReady) {
-    initialRoute = AppRoutes.coupleSetup;
-  } else {
-    initialRoute = AppRoutes.home;
-  }
-  return initialRoute;
 }

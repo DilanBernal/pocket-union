@@ -15,7 +15,7 @@ class HomeController extends _$HomeController {
   UserEntity? _actualUser;
   UserEntity? _actualPartnerUser;
 
-  Future<UserEntity?> getActualUser(bool forceRefresh) async {
+  Future<UserEntity?> getActualUser({bool forceRefresh = false}) async {
     // final userId = prefs.getString(PreferencesCacheKeys.userId);
     if (_actualUser != null && !forceRefresh) {
       return _actualUser;
@@ -26,8 +26,7 @@ class HomeController extends _$HomeController {
       final userResponse = await userService.getCurrentUser();
       logger.info('User response: $userResponse');
       return switch (userResponse) {
-        Success<UserEntity?>(): 
-        break,
+        Success<UserEntity?>() => userResponse.value,
         Failure<UserEntity?>() => null,
       };
     } catch (e) {
@@ -36,7 +35,7 @@ class HomeController extends _$HomeController {
     }
   }
 
-  Future<UserEntity?> getActualPartnerUser(bool forceRefresh) async {
+  Future<UserEntity?> getActualPartnerUser({bool forceRefresh = false}) async {
     // final userId = prefs.getString(PreferencesCacheKeys.userId);
     if (_actualPartnerUser != null && !forceRefresh) {
       return _actualPartnerUser;

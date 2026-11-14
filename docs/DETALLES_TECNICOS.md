@@ -267,3 +267,35 @@ La tabla `income` no tenia una representacion en la capa de dominio de transacci
 ### Tradeoffs
 
 La entidad representa `categoryId` como una sola categoria, igual que la tabla `income`; cualquier relacion de multiples categorias debe resolverse mediante la tabla puente local sin alterar este contrato.
+
+## Compuerta de autenticacion al iniciar la app
+
+### Problema resuelto
+
+La app decidia la ruta inicial usando `SharedPreferences.isInSession` y
+`coupleId`, y configuraba `initialRoute` directamente. Esto podia dejar la ruta
+`/` (login) debajo de `/home`, permitiendo volver al login con el boton atras,
+ademas de aceptar flags locales aunque la sesion real de Supabase hubiera
+expirado.
+
+### Cambio aplicado
+
+Se agrego un provider de arranque y una pantalla splash que:
+
+1. Consulta `Supabase.auth.currentSession` como fuente de verdad.
+2. Envia al login cuando no existe una sesion valida.
+3. Envia a configuracion de pareja cuando falta `coupleId`.
+4. Envia a Home cuando la sesion y la pareja estan disponibles.
+5. Muestra un error explicito con opcion de reintento si falla la inicializacion.
+
+`MaterialApp` ahora usa la compuerta como `home`, en lugar de construir una
+`initialRoute` autenticada. Asi la pantalla final ocupa la ruta inicial sin
+apilar el login debajo.
+
+### Impacto y tradeoffs
+
+- El arranque valida correctamente la sesion persistida por Supabase.
+- Una sesion no disponible requiere iniciar sesion de nuevo, incluso si quedan
+  flags locales antiguos.
+- Se agrega una pantalla de carga breve y una accion de reintento para fallos
+  de inicializacion.
