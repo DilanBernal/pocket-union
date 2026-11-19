@@ -1,8 +1,10 @@
-import 'package:flutter/widgets.dart';
 import 'package:pocket_union/core/common/app_response.dart';
 import 'package:pocket_union/core/utils/logger_provider.dart';
 import 'package:pocket_union/features/auth/application/services/auth_service.dart';
 import 'package:pocket_union/features/auth/domain/entities/user_entity.dart';
+import 'package:pocket_union/features/home/application/services/home_service.dart';
+import 'package:pocket_union/features/home/domain/entities/couple_balance_entity.dart';
+import 'package:pocket_union/features/home/domain/entities/couple_transaction_entity.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'home_controller.g.dart';
@@ -16,7 +18,6 @@ class HomeController extends _$HomeController {
   UserEntity? _actualPartnerUser;
 
   Future<UserEntity?> getActualUser({bool forceRefresh = false}) async {
-    // final userId = prefs.getString(PreferencesCacheKeys.userId);
     if (_actualUser != null && !forceRefresh) {
       return _actualUser;
     }
@@ -26,7 +27,7 @@ class HomeController extends _$HomeController {
       final userResponse = await userService.getCurrentUser();
       logger.info('User response: $userResponse');
       return switch (userResponse) {
-        Success<UserEntity?>() => userResponse.value,
+        Success<UserEntity?>() => _actualUser = userResponse.value,
         Failure<UserEntity?>() => null,
       };
     } catch (e) {
@@ -36,7 +37,6 @@ class HomeController extends _$HomeController {
   }
 
   Future<UserEntity?> getActualPartnerUser({bool forceRefresh = false}) async {
-    // final userId = prefs.getString(PreferencesCacheKeys.userId);
     if (_actualPartnerUser != null && !forceRefresh) {
       return _actualPartnerUser;
     }
@@ -54,4 +54,56 @@ class HomeController extends _$HomeController {
       return null;
     }
   }
+}
+
+class HomeDashboardData {
+  final UserEntity? user;
+  final UserEntity? partner;
+  final CoupleBalanceEntity coupleBalance;
+  final List<CoupleTransactionEntity> recentTransactions;
+
+  const HomeDashboardData({
+    required this.user,
+    required this.partner,
+    required this.coupleBalance,
+    required this.recentTransactions,
+  });
+}
+
+@riverpod
+Future<HomeDashboardData> homeDashboard(Ref ref) async {
+  final authService = await ref.watch(authServiceProvider.future);
+  final homeService = await ref.watch(homeServiceProvider.future);
+
+  final userResponse = await authService.getCurrentUser();
+  final partnerResponse = await authService.getCurrentUserPartner();
+  final balanceResponse = await homeService.getCoupleBalance();
+  final transactionsResponse = await homeService.getRecentTransactions();
+
+  final user = switch (userResponse) {
+    Success<UserEntity?>() => userResponse.value,
+    Failure<UserEntity?>() => null,
+  };
+  final partner = switch (partnerResponse) {
+    Success<UserEntity?>() => partnerResponse.value,
+    Failure<UserEntity?>() => null,
+  };
+  final coupleBalance = switch (balanceResponse) {
+    Success<CoupleBalanceEntity>() => balanceResponse.value,
+    Failure<CoupleBalanceEntity>() => const CoupleBalanceEntity.zero(
+      coupleId: '',
+    ),
+  };
+  final recentTransactions = switch (transactionsResponse) {
+    Success<List<CoupleTransactionEntity>>() => transactionsResponse.value,
+    Failure<List<CoupleTransactionEntity>>() =>
+      const <CoupleTransactionEntity>[],
+  };
+
+  return HomeDashboardData(
+    user: user,
+    partner: partner,
+    coupleBalance: coupleBalance,
+    recentTransactions: recentTransactions,
+  );
 }

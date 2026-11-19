@@ -41,6 +41,50 @@ mantiene la validación de categorías dentro del mismo `FormBuilder`.
 * **Sensibles:** Uso de `String.fromEnvironment` para claves de API via `--dart-define`.
 * **IDs:** Implementación de `uuid` v4 para evitar colisiones entre registros locales y remotos.
 
+## 🧾 Cambios Importantes - Pantalla Principal de la Pareja
+
+### Cambio aplicado
+
+La pantalla principal ahora muestra:
+
+1. Fotos o iniciales del usuario y su pareja.
+2. Balance personal del usuario como dato destacado.
+3. Balance compartido obtenido de la vista `couple_balance`.
+4. Las ultimas cuatro transacciones obtenidas de `couple_transactions`.
+
+La implementacion separa el dominio, el servicio y la presentacion:
+
+- `home/domain/entities/` define los datos tipados de balance y transaccion.
+- `home/domain/ports/` define el contrato de lectura del dashboard.
+- `home/application/services/home_service.dart` consulta Supabase y conserva un fallback local.
+- `home/controllers/home_controller.dart` combina usuario, pareja y datos financieros.
+- `home/screens/home_screen.dart` solo renderiza el estado del dashboard.
+
+### Razon del cambio
+
+La UI anterior solo mostraba los nombres de ambos perfiles y no ofrecía una lectura
+operativa de las finanzas compartidas. Las vistas Supabase permiten reutilizar
+el calculo agregado sin duplicar logica en Flutter y mantienen la vista sincronizada
+con ingresos y gastos existentes.
+
+### Impacto tecnico
+
+1. `couple_balance` se consulta con `couple_id` y entrega `balance`,
+   `total_income` y `total_expense`.
+2. `couple_transactions` se consulta por `couple_id`, se ordena por
+   `transaction_date` descendente y se limita a cuatro registros.
+3. Ante una falla de Supabase, el servicio calcula un resumen local con las
+   tablas Drift de ingresos y gastos y devuelve las cuatro transacciones recientes.
+4. Los montos se representan tipados en entidades y se formatean con `intl`
+   exclusivamente en la capa de presentacion.
+
+### Tradeoffs
+
+1. El resumen local puede no reflejar el estado cloud inmediato si hay registros
+   pendientes de sincronizacion o columnas locales incompletas.
+2. Las vistas Supabase deben seguir expuestas con las politicas RLS y el filtro
+   por `couple_id` adecuado para impedir lectura cruzada entre parejas.
+
 ## 🎨 Tematización
 
 La app implementa un `AppTheme` personalizado que utiliza `GoogleFonts` para inyectar la estética Synthwave. El `GridBackground` es un `CustomPainter` optimizado para no penalizar el rendimiento del renderizado.

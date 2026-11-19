@@ -4,7 +4,11 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pocket_union/features/home/controllers/home_controller.dart';
 import 'package:pocket_union/features/home/screens/new_expense_screen.dart';
 import 'package:pocket_union/features/home/screens/new_income_screen.dart';
+import 'package:pocket_union/features/home/widgets/balance_card.dart';
+import 'package:pocket_union/features/home/widgets/couple_header.dart';
+import 'package:pocket_union/features/home/widgets/empty_transactions.dart';
 import 'package:pocket_union/features/home/widgets/list_menu.dart';
+import 'package:pocket_union/features/home/widgets/transaction_tile.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,31 +35,70 @@ class _HomeScreenState extends State<HomeScreen> {
               0 => Expanded(child: NewIncomeScreen()),
               1 => Expanded(
                 child: Consumer(
-                  builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                    final homeController = ref.watch(
-                      homeControllerProvider.notifier,
-                    );
-                    final user = homeController.getActualUser();
-                    final partnerUser = homeController.getActualPartnerUser();
-                    final future = Future.wait([user, partnerUser]);
-
-                    return FutureBuilder(
-                      future: future,
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return Text(
-                            snapshot.data?.first?.fullName ?? 'No user found',
-                          );
-                        }
-                        return (snapshot.data?.first?.fullName != null &&
-                                snapshot.data?.last?.fullName != null)
-                            ? Text(
-                                '${snapshot.data!.first!.fullName} and ${snapshot.data!.last!.fullName}',
-                              )
-                            : const Text('No user found');
+                  builder:
+                      (BuildContext context, WidgetRef ref, Widget? child) {
+                        final dashboardAsync = ref.watch(homeDashboardProvider);
+                        return dashboardAsync.when(
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
+                          error: (error, stackTrace) => const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text(
+                                'No se pudo cargar el resumen financiero.',
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                          data: (dashboard) => RefreshIndicator(
+                            onRefresh: () async {
+                              ref.invalidate(homeDashboardProvider);
+                              await ref.read(homeDashboardProvider.future);
+                            },
+                            child: ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                12,
+                                16,
+                                24,
+                              ),
+                              children: [
+                                CoupleHeader(
+                                  userName: dashboard.user?.fullName,
+                                  partnerName: dashboard.partner?.fullName,
+                                  userAvatarUrl: dashboard.user?.avatarUrl,
+                                  partnerAvatarUrl:
+                                      dashboard.partner?.avatarUrl,
+                                ),
+                                const SizedBox(height: 16),
+                                BalanceCard(
+                                  personalBalance: dashboard.user?.balance ?? 0,
+                                  coupleBalance:
+                                      dashboard.coupleBalance.balance,
+                                ),
+                                const SizedBox(height: 24),
+                                const Text(
+                                  'Ultimas transacciones',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                if (dashboard.recentTransactions.isEmpty)
+                                  const EmptyTransactions()
+                                else
+                                  ...dashboard.recentTransactions.map(
+                                    (transaction) => TransactionTile(
+                                      transaction: transaction,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
                       },
-                    );
-                  },
                 ),
               ),
               2 => Expanded(child: NewExpenseScreen()),
