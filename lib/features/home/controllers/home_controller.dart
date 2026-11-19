@@ -5,6 +5,7 @@ import 'package:pocket_union/features/auth/domain/entities/user_entity.dart';
 import 'package:pocket_union/features/home/application/services/home_service.dart';
 import 'package:pocket_union/features/home/domain/entities/couple_balance_entity.dart';
 import 'package:pocket_union/features/home/domain/entities/couple_transaction_entity.dart';
+import 'package:pocket_union/features/home/domain/entities/user_balance_entity.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'home_controller.g.dart';
@@ -60,12 +61,14 @@ class HomeDashboardData {
   final UserEntity? user;
   final UserEntity? partner;
   final CoupleBalanceEntity coupleBalance;
+  final UserBalanceEntity personalBalance;
   final List<CoupleTransactionEntity> recentTransactions;
 
   const HomeDashboardData({
     required this.user,
     required this.partner,
     required this.coupleBalance,
+    required this.personalBalance,
     required this.recentTransactions,
   });
 }
@@ -77,7 +80,8 @@ Future<HomeDashboardData> homeDashboard(Ref ref) async {
 
   final userResponse = await authService.getCurrentUser();
   final partnerResponse = await authService.getCurrentUserPartner();
-  final balanceResponse = await homeService.getCoupleBalance();
+  final coupleBalanceResponse = await homeService.getCoupleBalance();
+  final personalBalanceResponse = await homeService.getUserBalance();
   final transactionsResponse = await homeService.getRecentTransactions();
 
   final user = switch (userResponse) {
@@ -88,11 +92,15 @@ Future<HomeDashboardData> homeDashboard(Ref ref) async {
     Success<UserEntity?>() => partnerResponse.value,
     Failure<UserEntity?>() => null,
   };
-  final coupleBalance = switch (balanceResponse) {
-    Success<CoupleBalanceEntity>() => balanceResponse.value,
+  final coupleBalance = switch (coupleBalanceResponse) {
+    Success<CoupleBalanceEntity>() => coupleBalanceResponse.value,
     Failure<CoupleBalanceEntity>() => const CoupleBalanceEntity.zero(
       coupleId: '',
     ),
+  };
+  final personalBalance = switch (personalBalanceResponse) {
+    Success<UserBalanceEntity>() => personalBalanceResponse.value,
+    Failure<UserBalanceEntity>() => const UserBalanceEntity.zero(userId: ''),
   };
   final recentTransactions = switch (transactionsResponse) {
     Success<List<CoupleTransactionEntity>>() => transactionsResponse.value,
@@ -105,5 +113,6 @@ Future<HomeDashboardData> homeDashboard(Ref ref) async {
     partner: partner,
     coupleBalance: coupleBalance,
     recentTransactions: recentTransactions,
+    personalBalance: personalBalance,
   );
 }

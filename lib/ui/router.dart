@@ -3,6 +3,8 @@ import 'package:pocket_union/features/auth/couple/presentation/screens/couple_se
 import 'package:pocket_union/features/home/screens/home_screen.dart';
 import 'package:pocket_union/features/reference/category/presentation/screens/category_command_screen.dart';
 import 'package:pocket_union/features/reference/category/presentation/screens/category_list_screen.dart';
+import 'package:pocket_union/features/transaction/expense/presentation/widgets/expense_history_list.dart';
+import 'package:pocket_union/features/transaction/income/presentation/widgets/income_history_list.dart';
 import '../features/auth/login/presentation/screens/login_screen.dart';
 import '../features/auth/register/presentation/screens/register_screen.dart';
 // import 'package:pocket_union/ui/screens/categories/categories_list_screen.dart';
@@ -71,8 +73,8 @@ class AppRoutes {
     register: (context) => const RegisterScreen(),
     home: (context) => const HomeScreen(),
     settings: (context) => const Placeholder(),
-    historyExpenses: (context) => const Placeholder(),
-    historyIncome: (context) => const Placeholder(),
+    historyExpenses: (context) => const ExpenseHistoryList(),
+    historyIncome: (context) => const IncomeHistoryList(),
     missions: (context) => const Placeholder(),
     categories: (context) => const CategoryListScreen(),
     newCategory: (context) => const CategoryCommandScreen(),

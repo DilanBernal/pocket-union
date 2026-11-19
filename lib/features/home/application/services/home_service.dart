@@ -6,6 +6,7 @@ import 'package:pocket_union/core/utils/shared_preferences.dart';
 import 'package:pocket_union/core/utils/supabase_client_provider.dart';
 import 'package:pocket_union/features/home/domain/entities/couple_balance_entity.dart';
 import 'package:pocket_union/features/home/domain/entities/couple_transaction_entity.dart';
+import 'package:pocket_union/features/home/domain/entities/user_balance_entity.dart';
 import 'package:pocket_union/features/home/domain/ports/home_port.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -105,6 +106,32 @@ class HomeService extends HomePort {
     );
   }
 
+  Future<UserBalanceEntity> _getLocalUserBalance(String coupleId) async {
+    final incomesQuery = _appDatabase.select(_appDatabase.incomeTable)
+      ..where((table) => table.coupleId.equals(coupleId));
+    final expensesQuery = _appDatabase.select(_appDatabase.expenseTable)
+      ..where((table) => table.coupleId.equals(coupleId));
+
+    final incomes = await incomesQuery.get();
+    final expenses = await expensesQuery.get();
+
+    final totalIncome = incomes.fold<double>(
+      0,
+      (total, income) => total + income.amount,
+    );
+    final totalExpense = expenses.fold<double>(
+      0,
+      (total, expense) => total + expense.amount,
+    );
+
+    return UserBalanceEntity(
+      userId: _sharedPreferences.getString(PreferencesCacheKeys.userId) ?? '',
+      totalIncome: totalIncome,
+      totalExpense: totalExpense,
+      balance: totalIncome - totalExpense,
+    );
+  }
+
   @override
   Future<AppResponse<List<CoupleTransactionEntity>>>
   getRecentTransactions() async {
@@ -187,5 +214,35 @@ class HomeService extends HomePort {
           second.transactionDate.compareTo(first.transactionDate),
     );
     return transactions.take(4).toList(growable: false);
+  }
+
+  @override
+  Future<AppResponse<UserBalanceEntity>> getUserBalance() async {
+    final userId = _sharedPreferences.getString(PreferencesCacheKeys.userId);
+    if (userId == null || userId.isEmpty) {
+      return Success(UserBalanceEntity.zero(userId: userId ?? ''));
+    }
+
+    final localBalance = await _getLocalUserBalance(userId);
+
+    try {
+      final row = await _supabaseClient
+          .from('user_balance')
+          .select()
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (row == null) {
+        return Success(localBalance);
+      }
+      return Success(UserBalanceEntity.fromMap(row));
+    } catch (error, stackTrace) {
+      _logger.error(
+        'Error loading user balance from Supabase',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Success(localBalance);
+    }
   }
 }

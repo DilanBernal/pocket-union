@@ -110,7 +110,6 @@ class UserDaoLocal extends UserLocalPort {
     return UserEntity(
       id: row.id,
       fullName: row.fullName ?? '',
-      balance: row.userBalance,
       inCloud: row.inCloud,
       avatarUrl: row.avatarUrl,
       lastSync: row.lastSync,

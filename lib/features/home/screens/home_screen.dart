@@ -73,7 +73,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(height: 16),
                                 BalanceCard(
-                                  personalBalance: dashboard.user?.balance ?? 0,
+                                  personalBalance:
+                                      dashboard.personalBalance.balance,
                                   coupleBalance:
                                       dashboard.coupleBalance.balance,
                                 ),

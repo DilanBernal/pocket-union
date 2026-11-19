@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:pocket_union/features/home/screens/home_screen.dart';
+import 'package:pocket_union/features/home/widgets/profile_avatar.dart';
 
 class CoupleHeader extends StatelessWidget {
   final String? userName;
@@ -21,7 +21,7 @@ class CoupleHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _ProfileAvatar(name: userName, avatarUrl: userAvatarUrl),
+        ProfileAvatar(name: userName, avatarUrl: userAvatarUrl),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 12),
           child: Icon(
@@ -29,7 +29,7 @@ class CoupleHeader extends StatelessWidget {
             color: Color.fromRGBO(255, 17, 203, 1),
           ),
         ),
-        _ProfileAvatar(name: partnerName, avatarUrl: partnerAvatarUrl),
+        ProfileAvatar(name: partnerName, avatarUrl: partnerAvatarUrl),
       ],
     );
   }

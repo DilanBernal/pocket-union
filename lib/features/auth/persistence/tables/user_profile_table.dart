@@ -13,8 +13,6 @@ class UserProfileTable extends Table {
 
   TextColumn get avatarUrl => text().nullable()();
 
-  RealColumn get userBalance => real().withDefault(const Constant(0.0))();
-
   BoolColumn get inCloud => boolean().withDefault(const Constant(false))();
 
   DateTimeColumn get updatedAt => dateTime().nullable()();
@@ -36,7 +34,6 @@ UserProfileTableCompanion userProfileCompanionFromEntity(UserEntity user) {
     id: Value(user.id),
     fullName: Value(user.fullName),
     avatarUrl: Value(user.avatarUrl),
-    userBalance: Value(user.balance),
     inCloud: Value(user.inCloud),
     updatedAt: Value(user.lastSync),
     lastSync: Value(user.lastSync),

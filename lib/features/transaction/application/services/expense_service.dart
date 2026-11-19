@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:pocket_union/core/common/app_response.dart';
+import 'package:pocket_union/core/enums/sync_status.dart';
 import 'package:pocket_union/core/ports/logger_port.dart';
 import 'package:pocket_union/core/utils/app_database.dart';
 import 'package:pocket_union/core/utils/logger_provider.dart';
 import 'package:pocket_union/core/utils/shared_preferences.dart';
 import 'package:pocket_union/core/utils/supabase_client_provider.dart';
 import 'package:pocket_union/features/transaction/application/dto/expense_ins_dto.dart';
+import 'package:pocket_union/features/transaction/domain/entities/expense_entity.dart';
 import 'package:pocket_union/features/transaction/domain/ports/expense_port.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,6 +49,317 @@ class ExpenseService extends ExpensePort {
        _logger = logger,
        _db = appDatabase,
        _prefs = sharedPreferences;
+
+  @override
+  Future<AppResponse<bool>> deleteExpense(String id) async {
+    try {
+      await (_db.update(
+        _db.expenseTable,
+      )..where((expense) => expense.id.equals(id))).write(
+        ExpenseTableCompanion(
+          isDeleted: const Value(true),
+          syncStatus: const Value(SyncStatus.pendingDelete),
+          localUpdatedAt: Value(DateTime.now().toUtc()),
+        ),
+      );
+
+      try {
+        await _supabaseClient.from('expense').delete().eq('id', id);
+        await (_db.update(
+          _db.expenseTable,
+        )..where((expense) => expense.id.equals(id))).write(
+          ExpenseTableCompanion(
+            syncStatus: const Value(SyncStatus.synced),
+            lastSyncedAt: Value(DateTime.now().toUtc()),
+          ),
+        );
+      } catch (error, stackTrace) {
+        _logger.error(
+          'Error syncing expense deletion to Supabase',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
+
+      return const Success(true);
+    } catch (error, stackTrace) {
+      _logger.error(
+        'Error deleting expense locally',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<ExpenseEntity>> getLocalExpenses() async {
+    final coupleId = _prefs.getString(PreferencesCacheKeys.coupleId);
+    if (coupleId == null || coupleId.isEmpty) {
+      return const [];
+    }
+
+    final query = _db.select(_db.expenseTable)
+      ..where(
+        (expense) =>
+            expense.coupleId.equals(coupleId) & expense.isDeleted.equals(false),
+      )
+      ..orderBy([
+        (expense) => OrderingTerm(
+          expression: expense.transactionDate,
+          mode: OrderingMode.desc,
+        ),
+      ]);
+    final rows = await query.get();
+
+    final entities = <ExpenseEntity>[];
+    for (final row in rows) {
+      final categoryQuery = _db.select(_db.expenseCategories)
+        ..where(
+          (category) =>
+              category.expenseId.equals(row.id) &
+              category.isDeleted.equals(false),
+        );
+      final categoryRows = await categoryQuery.get();
+
+      entities.add(
+        ExpenseEntity(
+          id: row.id,
+          coupleId: row.coupleId ?? coupleId,
+          createdBy: row.createdBy ?? '',
+          name: row.name,
+          transactionDate: row.transactionDate,
+          description: row.description,
+          amount: row.amount,
+          categoryIds: categoryRows.map((item) => item.categoryId).toList(),
+          isFixed: row.isFixed,
+          importanceLevel: row.importanceLevel,
+          isPlaned: row.isPlaned,
+          createdAt: row.createdAt,
+          syncStatus: row.syncStatus,
+          lastSyncedAt: row.lastSyncedAt,
+          localUpdatedAt: row.localUpdatedAt,
+          isPaid: row.isPaid,
+        ),
+      );
+    }
+    return entities;
+  }
+
+  @override
+  Future<void> synchronizeExpenses() async {
+    final coupleId = _prefs.getString(PreferencesCacheKeys.coupleId);
+    if (coupleId == null || coupleId.isEmpty) {
+      return;
+    }
+
+    try {
+      final localExpenses = await getLocalExpenses();
+      final localLatest = localExpenses.isEmpty
+          ? null
+          : localExpenses.reduce(
+              (first, second) =>
+                  first.createdAt.isAfter(second.createdAt) ? first : second,
+            );
+
+      final latestRemote = await _supabaseClient
+          .from('expense')
+          .select('id, created_at')
+          .eq('couple_id', coupleId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (localLatest != null &&
+          latestRemote != null &&
+          latestRemote['id']?.toString() == localLatest.id) {
+        await _refreshLatestTenExpenses(coupleId);
+        return;
+      }
+
+      var newExpensesQuery = _supabaseClient
+          .from('expense')
+          .select()
+          .eq('couple_id', coupleId);
+      if (localLatest != null) {
+        newExpensesQuery = newExpensesQuery.gt(
+          'created_at',
+          localLatest.createdAt.toUtc().toIso8601String(),
+        );
+      }
+      var orderedNewExpensesQuery = newExpensesQuery.order(
+        'created_at',
+        ascending: true,
+      );
+      final newExpenses = localLatest == null
+          ? await orderedNewExpensesQuery.limit(100)
+          : await orderedNewExpensesQuery;
+
+      final newIds = <String>{};
+      for (final remoteExpense in newExpenses) {
+        final expense = await _upsertRemoteExpense(
+          Map<String, dynamic>.from(remoteExpense),
+          coupleId,
+        );
+        newIds.add(expense.id);
+      }
+
+      await _refreshLatestTenExpenses(coupleId, excludedIds: newIds);
+    } catch (error, stackTrace) {
+      _logger.error(
+        'Error synchronizing expense history',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _refreshLatestTenExpenses(
+    String coupleId, {
+    Set<String> excludedIds = const {},
+  }) async {
+    final query = _db.select(_db.expenseTable)
+      ..where(
+        (expense) =>
+            expense.coupleId.equals(coupleId) & expense.isDeleted.equals(false),
+      )
+      ..orderBy([
+        (expense) => OrderingTerm(
+          expression: expense.createdAt,
+          mode: OrderingMode.desc,
+        ),
+      ])
+      ..limit(10);
+    final localRows = await query.get();
+    final ids = localRows
+        .map((expense) => expense.id)
+        .where((id) => !excludedIds.contains(id))
+        .take(10)
+        .toList(growable: false);
+    if (ids.isEmpty) {
+      return;
+    }
+
+    final remoteRows = await _supabaseClient
+        .from('expense')
+        .select()
+        .eq('couple_id', coupleId)
+        .inFilter('id', ids);
+
+    for (final remoteExpense in remoteRows) {
+      await _upsertRemoteExpense(
+        Map<String, dynamic>.from(remoteExpense),
+        coupleId,
+      );
+    }
+  }
+
+  Future<ExpenseEntity> _upsertRemoteExpense(
+    Map<String, dynamic> row,
+    String coupleId,
+  ) async {
+    final id = row['id'].toString();
+    final createdAt =
+        DateTime.tryParse(row['created_at']?.toString() ?? '') ??
+        DateTime.now().toUtc();
+    final transactionDate =
+        DateTime.tryParse(row['transaction_date']?.toString() ?? '') ??
+        createdAt;
+    final categoryId = row['category_id']?.toString();
+
+    await _db
+        .into(_db.expenseTable)
+        .insertOnConflictUpdate(
+          ExpenseTableCompanion(
+            id: Value(id),
+            coupleId: Value(row['couple_id']?.toString() ?? coupleId),
+            name: Value(row['name']?.toString() ?? ''),
+            createdBy: Value(row['created_by']?.toString()),
+            transactionDate: Value(transactionDate),
+            description: Value(row['description']?.toString()),
+            amount: Value((row['amount'] as num? ?? 0).toDouble()),
+            isFixed: Value(row['is_fixed'] == true),
+            importanceLevel: Value(
+              (row['importance_level'] as num?)?.toInt() ?? 1,
+            ),
+            isPlaned: Value(row['is_planed'] == true),
+            isPaid: Value(row['is_paid'] != false),
+            createdAt: Value(createdAt),
+            syncStatus: const Value(SyncStatus.synced),
+            localUpdatedAt: Value(DateTime.now().toUtc()),
+            lastSyncedAt: Value(DateTime.now().toUtc()),
+            isDeleted: const Value(false),
+          ),
+        );
+
+    final categoryRows = await _supabaseClient
+        .from('expense_category')
+        .select('category_id')
+        .eq('expense_id', id);
+    final categoryIds = categoryRows
+        .map((item) => item['category_id']?.toString())
+        .whereType<String>()
+        .toSet();
+    if (categoryId != null) {
+      categoryIds.add(categoryId);
+    }
+
+    await (_db.delete(
+      _db.expenseCategories,
+    )..where((category) => category.expenseId.equals(id))).go();
+    for (final categoryId in categoryIds) {
+      await _db
+          .into(_db.expenseCategories)
+          .insertOnConflictUpdate(
+            ExpenseCategoriesCompanion.insert(
+              expenseId: id,
+              categoryId: categoryId,
+              syncStatus: const Value(SyncStatus.synced),
+              localUpdatedAt: Value(DateTime.now().toUtc()),
+            ),
+          );
+    }
+
+    final infoRows = await _supabaseClient
+        .from('expense_info')
+        .select()
+        .eq('id', id)
+        .limit(1);
+    final info = infoRows.isEmpty ? null : infoRows.first;
+    final importanceLevel =
+        (info?['importance_level'] as num?)?.toInt() ??
+        (row['importance_level'] as num?)?.toInt() ??
+        1;
+    await _db
+        .into(_db.expenseInfoTable)
+        .insertOnConflictUpdate(
+          ExpenseInfoTableCompanion.insert(
+            id: id,
+            importanceLevel: Value(importanceLevel),
+            isFixed: Value(info?['is_fixed'] == true),
+            isPlaned: Value(info?['is_planed'] == true),
+          ),
+        );
+
+    return ExpenseEntity(
+      id: id,
+      coupleId: coupleId,
+      createdBy: row['created_by']?.toString() ?? '',
+      name: row['name']?.toString() ?? '',
+      transactionDate: transactionDate,
+      description: row['description']?.toString(),
+      amount: (row['amount'] as num? ?? 0).toDouble(),
+      categoryIds: categoryIds.toList(growable: false),
+      isFixed: info?['is_fixed'] == true,
+      importanceLevel: importanceLevel,
+      isPlaned: info?['is_planed'] == true,
+      createdAt: createdAt,
+      syncStatus: SyncStatus.synced,
+      lastSyncedAt: DateTime.now().toUtc(),
+      localUpdatedAt: DateTime.now().toUtc(),
+      isPaid: row['is_paid'] != false,
+    );
+  }
 
   @override
   Future<AppResponse<String?>> createExpense(ExpenseInsDto data) async {

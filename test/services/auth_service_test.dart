@@ -40,7 +40,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(
-      UserEntity(id: kUserId, fullName: kFullName, balance: 0, inCloud: true),
+      UserEntity(id: kUserId, fullName: kFullName, inCloud: true),
     );
     registerFallbackValue(
       CoupleEntity(id: kCoupleId, createdAt: DateTime(2026, 1, 1)),
@@ -206,7 +206,6 @@ void main() {
       final profileChain = createSupabaseChain(<String, dynamic>{
         'id': kUserId,
         'full_name': kFullName,
-        'user_balance': 0,
         'last_sync': null,
       });
       // Couple query chain: .from('couple').select(...).or(...).limit(1)

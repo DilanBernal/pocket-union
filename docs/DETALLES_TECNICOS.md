@@ -2,6 +2,77 @@
 
 Este documento describe cómo está operando actualmente la maquinaria de **Pocket Union**.
 
+## 🧾 Historial de gastos offline-first
+
+### Cambio aplicado
+
+El historial de gastos carga primero desde SQLite y ejecuta la comparación con
+Supabase después. La ruta existente `/history-expenses` ahora muestra el nuevo
+widget `ExpenseHistoryList` ubicado dentro de la feature de gastos.
+
+### Razon del cambio
+
+La interfaz debe ser util incluso sin conexion. Consultar primero Supabase
+ocultaria datos ya disponibles en el dispositivo y podria dejar una pantalla
+vacia durante una falla temporal de red.
+
+### Flujo tecnico
+
+1. `ExpenseHistoryController` solicita `getLocalExpenses()` al `ExpenseService`.
+2. Drift filtra por `coupleId`, excluye borrados y ordena por fecha de
+   transaccion descendente.
+3. El controlador publica esos datos inmediatamente como `AsyncData`.
+4. `synchronizeExpenses()` compara el `id` del gasto local mas reciente por
+   `createdAt` con el ultimo gasto remoto por `created_at`.
+5. Si los ids difieren, descarga los gastos remotos posteriores al
+   `created_at` local y los inserta con reemplazo en SQLite.
+6. Despues actualiza en segundo plano hasta los ultimos 10 gastos locales,
+   excluyendo los ids incluidos en el paso anterior.
+7. Ante cualquier error remoto, el servicio registra el fallo y conserva la
+   lectura local; no lanza una respuesta vacia artificial.
+
+### Tradeoffs
+
+1. La sincronizacion diferida puede actualizar la lista unos instantes despues
+   de la carga inicial.
+2. La actualizacion de los ultimos 10 gastos requiere que Supabase exponga
+   `created_at`, `updated_at` o campos equivalentes solo cuando exista una
+   estrategia de deteccion remota mas fina.
+
+### Eliminacion deslizable
+
+Cada gasto del historial puede deslizarse hacia la izquierda para mostrar una
+accion de eliminacion. La UI solicita confirmacion antes de borrar.
+
+El servicio usa borrado offline-first:
+
+1. Marca primero el gasto como eliminado y `pendingDelete` en SQLite.
+2. Intenta eliminar el registro en Supabase.
+3. Si la nube confirma el borrado, marca el registro local como `synced`.
+4. Si la red falla, conserva el borrado local con `pendingDelete` para que una
+   sincronizacion posterior pueda reintentarlo.
+
+## 🧾 Historial de ingresos
+
+El historial de ingresos sigue el mismo flujo offline-first que gastos:
+
+1. SQLite se consulta primero y publica el estado local.
+2. Supabase se compara por el ultimo `created_at`.
+3. Los ingresos nuevos se descargan y persisten localmente.
+4. Los ultimos 10 ingresos se actualizan en segundo plano.
+5. Deslizar hacia la izquierda permite confirmar y ejecutar la eliminacion.
+6. La eliminacion se marca localmente antes del intento remoto, conservando
+   `pendingDelete` si no hay conexion.
+
+### Integridad al sincronizar ingresos
+
+Las filas remotas pueden llegar antes que sus padres locales, como la pareja,
+perfiles de usuario o categorias. Antes de persistir un ingreso, la
+sincronizacion verifica que cada referencia exista en SQLite. Las referencias
+ausentes se guardan como `null`; de esta manera una fila remota valida no causa
+una violacion de llave foranea y puede sincronizarse despues de que llegue su
+dependencia.
+
 ## 🏗️ Arquitectura de Datos (Offline-First)
 
 La aplicación utiliza un patrón de **Repositorio Dual**.

@@ -174,7 +174,6 @@ class AuthService extends AuthPort {
         final domainUser = UserEntity(
           id: res.user!.id,
           fullName: request.fullName,
-          balance: 0,
           inCloud: true,
         );
 
