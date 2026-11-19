@@ -68,3 +68,39 @@ class ExpenseCategories extends Table {
   @override
   Set<Column> get primaryKey => {expenseId, categoryId};
 }
+
+class ExpenseInfoTable extends Table {
+  @override
+  String? get tableName => 'expense_info';
+
+  TextColumn get id => text().references(ExpenseTable, #id)();
+
+  IntColumn get importanceLevel =>
+      integer().nullable().withDefault(const Constant(1))();
+
+  BoolColumn get isFixed => boolean().withDefault(const Constant(false))();
+
+  BoolColumn get isPlaned => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+class ExpenseShares extends Table {
+  @override
+  String? get tableName => 'expense_share';
+
+  TextColumn get id => text()();
+
+  TextColumn get expenseId => text().references(ExpenseTable, #id)();
+
+  TextColumn get userId =>
+      text().nullable().references(UserProfileTable, #id)();
+
+  RealColumn get sharePercentage => real()();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}

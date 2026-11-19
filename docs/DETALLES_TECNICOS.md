@@ -299,3 +299,40 @@ apilar el login debajo.
   flags locales antiguos.
 - Se agrega una pantalla de carga breve y una accion de reintento para fallos
   de inicializacion.
+
+## 🧾 Cambios Importantes (Noviembre 2026) - Creacion de gastos
+
+### Cambio aplicado
+
+Se agrego el vertical slice de creacion de gastos siguiendo el flujo existente
+de ingresos:
+
+1. `ExpenseCommandForm` ahora usa un controlador y un servicio propios.
+2. El gasto se persiste primero en Drift y luego se intenta sincronizar con
+   `expense`, `expense_info`, `expense_category` y `expense_share` en Supabase.
+3. La pantalla permite capturar nombre, monto, fecha, categorias, descripcion,
+   nivel de importancia y estado de pago.
+4. La primera version registra la participacion de la pareja en partes iguales
+   (50/50), usando los perfiles guardados en preferencias.
+
+### Razon del cambio
+
+El formulario de gastos era una copia del formulario de ingresos y enviaba sus
+datos al controlador equivocado, por lo que no podia crear gastos ni respetar
+las categorias de tipo `expense`. Separar el contrato, controlador y servicio
+evita mezclar los dos flujos y conserva el comportamiento offline-first de la
+aplicacion.
+
+### Impacto tecnico y tradeoffs
+
+1. Se agregaron tablas locales `expense_info` y `expense_share` mediante la
+   migracion Drift v5; la relacion de `expense_info` reutiliza el UUID del
+   gasto.
+2. `is_fixed` e `is_planed` quedan en `false` por defecto porque no son campos
+   visibles en esta iteracion.
+3. Si Supabase no esta disponible, el gasto local permanece guardado y queda
+   disponible para la futura cola de sincronizacion; un fallo de persistencia
+   local si se propaga al controlador.
+4. Los porcentajes editables quedan fuera de esta primera version para evitar
+   combinaciones que no sumen 100%; la UI puede ampliarse posteriormente sin
+   cambiar el contrato de las tablas.

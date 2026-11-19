@@ -32,13 +32,15 @@ Future<AppDatabase> appDatabase(Ref ref) async {
     CategoryTable,
     IncomeTable,
     IncomeCategories,
+    ExpenseInfoTable,
+    ExpenseShares,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -49,6 +51,10 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(userProfileTable, userProfileTable.syncStatus);
         await m.addColumn(userProfileTable, userProfileTable.localUpdatedAt);
         await m.addColumn(userProfileTable, userProfileTable.isDeleted);
+      }
+      if (from < 5) {
+        await m.createTable(expenseInfoTable);
+        await m.createTable(expenseShares);
       }
     },
     beforeOpen: (details) async {

@@ -5,7 +5,7 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:pocket_union/core/utils/categories_list_provider.dart';
 import 'package:pocket_union/features/reference/domain/enums/category_host.dart';
-import 'package:pocket_union/features/transaction/income/presentation/controllers/income_command_form.controller.dart';
+import 'package:pocket_union/features/transaction/expense/presentation/controllers/expense_command_form.controller.dart';
 import 'package:pocket_union/features/transaction/presentation/widgets/category_horizontal_list.dart';
 import 'package:pocket_union/features/transaction/presentation/widgets/concurrency_input.dart';
 
@@ -13,8 +13,7 @@ class ExpenseCommandForm extends ConsumerStatefulWidget {
   const ExpenseCommandForm({super.key});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() =>
-      _ExpenseCommandFormState();
+  ConsumerState<ExpenseCommandForm> createState() => _ExpenseCommandFormState();
 }
 
 class _ExpenseCommandFormState extends ConsumerState<ExpenseCommandForm> {
@@ -22,26 +21,26 @@ class _ExpenseCommandFormState extends ConsumerState<ExpenseCommandForm> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = ref.watch(incomeCommandFormControllerProvider.notifier);
+    final controller = ref.watch(expenseCommandFormControllerProvider.notifier);
     final primaryCategoryId = controller.primaryCategoryId;
-    ref.listen<AsyncValue>(incomeCommandFormControllerProvider, (prev, next) {
+    ref.listen<AsyncValue>(expenseCommandFormControllerProvider, (prev, next) {
       next.whenOrNull(
         data: (value) {
           if (value == null) return;
           _formKey.currentState?.reset();
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Ingreso creado')));
+          ).showSnackBar(const SnackBar(content: Text('Gasto creado')));
           Navigator.pop(context);
         },
-        error: (err, st) {
+        error: (error, _) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error: $err')));
+          ).showSnackBar(SnackBar(content: Text('Error: $error')));
         },
       );
     });
-    final isLoading = ref.watch(incomeCommandFormControllerProvider).isLoading;
+    final isLoading = ref.watch(expenseCommandFormControllerProvider).isLoading;
 
     return FormBuilder(
       key: _formKey,
@@ -57,22 +56,22 @@ class _ExpenseCommandFormState extends ConsumerState<ExpenseCommandForm> {
               name: 'name',
               validator: FormBuilderValidators.compose([
                 FormBuilderValidators.required(
-                  errorText: 'El nombre del ingreso es requerido',
+                  errorText: 'El nombre del gasto es requerido',
                 ),
                 FormBuilderValidators.maxLength(
                   50,
                   errorText:
-                      'El nombre del ingreso no puede exceder 50 caracteres',
+                      'El nombre del gasto no puede exceder 50 caracteres',
                 ),
               ]),
               decoration: const InputDecoration(
-                labelText: 'Nombre del ingreso',
-                hintText: 'Ej: Salario, Freelance, Regalo',
+                labelText: 'Nombre del gasto',
+                hintText: 'Ej: Supermercado, Renta, Electricidad',
                 prefixIcon: Icon(TablerIcons.label),
               ),
             ),
             Text(
-              'Monto del ingreso',
+              'Monto del gasto',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             ConcurrencyInput(
@@ -87,13 +86,13 @@ class _ExpenseCommandFormState extends ConsumerState<ExpenseCommandForm> {
                 ),
               ]),
               decoration: const InputDecoration(
-                labelText: 'Monto del ingreso',
+                labelText: 'Monto del gasto',
                 hintText: 'Ej: 1000, 500.50, 2000',
                 prefixIcon: Icon(TablerIcons.currency_dollar),
               ),
             ),
             Text(
-              'Fecha del ingreso',
+              'Fecha del gasto',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             FormBuilderDateTimePicker(
@@ -106,13 +105,13 @@ class _ExpenseCommandFormState extends ConsumerState<ExpenseCommandForm> {
             Consumer(
               builder: (context, ref, _) {
                 final categories = ref.watch(
-                  categoriesByHostProvider(CategoryHost.income),
+                  categoriesByHostProvider(CategoryHost.expense),
                 );
 
                 return Column(
                   children: [
                     Text(
-                      'Categorías del ingreso',
+                      'Categorías del gasto',
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     categories.when(
@@ -123,7 +122,6 @@ class _ExpenseCommandFormState extends ConsumerState<ExpenseCommandForm> {
                       data: (items) => CategoryHorizontalList(
                         categories: items,
                         validator: FormBuilderValidators.compose([
-                          FormBuilderValidators.minLength(1),
                           FormBuilderValidators.required(
                             errorText: 'Seleccione al menos una categoría',
                           ),
@@ -141,78 +139,57 @@ class _ExpenseCommandFormState extends ConsumerState<ExpenseCommandForm> {
               },
             ),
             Text(
-              'A quien le llego',
+              'Nivel de importancia',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             FormBuilderChoiceChips(
-              name: 'recipient',
-              validator: FormBuilderValidators.compose([
-                FormBuilderValidators.required(
-                  errorText: 'Seleccione a quien le llego el ingreso',
-                ),
-                FormBuilderValidators.range(
-                  0,
-                  2,
-                  errorText: 'Seleccione una opción válida',
-                ),
-              ]),
-              options: [
-                FormBuilderChipOption(value: 0, child: Text('Yo')),
-                FormBuilderChipOption(value: 1, child: Text('Nosotros')),
-                FormBuilderChipOption(value: 2, child: Text('Mi pareja')),
+              name: 'importance_level',
+              validator: FormBuilderValidators.required(
+                errorText: 'Seleccione el nivel de importancia',
+              ),
+              options: const [
+                FormBuilderChipOption(value: 1, child: Text('Bajo')),
+                FormBuilderChipOption(value: 2, child: Text('Medio')),
+                FormBuilderChipOption(value: 3, child: Text('Alto')),
               ],
               alignment: WrapAlignment.spaceAround,
-              initialValue: 0,
+              initialValue: 1,
             ),
             Text('Descripción', style: Theme.of(context).textTheme.titleSmall),
             FormBuilderTextField(
               name: 'description',
-              validator: FormBuilderValidators.compose([
-                FormBuilderValidators.maxLength(
-                  200,
-                  checkNullOrEmpty: false,
-                  errorText: 'La descripción no puede exceder 200 caracteres',
-                ),
-              ]),
+              validator: FormBuilderValidators.maxLength(
+                200,
+                checkNullOrEmpty: false,
+                errorText: 'La descripción no puede exceder 200 caracteres',
+              ),
               decoration: const InputDecoration(
                 labelText: 'Descripción',
-                hintText: 'Ej: Pago de proyecto, Bonificación, etc.',
+                hintText: 'Ej: Compra mensual, mantenimiento, etc.',
                 prefixIcon: Icon(TablerIcons.notes),
               ),
               maxLines: 3,
             ),
             Text(
-              '¿Ya se recibio?',
+              'Estado del pago',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             FormBuilderSwitch(
-              name: 'is_received',
+              name: 'is_paid',
               initialValue: true,
-              title: const Text('¿Ya se recibio el ingreso?'),
+              title: const Text('¿Ya se pagó el gasto?'),
               decoration: const InputDecoration(
-                hintText:
-                    'Indica si el ingreso ya fue recibido en alguna cuenta, billetera o efectivo',
+                hintText: 'Indica si el gasto ya fue pagado',
                 prefixIcon: Icon(TablerIcons.check),
               ),
             ),
-
             RepaintBoundary(
               child: ElevatedButton(
                 statesController: isLoading
                     ? WidgetStatesController({WidgetState.disabled})
                     : null,
-                child: Text('Guardar'),
-
-                onPressed: () {
-                  _formKey.currentState?.saveAndValidate();
-                  // _formKey.su();
-                  final ammountValue =
-                      _formKey.currentState?.fields['amount']?.transformedValue;
-                  debugPrint('Amount value: $ammountValue');
-
-                  _formKey.currentState?.saveAndValidate();
-                  controller.submit(_formKey.currentState!);
-                },
+                onPressed: () => controller.submit(_formKey.currentState!),
+                child: const Text('Guardar'),
               ),
             ),
           ],
