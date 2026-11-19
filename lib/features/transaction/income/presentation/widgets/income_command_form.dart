@@ -50,7 +50,7 @@ class _EntryCommandFormState extends ConsumerState<EntryCommandForm> {
         child: Column(
           children: [
             Text(
-              'Nombre del gasto',
+              'Nombre del ingreso',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             FormBuilderTextField(

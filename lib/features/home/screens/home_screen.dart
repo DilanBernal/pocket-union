@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pocket_union/features/home/controllers/home_controller.dart';
-import 'package:pocket_union/features/home/screens/new_entry_screen.dart';
+import 'package:pocket_union/features/home/screens/new_expense_screen.dart';
+import 'package:pocket_union/features/home/screens/new_income_screen.dart';
 import 'package:pocket_union/features/home/widgets/list_menu.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -27,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             switch (indexScreen) {
-              0 => Expanded(child: NewEntryScreen()),
+              0 => Expanded(child: NewIncomeScreen()),
               1 => Expanded(
                 child: Consumer(
                   builder: (BuildContext context, WidgetRef ref, Widget? child) {
@@ -57,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
-              2 => Expanded(child: Text('Agregar una salida')),
+              2 => Expanded(child: NewExpenseScreen()),
               int() => throw UnimplementedError(),
             },
           ],
