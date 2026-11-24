@@ -1,226 +1,172 @@
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
-import 'package:pocket_union/core/services/features/income_service.dart';
-import 'package:pocket_union/domain/enum/sync_status.dart';
-import 'package:pocket_union/domain/models/income.dart';
-import 'package:pocket_union/domain/port/local/income_port_local.dart';
-import 'package:pocket_union/domain/port/utils/logger_port.dart';
-import 'package:pocket_union/dto/new_income_dto.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:pocket_union/core/common/app_response.dart';
+import 'package:pocket_union/core/enums/sync_status.dart';
+import 'package:pocket_union/core/utils/app_database.dart';
+import 'package:pocket_union/core/utils/shared_preferences.dart';
+import 'package:pocket_union/features/reference/domain/enums/category_host.dart';
+import 'package:pocket_union/features/transaction/application/services/income_service.dart';
 
-import 'income_service_test.mocks.dart';
+import '../mocks/logger.mock.dart';
+import '../mocks/shared_preferences_cache.dart';
+import '../mocks/supabaseClient.mock.dart';
 
-@GenerateMocks([IncomeLocalPort, SupabaseClient, LoggerPort])
 void main() {
-  late IncomeService incomeService;
-  late MockIncomeLocalPort mockIncomeDao;
-  late MockSupabaseClient mockSupabaseClient;
-  late MockLoggerPort mockLogger;
-
-  final testIncome = Income(
-    id: 'income-uuid-1',
-    name: 'Sueldo',
-    transactionDate: DateTime(2024, 1, 15),
-    amount: 1500.0,
-    createdAt: DateTime(2024, 1, 15),
-    categoryIds: ['cat-1'],
-    isReceived: true,
-    userRecipientId: 'user-1',
-    syncStatus: SyncStatus.pending,
-  );
+  late AppDatabase database;
+  late MockLogger logger;
+  late MockSharedPreferencesWithCache preferences;
+  late MockSupabase supabase;
+  late IncomeService service;
 
   setUp(() {
-    mockIncomeDao = MockIncomeLocalPort();
-    mockSupabaseClient = MockSupabaseClient();
-    mockLogger = MockLoggerPort();
-    incomeService = IncomeService(
-      mockIncomeDao,
-      mockSupabaseClient,
-      mockLogger,
+    database = AppDatabase(
+      DatabaseConnection(
+        NativeDatabase.memory(),
+        closeStreamsSynchronously: true,
+      ),
+    );
+    logger = MockLogger();
+    preferences = MockSharedPreferencesWithCache();
+    supabase = MockSupabase();
+
+    when(
+      () => preferences.getString(PreferencesCacheKeys.coupleId),
+    ).thenReturn('couple-1');
+    when(
+      () => preferences.getString(PreferencesCacheKeys.userId),
+    ).thenReturn('user-1');
+    when(() => supabase.from(any())).thenThrow(Exception('offline'));
+
+    service = IncomeService(
+      logger: logger,
+      supabaseClient: supabase,
+      appDatabase: database,
+      sharedPreferences: preferences,
     );
   });
 
-  group('IncomeService - getAllIncomes', () {
-    test('retorna lista de ingresos desde el DAO local', () async {
-      when(mockIncomeDao.getAllIncomes()).thenAnswer((_) async => [testIncome]);
-
-      final result = await incomeService.getAllIncomes();
-
-      expect(result, hasLength(1));
-      expect(result.first.name, 'Sueldo');
-      verify(mockIncomeDao.getAllIncomes()).called(1);
-    });
-
-    test('retorna lista vacía cuando no hay ingresos', () async {
-      when(mockIncomeDao.getAllIncomes()).thenAnswer((_) async => []);
-
-      final result = await incomeService.getAllIncomes();
-
-      expect(result, isEmpty);
-      verify(mockIncomeDao.getAllIncomes()).called(1);
-    });
-
-    test('propaga excepción del DAO', () async {
-      when(mockIncomeDao.getAllIncomes()).thenThrow(Exception('DB error'));
-
-      expect(() => incomeService.getAllIncomes(), throwsException);
-    });
+  tearDown(() async {
+    await database.close();
   });
 
-  group('IncomeService - createIncome', () {
-    final newIncomeDto = NewIncomeDto(
-      name: 'Sueldo enero',
-      amount: 1500.00,
-      categoryIds: ['cat-uuid-1'],
-      isRecurring: false,
-      isReceived: true,
-      userId: 'user-uuid-1',
-      description: 'Pago mensual',
-      coupleId: 'couple-1',
-    );
+  test('loads income history first from the local database', () async {
+    await database
+        .into(database.coupleTable)
+        .insert(CoupleTableCompanion.insert(id: 'couple-1'));
+    await database
+        .into(database.incomeTable)
+        .insert(
+          IncomeTableCompanion.insert(
+            id: 'income-1',
+            coupleId: const Value('couple-1'),
+            name: 'Salario',
+            amount: 1000,
+          ),
+        );
 
-    test('inserta en SQLite y devuelve el ID generado', () async {
-      const generatedId = 'income-uuid-new';
-      when(
-        mockIncomeDao.createIncome(any),
-      ).thenAnswer((_) async => generatedId);
-      // Supabase falla en silencio (offline-first)
-      when(mockSupabaseClient.from(any)).thenThrow(Exception('offline'));
+    final incomes = await service.getLocalIncomes();
 
-      final result = await incomeService.createIncome(newIncomeDto);
-
-      expect(result, generatedId);
-      verify(mockIncomeDao.createIncome(any)).called(1);
-    });
-
-    test('retorna ID aunque falle la sincronización con Supabase', () async {
-      const generatedId = 'income-uuid-offline';
-      when(
-        mockIncomeDao.createIncome(any),
-      ).thenAnswer((_) async => generatedId);
-      when(mockSupabaseClient.from(any)).thenThrow(Exception('Network error'));
-
-      final result = await incomeService.createIncome(newIncomeDto);
-
-      expect(result, generatedId);
-      verify(mockIncomeDao.createIncome(any)).called(1);
-    });
-
-    test('lanza excepción si el DAO falla', () async {
-      when(
-        mockIncomeDao.createIncome(any),
-      ).thenThrow(Exception('SQLite error'));
-
-      expect(() => incomeService.createIncome(newIncomeDto), throwsException);
-    });
-
-    test('isReceived=true (solo yo) pasa userId al DAO', () async {
-      when(mockIncomeDao.createIncome(any)).thenAnswer((_) async => 'id-me');
-      when(mockSupabaseClient.from(any)).thenThrow(Exception('offline'));
-
-      final dto = NewIncomeDto(
-        name: 'Bono',
-        amount: 500.0,
-        categoryIds: ['cat-2'],
-        isRecurring: false,
-        isReceived: true,
-        userId: 'user-1',
-      );
-
-      await incomeService.createIncome(dto);
-
-      final captured =
-          verify(mockIncomeDao.createIncome(captureAny)).captured.single
-              as NewIncomeDto;
-      expect(captured.isReceived, isTrue);
-      expect(captured.userId, 'user-1');
-      expect(captured.name, 'Bono');
-    });
-
-    test('isReceived=false (ambos) pasa userId null al DAO', () async {
-      when(mockIncomeDao.createIncome(any)).thenAnswer((_) async => 'id-both');
-      when(mockSupabaseClient.from(any)).thenThrow(Exception('offline'));
-
-      final dto = NewIncomeDto(
-        name: 'Dividendos',
-        amount: 2000.0,
-        categoryIds: ['cat-3'],
-        isRecurring: false,
-        isReceived: false,
-        userId: null,
-      );
-
-      await incomeService.createIncome(dto);
-
-      final captured =
-          verify(mockIncomeDao.createIncome(captureAny)).captured.single
-              as NewIncomeDto;
-      expect(captured.isReceived, isFalse);
-      expect(captured.userId, isNull);
-    });
-
-    test('coupleId se pasa correctamente al DAO', () async {
-      when(
-        mockIncomeDao.createIncome(any),
-      ).thenAnswer((_) async => 'id-couple');
-      when(mockSupabaseClient.from(any)).thenThrow(Exception('offline'));
-
-      final dto = NewIncomeDto(
-        name: 'Ingreso pareja',
-        amount: 3000.0,
-        categoryIds: ['cat-4'],
-        isRecurring: false,
-        isReceived: false,
-        userId: null,
-        coupleId: 'couple-uuid-1',
-      );
-
-      await incomeService.createIncome(dto);
-
-      final captured =
-          verify(mockIncomeDao.createIncome(captureAny)).captured.single
-              as NewIncomeDto;
-      expect(captured.coupleId, 'couple-uuid-1');
-      expect(captured.userId, isNull);
-    });
+    expect(incomes, hasLength(1));
+    expect(incomes.single.id, 'income-1');
+    expect(incomes.single.name, 'Salario');
   });
 
-  group('IncomeService - deleteIncome', () {
-    test('retorna true cuando elimina localmente', () async {
-      when(
-        mockIncomeDao.deleteIncome('income-uuid-1'),
-      ).thenAnswer((_) async => true);
-      when(mockSupabaseClient.from(any)).thenThrow(Exception('offline'));
+  test('marks an income deleted locally when the cloud is offline', () async {
+    await database
+        .into(database.coupleTable)
+        .insert(CoupleTableCompanion.insert(id: 'couple-1'));
+    await database
+        .into(database.incomeTable)
+        .insert(
+          IncomeTableCompanion.insert(
+            id: 'income-delete',
+            coupleId: const Value('couple-1'),
+            name: 'Regalo',
+            amount: 200,
+          ),
+        );
 
-      final result = await incomeService.deleteIncome('income-uuid-1');
+    final response = await service.deleteIncome('income-delete');
+    final row = await (database.select(
+      database.incomeTable,
+    )..where((income) => income.id.equals('income-delete'))).getSingle();
 
-      expect(result, isTrue);
-      verify(mockIncomeDao.deleteIncome('income-uuid-1')).called(1);
-    });
-
-    test('retorna false cuando no se pudo eliminar en local', () async {
-      when(
-        mockIncomeDao.deleteIncome('income-uuid-2'),
-      ).thenAnswer((_) async => false);
-
-      final result = await incomeService.deleteIncome('income-uuid-2');
-
-      expect(result, isFalse);
-      verify(mockIncomeDao.deleteIncome('income-uuid-2')).called(1);
-      verifyNever(mockSupabaseClient.from(any));
-    });
-
-    test('mantiene true aunque falle Supabase en delete cloud', () async {
-      when(
-        mockIncomeDao.deleteIncome('income-uuid-3'),
-      ).thenAnswer((_) async => true);
-      when(mockSupabaseClient.from(any)).thenThrow(Exception('network'));
-
-      final result = await incomeService.deleteIncome('income-uuid-3');
-
-      expect(result, isTrue);
-      verify(mockIncomeDao.deleteIncome('income-uuid-3')).called(1);
-    });
+    expect(response, isA<Success<bool>>());
+    expect(row.isDeleted, isTrue);
+    expect(row.syncStatus, SyncStatus.pendingDelete);
   });
+
+  test('keeps local income history when synchronization is offline', () async {
+    await database
+        .into(database.coupleTable)
+        .insert(CoupleTableCompanion.insert(id: 'couple-1'));
+    await database
+        .into(database.incomeTable)
+        .insert(
+          IncomeTableCompanion.insert(
+            id: 'income-local',
+            coupleId: const Value('couple-1'),
+            name: 'Freelance',
+            amount: 450,
+          ),
+        );
+
+    await service.synchronizeIncomes();
+
+    final incomes = await service.getLocalIncomes();
+    expect(incomes, hasLength(1));
+    expect(incomes.single.id, 'income-local');
+  });
+
+  test(
+    'can persist an income only after creating missing local references',
+    () async {
+      await database
+          .into(database.coupleTable)
+          .insert(
+            CoupleTableCompanion.insert(
+              id: 'couple-remote',
+              syncStatus: const Value('synced'),
+            ),
+          );
+      await database
+          .into(database.userProfileTable)
+          .insert(
+            UserProfileTableCompanion.insert(
+              id: 'creator-remote',
+              syncStatus: const Value('synced'),
+            ),
+          );
+      await database
+          .into(database.categoryTable)
+          .insert(
+            CategoryTableCompanion.insert(
+              id: 'category-remote',
+              coupleId: 'couple-remote',
+              name: 'Ingreso',
+              categoryHost: CategoryHost.income,
+              syncStatus: const Value(SyncStatus.synced),
+            ),
+          );
+
+      await database
+          .into(database.incomeTable)
+          .insert(
+            IncomeTableCompanion.insert(
+              id: 'income-remote',
+              coupleId: const Value('couple-remote'),
+              name: 'Ingreso remoto',
+              amount: 233,
+              createdBy: const Value('creator-remote'),
+              categoryId: const Value('category-remote'),
+            ),
+          );
+
+      final incomes = await database.select(database.incomeTable).get();
+      expect(incomes, hasLength(1));
+      expect(incomes.single.id, 'income-remote');
+    },
+  );
 }

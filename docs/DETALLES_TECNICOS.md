@@ -2,6 +2,77 @@
 
 Este documento describe cómo está operando actualmente la maquinaria de **Pocket Union**.
 
+## 🧾 Historial de gastos offline-first
+
+### Cambio aplicado
+
+El historial de gastos carga primero desde SQLite y ejecuta la comparación con
+Supabase después. La ruta existente `/history-expenses` ahora muestra el nuevo
+widget `ExpenseHistoryList` ubicado dentro de la feature de gastos.
+
+### Razon del cambio
+
+La interfaz debe ser util incluso sin conexion. Consultar primero Supabase
+ocultaria datos ya disponibles en el dispositivo y podria dejar una pantalla
+vacia durante una falla temporal de red.
+
+### Flujo tecnico
+
+1. `ExpenseHistoryController` solicita `getLocalExpenses()` al `ExpenseService`.
+2. Drift filtra por `coupleId`, excluye borrados y ordena por fecha de
+   transaccion descendente.
+3. El controlador publica esos datos inmediatamente como `AsyncData`.
+4. `synchronizeExpenses()` compara el `id` del gasto local mas reciente por
+   `createdAt` con el ultimo gasto remoto por `created_at`.
+5. Si los ids difieren, descarga los gastos remotos posteriores al
+   `created_at` local y los inserta con reemplazo en SQLite.
+6. Despues actualiza en segundo plano hasta los ultimos 10 gastos locales,
+   excluyendo los ids incluidos en el paso anterior.
+7. Ante cualquier error remoto, el servicio registra el fallo y conserva la
+   lectura local; no lanza una respuesta vacia artificial.
+
+### Tradeoffs
+
+1. La sincronizacion diferida puede actualizar la lista unos instantes despues
+   de la carga inicial.
+2. La actualizacion de los ultimos 10 gastos requiere que Supabase exponga
+   `created_at`, `updated_at` o campos equivalentes solo cuando exista una
+   estrategia de deteccion remota mas fina.
+
+### Eliminacion deslizable
+
+Cada gasto del historial puede deslizarse hacia la izquierda para mostrar una
+accion de eliminacion. La UI solicita confirmacion antes de borrar.
+
+El servicio usa borrado offline-first:
+
+1. Marca primero el gasto como eliminado y `pendingDelete` en SQLite.
+2. Intenta eliminar el registro en Supabase.
+3. Si la nube confirma el borrado, marca el registro local como `synced`.
+4. Si la red falla, conserva el borrado local con `pendingDelete` para que una
+   sincronizacion posterior pueda reintentarlo.
+
+## 🧾 Historial de ingresos
+
+El historial de ingresos sigue el mismo flujo offline-first que gastos:
+
+1. SQLite se consulta primero y publica el estado local.
+2. Supabase se compara por el ultimo `created_at`.
+3. Los ingresos nuevos se descargan y persisten localmente.
+4. Los ultimos 10 ingresos se actualizan en segundo plano.
+5. Deslizar hacia la izquierda permite confirmar y ejecutar la eliminacion.
+6. La eliminacion se marca localmente antes del intento remoto, conservando
+   `pendingDelete` si no hay conexion.
+
+### Integridad al sincronizar ingresos
+
+Las filas remotas pueden llegar antes que sus padres locales, como la pareja,
+perfiles de usuario o categorias. Antes de persistir un ingreso, la
+sincronizacion verifica que cada referencia exista en SQLite. Las referencias
+ausentes se guardan como `null`; de esta manera una fila remota valida no causa
+una violacion de llave foranea y puede sincronizarse despues de que llegue su
+dependencia.
+
 ## 🏗️ Arquitectura de Datos (Offline-First)
 
 La aplicación utiliza un patrón de **Repositorio Dual**.
@@ -24,11 +95,66 @@ Utilizamos una jerarquía de Providers para desacoplar la lógica:
 2. **Service Providers:** Encapsulan la lógica de negocio (ej. `authServiceProvider`).
 3. **State Providers:** Gestionan la UI reactiva (ej. `allIncomesProvider`).
 
+### Formulario de ingresos: categorías sin reiniciar campos
+
+La sección de categorías del formulario de ingresos observa su provider dentro
+de un `Consumer` local. Esto evita que los cambios de carga o sincronización de
+categorías reconstruyan el formulario completo y reinicien el texto introducido
+en el campo monetario. La selección se mantiene como un `FormBuilderField` y
+cada categoría se muestra con su nombre, color e icono configurado.
+
+La decisión resuelve la pérdida de estado percibida al escribir montos y
+mantiene la validación de categorías dentro del mismo `FormBuilder`.
+
 ## 🔐 Seguridad y Precisión Financiera
 
 * **Cálculos:** Todos los montos se manejan en **centavos (enteros)** en la base de datos para evitar errores de redondeo de punto flotante de IEEE 754. La clase `intl` se encarga de la visualización.
 * **Sensibles:** Uso de `String.fromEnvironment` para claves de API via `--dart-define`.
 * **IDs:** Implementación de `uuid` v4 para evitar colisiones entre registros locales y remotos.
+
+## 🧾 Cambios Importantes - Pantalla Principal de la Pareja
+
+### Cambio aplicado
+
+La pantalla principal ahora muestra:
+
+1. Fotos o iniciales del usuario y su pareja.
+2. Balance personal del usuario como dato destacado.
+3. Balance compartido obtenido de la vista `couple_balance`.
+4. Las ultimas cuatro transacciones obtenidas de `couple_transactions`.
+
+La implementacion separa el dominio, el servicio y la presentacion:
+
+- `home/domain/entities/` define los datos tipados de balance y transaccion.
+- `home/domain/ports/` define el contrato de lectura del dashboard.
+- `home/application/services/home_service.dart` consulta Supabase y conserva un fallback local.
+- `home/controllers/home_controller.dart` combina usuario, pareja y datos financieros.
+- `home/screens/home_screen.dart` solo renderiza el estado del dashboard.
+
+### Razon del cambio
+
+La UI anterior solo mostraba los nombres de ambos perfiles y no ofrecía una lectura
+operativa de las finanzas compartidas. Las vistas Supabase permiten reutilizar
+el calculo agregado sin duplicar logica en Flutter y mantienen la vista sincronizada
+con ingresos y gastos existentes.
+
+### Impacto tecnico
+
+1. `couple_balance` se consulta con `couple_id` y entrega `balance`,
+   `total_income` y `total_expense`.
+2. `couple_transactions` se consulta por `couple_id`, se ordena por
+   `transaction_date` descendente y se limita a cuatro registros.
+3. Ante una falla de Supabase, el servicio calcula un resumen local con las
+   tablas Drift de ingresos y gastos y devuelve las cuatro transacciones recientes.
+4. Los montos se representan tipados en entidades y se formatean con `intl`
+   exclusivamente en la capa de presentacion.
+
+### Tradeoffs
+
+1. El resumen local puede no reflejar el estado cloud inmediato si hay registros
+   pendientes de sincronizacion o columnas locales incompletas.
+2. Las vistas Supabase deben seguir expuestas con las politicas RLS y el filtro
+   por `couple_id` adecuado para impedir lectura cruzada entre parejas.
 
 ## 🎨 Tematización
 
@@ -237,3 +363,91 @@ Adicionalmente:
 ### Tradeoffs
 
 1. Algunas pantallas avanzadas quedaron temporalmente como placeholders en `presentation/router.dart` mientras se remigran por feature.
+
+## 🧾 Cambios Importantes (Septiembre 2026) - Entidad de dominio `income`
+
+### Cambio aplicado
+
+Se creo `IncomeEntity` en `lib/features/transaction/domain/entities/income_entity.dart` con los campos de la tabla remota `income` y los metadatos transversales de sincronizacion offline.
+
+### Razon del cambio
+
+La tabla `income` no tenia una representacion en la capa de dominio de transacciones, lo que dificultaba compartir el contrato de ingresos entre persistencia local, Supabase y la capa de aplicacion.
+
+### Impacto tecnico
+
+1. Los tipos del dominio reflejan las restricciones de la tabla: `amount` como `double`, fechas como `DateTime`, `userRecipientId` nullable y `isReceived` como `bool`.
+2. La entidad hereda `OfflineBaseEntity`, por lo que puede participar en el flujo de sincronizacion sin acoplar el dominio a Drift o Supabase.
+
+### Tradeoffs
+
+La entidad representa `categoryId` como una sola categoria, igual que la tabla `income`; cualquier relacion de multiples categorias debe resolverse mediante la tabla puente local sin alterar este contrato.
+
+## Compuerta de autenticacion al iniciar la app
+
+### Problema resuelto
+
+La app decidia la ruta inicial usando `SharedPreferences.isInSession` y
+`coupleId`, y configuraba `initialRoute` directamente. Esto podia dejar la ruta
+`/` (login) debajo de `/home`, permitiendo volver al login con el boton atras,
+ademas de aceptar flags locales aunque la sesion real de Supabase hubiera
+expirado.
+
+### Cambio aplicado
+
+Se agrego un provider de arranque y una pantalla splash que:
+
+1. Consulta `Supabase.auth.currentSession` como fuente de verdad.
+2. Envia al login cuando no existe una sesion valida.
+3. Envia a configuracion de pareja cuando falta `coupleId`.
+4. Envia a Home cuando la sesion y la pareja estan disponibles.
+5. Muestra un error explicito con opcion de reintento si falla la inicializacion.
+
+`MaterialApp` ahora usa la compuerta como `home`, en lugar de construir una
+`initialRoute` autenticada. Asi la pantalla final ocupa la ruta inicial sin
+apilar el login debajo.
+
+### Impacto y tradeoffs
+
+- El arranque valida correctamente la sesion persistida por Supabase.
+- Una sesion no disponible requiere iniciar sesion de nuevo, incluso si quedan
+  flags locales antiguos.
+- Se agrega una pantalla de carga breve y una accion de reintento para fallos
+  de inicializacion.
+
+## 🧾 Cambios Importantes (Noviembre 2026) - Creacion de gastos
+
+### Cambio aplicado
+
+Se agrego el vertical slice de creacion de gastos siguiendo el flujo existente
+de ingresos:
+
+1. `ExpenseCommandForm` ahora usa un controlador y un servicio propios.
+2. El gasto se persiste primero en Drift y luego se intenta sincronizar con
+   `expense`, `expense_info`, `expense_category` y `expense_share` en Supabase.
+3. La pantalla permite capturar nombre, monto, fecha, categorias, descripcion,
+   nivel de importancia y estado de pago.
+4. La primera version registra la participacion de la pareja en partes iguales
+   (50/50), usando los perfiles guardados en preferencias.
+
+### Razon del cambio
+
+El formulario de gastos era una copia del formulario de ingresos y enviaba sus
+datos al controlador equivocado, por lo que no podia crear gastos ni respetar
+las categorias de tipo `expense`. Separar el contrato, controlador y servicio
+evita mezclar los dos flujos y conserva el comportamiento offline-first de la
+aplicacion.
+
+### Impacto tecnico y tradeoffs
+
+1. Se agregaron tablas locales `expense_info` y `expense_share` mediante la
+   migracion Drift v5; la relacion de `expense_info` reutiliza el UUID del
+   gasto.
+2. `is_fixed` e `is_planed` quedan en `false` por defecto porque no son campos
+   visibles en esta iteracion.
+3. Si Supabase no esta disponible, el gasto local permanece guardado y queda
+   disponible para la futura cola de sincronizacion; un fallo de persistencia
+   local si se propaga al controlador.
+4. Los porcentajes editables quedan fuera de esta primera version para evitar
+   combinaciones que no sumen 100%; la UI puede ampliarse posteriormente sin
+   cambiar el contrato de las tablas.
