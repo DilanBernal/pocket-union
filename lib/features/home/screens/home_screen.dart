@@ -124,17 +124,17 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(TablerIcons.circle_dashed_plus),
             activeIcon: Icon(TablerIcons.circle_plus_filled),
-            label: 'Agregar una entrada',
+            label: 'Entrada',
           ),
           BottomNavigationBarItem(
             icon: Icon(TablerIcons.home),
             label: 'Inicio',
-            activeIcon: Icon(TablerIcons.home_filled),
+            activeIcon: Icon(TablerIcons.home),
           ),
           BottomNavigationBarItem(
             icon: Icon(TablerIcons.circle_dashed_minus),
             activeIcon: Icon(TablerIcons.circle_minus),
-            label: 'Agregar una salida',
+            label: 'Gasto',
           ),
         ],
       ),

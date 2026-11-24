@@ -12,6 +12,7 @@ class ConcurrencyInput extends StatefulWidget {
     required this.name,
     this.onChanged,
     this.formKey,
+    this.showError = false,
   });
 
   final FormFieldValidator<String>? validator;
@@ -19,6 +20,7 @@ class ConcurrencyInput extends StatefulWidget {
   final String name;
   final ValueChanged<dynamic>? onChanged;
   final GlobalKey<FormBuilderState>? formKey;
+  final bool showError;
 
   @override
   State<ConcurrencyInput> createState() => _ConcurrencyInputState();
@@ -44,6 +46,8 @@ class _ConcurrencyInputState extends State<ConcurrencyInput> {
       initialValue: _formatter.formatString('0'),
       inputFormatters: <TextInputFormatter>[_formatter],
       decoration: widget.decoration!,
+
+      errorBuilder: !widget.showError ? (_, _) => SizedBox(height: 0) : null,
       validator: FormBuilderValidators.transform((_) {
         debugPrint('Transforming value...');
         return _formatter.getUnformattedValue().toString();
